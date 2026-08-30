@@ -1,0 +1,45 @@
+
+# Environment secrets
+.env
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build output
+backend/dist/
+frontend/dist/
+
+# Vite cache
+.vite/
+frontend/.vite/
+
+# Database backups
+backend/backups/database/
+*.dump
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local project snapshots / recovery folders
+stable-rbac-final/
+stable-security-backup/
+
+# Environment backup files
+**/.env.before-*
+
+# Local source-code recovery copies
+backend/backups/
+**/*.before-*
+**/*.backup
+**/*.backup-*
+**/*.broken-*
+**/*.stable
+**/*.stable-*
+**/*.corrupted-*
+**/*.safe-before-*

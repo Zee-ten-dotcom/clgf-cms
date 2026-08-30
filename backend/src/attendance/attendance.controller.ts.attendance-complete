@@ -1,0 +1,66 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+
+import { AttendanceService } from './attendance.service';
+
+@Controller('attendance')
+export class AttendanceController {
+  constructor(private readonly attendanceService: AttendanceService) {}
+
+  @Get()
+  findAllSessions() {
+    return this.attendanceService.findAllSessions();
+  }
+
+  @Get('member/:memberId/history')
+  getMemberHistory(@Param('memberId') memberId: string) {
+    return this.attendanceService.getMemberHistory(memberId);
+  }
+  @Get('report')
+getAttendanceReport(
+  @Query('from') from?: string,
+  @Query('to') to?: string,
+) {
+  return this.attendanceService.getAttendanceReport(from, to);
+}
+  @Get(':id')
+  findSession(@Param('id') id: string) {
+    return this.attendanceService.findSession(id);
+  }
+
+  @Post()
+  createSession(@Body() body: any) {
+    return this.attendanceService.createSession(body);
+  }
+
+  @Post(':sessionId/members')
+  markAttendance(
+    @Param('sessionId') sessionId: string,
+    @Body() body: any,
+  ) {
+    return this.attendanceService.markAttendance(sessionId, body);
+  }
+
+  @Delete(':sessionId/members/:memberId')
+  removeAttendance(
+    @Param('sessionId') sessionId: string,
+    @Param('memberId') memberId: string,
+  ) {
+    return this.attendanceService.removeAttendance(
+      sessionId,
+      memberId,
+    );
+  }
+
+  @Delete(':id')
+  removeSession(@Param('id') id: string) {
+    return this.attendanceService.removeSession(id);
+  }
+}
