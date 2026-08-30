@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+
 type AuthUser = {
   id: string;
   email: string;
@@ -531,7 +533,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/finance/${transaction.id}`,
+        `${API_BASE_URL}/finance/${transaction.id}`,
         {
           method: 'DELETE',
         },
@@ -582,8 +584,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
             const url = editingFinanceTransaction
-        ? `http://localhost:3000/finance/${editingFinanceTransaction.id}`
-        : 'http://localhost:3000/finance';
+        ? `${API_BASE_URL}/finance/${editingFinanceTransaction.id}`
+        : `${API_BASE_URL}/finance`;
 
       const response = await authFetch(
         url,
@@ -629,7 +631,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   };
   const loadLeadership = () => {
-    authFetch('http://localhost:3000/leadership')
+    authFetch(`${API_BASE_URL}/leadership`)
       .then((response) => response.json())
       .then((data) => {
         setLeadershipAssignments(
@@ -642,7 +644,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadPastoralCare = () => {
-    authFetch('http://localhost:3000/pastoral-care')
+    authFetch(`${API_BASE_URL}/pastoral-care`)
       .then((response) => response.json())
       .then((data) => {
         setPastoralCareRecords(
@@ -655,7 +657,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadEvents = () => {
-    authFetch('http://localhost:3000/events')
+    authFetch(`${API_BASE_URL}/events`)
       .then((response) => response.json())
       .then((data) => {
         setEvents(
@@ -684,7 +686,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     const query = params.toString();
 
     authFetch(
-      `http://localhost:3000/giving${query ? `?${query}` : ''}`,
+      `${API_BASE_URL}/giving${query ? `?${query}` : ''}`,
     )
       .then((response) => response.json())
       .then((data) => {
@@ -712,7 +714,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     const query = params.toString();
 
     authFetch(
-      `http://localhost:3000/giving/summary${query ? `?${query}` : ''}`,
+      `${API_BASE_URL}/giving/summary${query ? `?${query}` : ''}`,
     )
       .then((response) => response.json())
       .then((data) => {
@@ -766,7 +768,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/giving/${record.id}`,
+        `${API_BASE_URL}/giving/${record.id}`,
         {
           method: 'DELETE',
         },
@@ -822,8 +824,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const url = editingGivingRecord
-        ? `http://localhost:3000/giving/${editingGivingRecord.id}`
-        : 'http://localhost:3000/giving';
+        ? `${API_BASE_URL}/giving/${editingGivingRecord.id}`
+        : `${API_BASE_URL}/giving`;
 
       const response = await authFetch(
         url,
@@ -892,7 +894,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     const query = params.toString();
 
     authFetch(
-      `http://localhost:3000/finance${
+      `${API_BASE_URL}/finance${
         query ? `?${query}` : ''
       }`,
     )
@@ -925,7 +927,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     const query = params.toString();
 
     authFetch(
-      `http://localhost:3000/finance/summary${
+      `${API_BASE_URL}/finance/summary${
         query ? `?${query}` : ''
       }`,
     )
@@ -962,7 +964,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadAttendance = () => {
-    authFetch("http://localhost:3000/attendance")
+    authFetch(`${API_BASE_URL}/attendance`)
       .then((response) => response.json())
       .then((data) => {
         setAttendanceSessions(data);
@@ -974,7 +976,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
   const loadHomeCells = () => {
-    authFetch("http://localhost:3000/home-cells")
+    authFetch(`${API_BASE_URL}/home-cells`)
       .then((response) => response.json())
       .then((data) => {
         setHomeCells(data);
@@ -986,7 +988,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
   const loadMinistries = () => {
-    authFetch("http://localhost:3000/ministries")
+    authFetch(`${API_BASE_URL}/ministries`)
       .then((response) => response.json())
       .then((data) => {
         setMinistries(data);
@@ -1001,7 +1003,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setLoading(true);
     setError('');
 
-    authFetch('http://localhost:3000/members')
+    authFetch(`${API_BASE_URL}/members`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Failed to load members');
@@ -1069,8 +1071,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const url = editingEvent
-        ? 'http://localhost:3000/events/' + editingEvent.id
-        : 'http://localhost:3000/events';
+        ? `${API_BASE_URL}/events/` + editingEvent.id
+        : `${API_BASE_URL}/events`;
 
       const response = await authFetch(
         url,
@@ -1125,7 +1127,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/events/' + event.id,
+        `${API_BASE_URL}/events/` + event.id,
         {
           method: 'DELETE',
         },
@@ -1199,9 +1201,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const url = editingPastoralCare
-        ? 'http://localhost:3000/pastoral-care/' +
+        ? `${API_BASE_URL}/pastoral-care/` +
           editingPastoralCare.id
-        : 'http://localhost:3000/pastoral-care';
+        : `${API_BASE_URL}/pastoral-care`;
 
       const response = await authFetch(
         url,
@@ -1264,7 +1266,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/pastoral-care/' +
+        `${API_BASE_URL}/pastoral-care/` +
           record.id,
         {
           method: 'DELETE',
@@ -1348,9 +1350,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const url = editingLeadership
-        ? 'http://localhost:3000/leadership/' +
+        ? `${API_BASE_URL}/leadership/` +
           editingLeadership.id
-        : 'http://localhost:3000/leadership';
+        : `${API_BASE_URL}/leadership`;
 
       const response = await authFetch(url, {
         method: editingLeadership ? 'PATCH' : 'POST',
@@ -1409,7 +1411,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/leadership/' +
+        `${API_BASE_URL}/leadership/` +
           assignment.id,
         {
           method: 'DELETE',
@@ -1507,7 +1509,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/audit/summary',
+        `${API_BASE_URL}/audit/summary`,
       );
 
       if (!response.ok) {
@@ -1553,7 +1555,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       }
 
       const response = await authFetch(
-        `http://localhost:3000/audit?${params.toString()}`,
+        `${API_BASE_URL}/audit?${params.toString()}`,
       );
 
       if (!response.ok) {
@@ -1580,7 +1582,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/users',
+        `${API_BASE_URL}/users`,
       );
 
       if (!response.ok) {
@@ -1634,8 +1636,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       const isEditing = editingSystemUser !== null;
 
       const url = isEditing
-        ? `http://localhost:3000/users/${editingSystemUser.id}`
-        : 'http://localhost:3000/users';
+        ? `${API_BASE_URL}/users/${editingSystemUser.id}`
+        : `${API_BASE_URL}/users`;
 
       const body = isEditing
         ? {
@@ -1691,7 +1693,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   ) => {
     try {
       const response = await authFetch(
-        `http://localhost:3000/users/${user.id}/status`,
+        `${API_BASE_URL}/users/${user.id}/status`,
         {
           method: 'PATCH',
           headers: {
@@ -1732,7 +1734,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/users/${user.id}/password`,
+        `${API_BASE_URL}/users/${user.id}/password`,
         {
           method: 'PATCH',
           headers: {
@@ -1765,7 +1767,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/auth/login',
+        `${API_BASE_URL}/auth/login`,
         {
           method: 'POST',
           headers: {
@@ -2018,7 +2020,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/members',
+        `${API_BASE_URL}/members`,
         {
           method: 'POST',
           headers: {
@@ -2071,7 +2073,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/members/${id}/deactivate`,
+        `${API_BASE_URL}/members/${id}/deactivate`,
         {
           method: 'PATCH',
         },
@@ -2102,7 +2104,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/members/${id}/reactivate`,
+        `${API_BASE_URL}/members/${id}/reactivate`,
         {
           method: 'PATCH',
         },
@@ -2160,7 +2162,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/members/${editingMember.id}`,
+        `${API_BASE_URL}/members/${editingMember.id}`,
         {
           method: 'PATCH',
           headers: {
@@ -2600,8 +2602,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     try {
       const isEditing = !!editingMinistry;
       const url = isEditing
-        ? `http://localhost:3000/ministries/${editingMinistry.id}`
-        : 'http://localhost:3000/ministries';
+        ? `${API_BASE_URL}/ministries/${editingMinistry.id}`
+        : `${API_BASE_URL}/ministries`;
 
       const response = await authFetch(url, {
         method: isEditing ? 'PATCH' : 'POST',
@@ -2647,7 +2649,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   ) => {
     try {
       const response = await authFetch(
-        `http://localhost:3000/ministries/${ministryId}`,
+        `${API_BASE_URL}/ministries/${ministryId}`,
         {
           method: 'PATCH',
           headers: {
@@ -2697,7 +2699,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/ministries/${id}`,
+        `${API_BASE_URL}/ministries/${id}`,
         {
           method: 'DELETE',
         },
@@ -2744,7 +2746,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/home-cells/${id}`,
+        `${API_BASE_URL}/home-cells/${id}`,
         {
           method: 'DELETE',
         },
@@ -2776,8 +2778,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       const isEditing = editingHomeCell !== null;
 
       const url = isEditing
-        ? `http://localhost:3000/home-cells/${editingHomeCell.id}`
-        : 'http://localhost:3000/home-cells';
+        ? `${API_BASE_URL}/home-cells/${editingHomeCell.id}`
+        : `${API_BASE_URL}/home-cells`;
 
       const response = await authFetch(url, {
         method: isEditing ? 'PATCH' : 'POST',
@@ -2841,7 +2843,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       const query = params.toString();
 
       const response = await authFetch(
-        `http://localhost:3000/attendance/report${
+        `${API_BASE_URL}/attendance/report${
           query ? `?${query}` : ''
         }`,
       );
@@ -2860,7 +2862,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   const openMemberAttendanceHistory = async (memberId: string) => {
     try {
       const response = await authFetch(
-        `http://localhost:3000/attendance/member/${memberId}/history`,
+        `${API_BASE_URL}/attendance/member/${memberId}/history`,
       );
 
       if (!response.ok) {
@@ -2879,7 +2881,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/attendance/${id}`,
+        `${API_BASE_URL}/attendance/${id}`,
       );
 
       if (!response.ok) {
@@ -2908,7 +2910,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/attendance/${selectedAttendance.id}/members`,
+        `${API_BASE_URL}/attendance/${selectedAttendance.id}/members`,
         {
           method: 'POST',
           headers: {
@@ -2940,7 +2942,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `http://localhost:3000/attendance/${selectedAttendance.id}/members/${memberId}`,
+        `${API_BASE_URL}/attendance/${selectedAttendance.id}/members/${memberId}`,
         {
           method: 'DELETE',
         },
@@ -2971,7 +2973,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        'http://localhost:3000/attendance',
+        `${API_BASE_URL}/attendance`,
         {
           method: 'POST',
           headers: {
@@ -3084,7 +3086,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setEventError('');
 
       const response = await authFetch(
-        `http://localhost:3000/events/${event.id}/attendance`,
+        `${API_BASE_URL}/events/${event.id}/attendance`,
         {
           method: 'POST',
         },
@@ -6626,7 +6628,7 @@ className="back-button no-print"
 
   try {
     const response = await authFetch(
-      'http://localhost:3000/attendance/report',
+      `${API_BASE_URL}/attendance/report`,
     );
 
     if (!response.ok) {
