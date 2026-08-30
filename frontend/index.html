@@ -2,12 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <meta
+      name="description"
+      content="The City Of The Living God Fellowship Church Management System"
+    />
+
+    <meta name="theme-color" content="#ffffff" />
+
+    <link rel="icon" type="image/png" href="/app-icon-192x192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <title>CLGF CMS</title>
   </head>
+
   <body>
     <div id="root"></div>
+
     <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .catch((error) => {
+              console.error('Service worker registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
