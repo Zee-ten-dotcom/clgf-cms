@@ -323,3 +323,34 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_module
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id
   ON audit_logs(user_id);
+
+-- ============================================================
+-- PUBLIC PRAYER REQUESTS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public_prayer_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  requester_name VARCHAR(120) NOT NULL,
+  contact VARCHAR(255),
+  prayer_request TEXT NOT NULL,
+  confidential BOOLEAN NOT NULL DEFAULT FALSE,
+  status VARCHAR(30) NOT NULL DEFAULT 'OPEN'
+    CHECK (
+      status IN (
+        'OPEN',
+        'IN_PROGRESS',
+        'PRAYED_FOR',
+        'FOLLOW_UP',
+        'CLOSED'
+      )
+    ),
+  source VARCHAR(50) NOT NULL DEFAULT 'WEBSITE',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_public_prayer_requests_status
+  ON public_prayer_requests(status);
+
+CREATE INDEX IF NOT EXISTS idx_public_prayer_requests_created_at
+  ON public_prayer_requests(created_at DESC);

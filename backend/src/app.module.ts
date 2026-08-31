@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { validateEnv } from './config/env.validation';
 import { DatabaseLifecycleService } from './database/database-lifecycle.service';
+import { PublicPrayerRequestsModule } from './public-prayer-requests/public-prayer-requests.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { DatabaseLifecycleService } from './database/database-lifecycle.service'
     LeadershipModule,
     AuthModule,
     UsersModule,
+    PublicPrayerRequestsModule,
   ],
   controllers: [AppController],
   providers: [

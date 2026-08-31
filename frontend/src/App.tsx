@@ -253,6 +253,23 @@ type PastoralCareRecord = {
   assigned_leader_last_name: string | null;
 };
   
+type PublicPrayerRequest = {
+  id: string;
+  requester_name: string;
+  contact: string | null;
+  prayer_request: string;
+  confidential: boolean;
+  status:
+    | 'OPEN'
+    | 'IN_PROGRESS'
+    | 'PRAYED_FOR'
+    | 'FOLLOW_UP'
+    | 'CLOSED';
+  source: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type LeadershipAssignment = {
   id: string;
   member_id: string;
@@ -354,6 +371,17 @@ function App() {
 
   const [pastoralCareRecords, setPastoralCareRecords] =
     useState<PastoralCareRecord[]>([]);
+
+  const [publicPrayerRequests, setPublicPrayerRequests] =
+    useState<PublicPrayerRequest[]>([]);
+  const [showPublicPrayerRequests, setShowPublicPrayerRequests] =
+    useState(false);
+  const [publicPrayerLoading, setPublicPrayerLoading] =
+    useState(false);
+  const [publicPrayerError, setPublicPrayerError] =
+    useState('');
+  const [publicPrayerActionId, setPublicPrayerActionId] =
+    useState('');
 
   const [leadershipAssignments, setLeadershipAssignments] =
     useState<LeadershipAssignment[]>([]);
@@ -654,6 +682,124 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       .catch((err) => {
         console.error('Failed to load pastoral care:', err);
       });
+  };
+
+  const loadPublicPrayerRequests = async () => {
+    if (!authUser || authUser.role !== 'ADMIN') {
+      return;
+    }
+
+    setPublicPrayerLoading(true);
+    setPublicPrayerError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/public-prayer-requests`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load prayer requests');
+      }
+
+      const data = await response.json();
+
+      setPublicPrayerRequests(
+        Array.isArray(data) ? data : [],
+      );
+    } catch (err) {
+      console.error(
+        'Failed to load public prayer requests:',
+        err,
+      );
+      setPublicPrayerError(
+        'Unable to load prayer requests.',
+      );
+    } finally {
+      setPublicPrayerLoading(false);
+    }
+  };
+
+  const updatePublicPrayerRequestStatus = async (
+    request: PublicPrayerRequest,
+    status: PublicPrayerRequest['status'],
+  ) => {
+    setPublicPrayerActionId(request.id);
+    setPublicPrayerError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/public-prayer-requests/${request.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to update prayer request',
+        );
+      }
+
+      await loadPublicPrayerRequests();
+    } catch (err) {
+      console.error(
+        'Failed to update prayer request:',
+        err,
+      );
+      setPublicPrayerError(
+        'Unable to update prayer request status.',
+      );
+    } finally {
+      setPublicPrayerActionId('');
+    }
+  };
+
+  const deletePublicPrayerRequest = async (
+    request: PublicPrayerRequest,
+  ) => {
+    const confirmed = window.confirm(
+      'Delete prayer request from "' +
+        request.requester_name +
+        '"?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setPublicPrayerActionId(request.id);
+    setPublicPrayerError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/public-prayer-requests/${request.id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to delete prayer request',
+        );
+      }
+
+      await loadPublicPrayerRequests();
+    } catch (err) {
+      console.error(
+        'Failed to delete prayer request:',
+        err,
+      );
+      setPublicPrayerError(
+        'Unable to delete prayer request.',
+      );
+    } finally {
+      setPublicPrayerActionId('');
+    }
   };
 
   const loadEvents = () => {
@@ -1865,6 +2011,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     loadAttendance();
 
     if (authUser.role === 'ADMIN') {
+      loadPublicPrayerRequests();
       loadSystemUsers();
     }
   }, [authUser, accessToken]);
@@ -3180,6 +3327,254 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         );
       },
     );
+
+  /* =========================
+     PUBLIC PRAYER REQUESTS MANAGEMENT PAGE
+     ========================= */
+
+  if (
+    showPublicPrayerRequests &&
+    authUser.role === 'ADMIN'
+  ) {
+    const openPrayerRequests =
+      publicPrayerRequests.filter(
+        (request) =>
+          request.status === 'OPEN' ||
+          request.status === 'IN_PROGRESS' ||
+          request.status === 'FOLLOW_UP',
+      ).length;
+
+    const confidentialPrayerRequests =
+      publicPrayerRequests.filter(
+        (request) => request.confidential,
+      ).length;
+
+    const completedPrayerRequests =
+      publicPrayerRequests.filter(
+        (request) =>
+          request.status === 'PRAYED_FOR' ||
+          request.status === 'CLOSED',
+      ).length;
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Prayer Requests</h2>
+              <p className="welcome">
+                Manage prayer requests submitted
+                through the public website
+              </p>
+            </div>
+
+            <div className="member-actions">
+              <button
+                type="button"
+                className="save-button"
+                onClick={loadPublicPrayerRequests}
+                disabled={publicPrayerLoading}
+              >
+                {publicPrayerLoading
+                  ? 'Refreshing...'
+                  : 'Refresh'}
+              </button>
+
+              <button
+                type="button"
+                className="back-button"
+                onClick={() =>
+                  setShowPublicPrayerRequests(false)
+                }
+              >
+                ← Dashboard
+              </button>
+            </div>
+          </div>
+
+          <div className="event-stats">
+            <div className="event-stat-card">
+              <div>🙏</div>
+              <h3>Total Requests</h3>
+              <strong>{publicPrayerRequests.length}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>🟡</div>
+              <h3>Open</h3>
+              <strong>{openPrayerRequests}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>🔒</div>
+              <h3>Confidential</h3>
+              <strong>{confidentialPrayerRequests}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>✅</div>
+              <h3>Prayed / Closed</h3>
+              <strong>{completedPrayerRequests}</strong>
+            </div>
+          </div>
+
+          {publicPrayerError && (
+            <div className="form-error">
+              {publicPrayerError}
+            </div>
+          )}
+
+          <div className="members-list">
+            {publicPrayerLoading ? (
+              <div className="empty">
+                <div>🙏</div>
+                <h3>Loading prayer requests...</h3>
+              </div>
+            ) : publicPrayerRequests.length === 0 ? (
+              <div className="empty">
+                <div>🙏</div>
+                <h3>No prayer requests found</h3>
+                <p>
+                  New website prayer submissions
+                  will appear here.
+                </p>
+              </div>
+            ) : (
+              publicPrayerRequests.map((request) => (
+                <div
+                  className="member-card"
+                  key={request.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>{request.requester_name}</h3>
+                      <p className="membership-number">
+                        {request.confidential
+                          ? '🔒 Confidential Prayer Request'
+                          : '🙏 Prayer Request'}
+                      </p>
+                    </div>
+
+                    <span className="status active">
+                      {request.status.replaceAll('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>Contact:</strong>{' '}
+                      {request.contact || 'Not provided'}
+                    </p>
+
+                    <div>
+                      <strong>Prayer Request:</strong>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>
+                        {request.prayer_request}
+                      </p>
+                    </div>
+
+                    <p>
+                      <strong>Confidential:</strong>{' '}
+                      {request.confidential ? 'Yes' : 'No'}
+                    </p>
+
+                    <p>
+                      <strong>Source:</strong>{' '}
+                      {request.source}
+                    </p>
+
+                    <p>
+                      <strong>Received:</strong>{' '}
+                      {new Date(
+                        request.created_at,
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Status</label>
+
+                      <select
+                        value={request.status}
+                        disabled={
+                          publicPrayerActionId === request.id
+                        }
+                        onChange={(e) =>
+                          updatePublicPrayerRequestStatus(
+                            request,
+                            e.target.value as
+                              PublicPrayerRequest['status'],
+                          )
+                        }
+                      >
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">
+                          In Progress
+                        </option>
+                        <option value="PRAYED_FOR">
+                          Prayed For
+                        </option>
+                        <option value="FOLLOW_UP">
+                          Follow-up
+                        </option>
+                        <option value="CLOSED">
+                          Closed
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="deactivate-button"
+                      disabled={
+                        publicPrayerActionId === request.id
+                      }
+                      onClick={() =>
+                        deletePublicPrayerRequest(request)
+                      }
+                    >
+                      {publicPrayerActionId === request.id
+                        ? 'Working...'
+                        : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
 
   /* =========================
      ADMIN ACTIVITY LOG PAGE
@@ -7757,6 +8152,17 @@ className="back-button no-print"
               ? 'Manage Leadership'
               : 'View Leadership'}
           </button>
+
+          {authUser.role === 'ADMIN' && (
+            <button
+              onClick={() => {
+                loadPublicPrayerRequests();
+                setShowPublicPrayerRequests(true);
+              }}
+            >
+              Manage Prayer Requests
+            </button>
+          )}
 
           {authUser.role === 'ADMIN' && (
             <button
