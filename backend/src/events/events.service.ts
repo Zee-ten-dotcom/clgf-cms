@@ -31,6 +31,35 @@ export class EventsService {
     }
   }
 
+  async findPublicUpcoming() {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        SELECT
+          id,
+          title,
+          description,
+          event_date,
+          start_time,
+          end_time,
+          location,
+          event_type
+        FROM events
+        WHERE
+          event_date >= CURRENT_DATE
+          AND UPPER(status) = 'SCHEDULED'
+        ORDER BY event_date ASC, start_time ASC, created_at ASC
+        `,
+      );
+
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
   async findOne(id: string) {
     const client = await this.db();
 
