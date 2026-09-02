@@ -142,6 +142,36 @@ CREATE INDEX IF NOT EXISTS idx_events_status
   ON events(status);
 
 -- ============================================================
+-- SERMONS & RESOURCES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS sermons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(200) NOT NULL,
+  speaker VARCHAR(150) NOT NULL,
+  scripture VARCHAR(255),
+  sermon_date DATE NOT NULL,
+  description TEXT,
+  video_url TEXT,
+  audio_url TEXT,
+  notes_url TEXT,
+  status VARCHAR(30) NOT NULL DEFAULT 'DRAFT'
+    CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')),
+  featured BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sermons_sermon_date
+  ON sermons(sermon_date);
+
+CREATE INDEX IF NOT EXISTS idx_sermons_status
+  ON sermons(status);
+
+CREATE INDEX IF NOT EXISTS idx_sermons_featured
+  ON sermons(featured);
+
+-- ============================================================
 -- FINANCE TRANSACTIONS
 -- ============================================================
 

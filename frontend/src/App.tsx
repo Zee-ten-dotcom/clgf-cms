@@ -233,6 +233,22 @@ type ChurchEvent = {
   updated_at: string;
 };
 
+type ChurchSermon = {
+  id: string;
+  title: string;
+  speaker: string;
+  scripture: string | null;
+  sermon_date: string;
+  description: string | null;
+  video_url: string | null;
+  audio_url: string | null;
+  notes_url: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  featured: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 type PastoralCareRecord = {
   id: string;
   member_id: string;
@@ -368,6 +384,25 @@ function App() {
     useState<GivingSummary | null>(null);
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [showEvents, setShowEvents] = useState(false);
+
+  const [sermons, setSermons] = useState<ChurchSermon[]>([]);
+  const [showSermons, setShowSermons] = useState(false);
+  const [editingSermon, setEditingSermon] =
+    useState<ChurchSermon | null>(null);
+
+  const [sermonTitle, setSermonTitle] = useState('');
+  const [sermonSpeaker, setSermonSpeaker] = useState('');
+  const [sermonScripture, setSermonScripture] = useState('');
+  const [sermonDate, setSermonDate] = useState('');
+  const [sermonDescription, setSermonDescription] = useState('');
+  const [sermonVideoUrl, setSermonVideoUrl] = useState('');
+  const [sermonAudioUrl, setSermonAudioUrl] = useState('');
+  const [sermonNotesUrl, setSermonNotesUrl] = useState('');
+  const [sermonStatus, setSermonStatus] =
+    useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
+  const [sermonFeatured, setSermonFeatured] = useState(false);
+  const [sermonSaving, setSermonSaving] = useState(false);
+  const [sermonError, setSermonError] = useState('');
 
   const [pastoralCareRecords, setPastoralCareRecords] =
     useState<PastoralCareRecord[]>([]);
@@ -1293,6 +1328,155 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setEventError(
         'Unable to delete event.',
       );
+    }
+  };
+
+  const loadSermons = async () => {
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/sermons`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load sermons');
+      }
+
+      const data = await response.json();
+
+      setSermons(
+        Array.isArray(data) ? data : [],
+      );
+    } catch (err) {
+      console.error('Failed to load sermons:', err);
+      setSermonError('Unable to load sermons.');
+    }
+  };
+
+  const cancelEditingSermon = () => {
+    setEditingSermon(null);
+    setSermonTitle('');
+    setSermonSpeaker('');
+    setSermonScripture('');
+    setSermonDate('');
+    setSermonDescription('');
+    setSermonVideoUrl('');
+    setSermonAudioUrl('');
+    setSermonNotesUrl('');
+    setSermonStatus('DRAFT');
+    setSermonFeatured(false);
+    setSermonError('');
+  };
+
+  const startEditingSermon = (
+    sermon: ChurchSermon,
+  ) => {
+    setEditingSermon(sermon);
+    setSermonTitle(sermon.title);
+    setSermonSpeaker(sermon.speaker);
+    setSermonScripture(sermon.scripture || '');
+    setSermonDate(sermon.sermon_date.slice(0, 10));
+    setSermonDescription(sermon.description || '');
+    setSermonVideoUrl(sermon.video_url || '');
+    setSermonAudioUrl(sermon.audio_url || '');
+    setSermonNotesUrl(sermon.notes_url || '');
+    setSermonStatus(sermon.status);
+    setSermonFeatured(sermon.featured);
+    setSermonError('');
+  };
+
+  const saveSermon = async (
+    submitEvent: React.FormEvent,
+  ) => {
+    submitEvent.preventDefault();
+
+    if (
+      !sermonTitle.trim() ||
+      !sermonSpeaker.trim() ||
+      !sermonDate
+    ) {
+      setSermonError(
+        'Title, speaker and sermon date are required.',
+      );
+      return;
+    }
+
+    setSermonSaving(true);
+    setSermonError('');
+
+    try {
+      const url = editingSermon
+        ? `${API_BASE_URL}/sermons/${editingSermon.id}`
+        : `${API_BASE_URL}/sermons`;
+
+      const response = await authFetch(url, {
+        method: editingSermon ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: sermonTitle.trim(),
+          speaker: sermonSpeaker.trim(),
+          scripture:
+            sermonScripture.trim() || undefined,
+          sermonDate,
+          description:
+            sermonDescription.trim() || undefined,
+          videoUrl:
+            sermonVideoUrl.trim() || undefined,
+          audioUrl:
+            sermonAudioUrl.trim() || undefined,
+          notesUrl:
+            sermonNotesUrl.trim() || undefined,
+          status: sermonStatus,
+          featured: sermonFeatured,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save sermon');
+      }
+
+      cancelEditingSermon();
+      await loadSermons();
+    } catch (err) {
+      console.error(err);
+      setSermonError('Unable to save sermon.');
+    } finally {
+      setSermonSaving(false);
+    }
+  };
+
+  const deleteSermon = async (
+    sermon: ChurchSermon,
+  ) => {
+    const confirmed = window.confirm(
+      'Delete "' + sermon.title + '"?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/sermons/${sermon.id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete sermon');
+      }
+
+      if (editingSermon?.id === sermon.id) {
+        cancelEditingSermon();
+      }
+
+      await loadSermons();
+    } catch (err) {
+      console.error(err);
+      setSermonError('Unable to delete sermon.');
     }
   };
 
@@ -6142,6 +6326,397 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     SERMONS & RESOURCES PAGE
+     ========================= */
+
+  if (showSermons) {
+    const publishedSermons = sermons.filter(
+      (sermon) => sermon.status === 'PUBLISHED',
+    ).length;
+
+    const draftSermons = sermons.filter(
+      (sermon) => sermon.status === 'DRAFT',
+    ).length;
+
+    const archivedSermons = sermons.filter(
+      (sermon) => sermon.status === 'ARCHIVED',
+    ).length;
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Sermons & Resources</h2>
+              <p className="welcome">
+                Manage sermons, teachings and ministry resources
+              </p>
+            </div>
+
+            <button
+              className="back-button"
+              onClick={() => setShowSermons(false)}
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          <div className="event-stats">
+            <div className="event-stat-card">
+              <div>📖</div>
+              <h3>Total Sermons</h3>
+              <strong>{sermons.length}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>🌍</div>
+              <h3>Published</h3>
+              <strong>{publishedSermons}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>📝</div>
+              <h3>Drafts</h3>
+              <strong>{draftSermons}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>📦</div>
+              <h3>Archived</h3>
+              <strong>{archivedSermons}</strong>
+            </div>
+          </div>
+
+          {authUser.role === 'ADMIN' && (
+            <form
+              className="member-form"
+              onSubmit={saveSermon}
+            >
+              <h3>
+                {editingSermon
+                  ? 'Edit Sermon'
+                  : 'Add Sermon'}
+              </h3>
+
+              {sermonError && (
+                <div className="form-error">
+                  {sermonError}
+                </div>
+              )}
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    value={sermonTitle}
+                    onChange={(e) =>
+                      setSermonTitle(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Speaker *</label>
+                  <input
+                    type="text"
+                    value={sermonSpeaker}
+                    onChange={(e) =>
+                      setSermonSpeaker(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Scripture</label>
+                  <input
+                    type="text"
+                    value={sermonScripture}
+                    onChange={(e) =>
+                      setSermonScripture(e.target.value)
+                    }
+                    placeholder="e.g. Hebrews 12:22-24"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Sermon Date *</label>
+                  <input
+                    type="date"
+                    value={sermonDate}
+                    onChange={(e) =>
+                      setSermonDate(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={sermonStatus}
+                    onChange={(e) =>
+                      setSermonStatus(
+                        e.target.value as
+                          | 'DRAFT'
+                          | 'PUBLISHED'
+                          | 'ARCHIVED',
+                      )
+                    }
+                  >
+                    <option value="DRAFT">Draft</option>
+                    <option value="PUBLISHED">
+                      Published
+                    </option>
+                    <option value="ARCHIVED">
+                      Archived
+                    </option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Featured</label>
+                  <select
+                    value={sermonFeatured ? 'YES' : 'NO'}
+                    onChange={(e) =>
+                      setSermonFeatured(
+                        e.target.value === 'YES',
+                      )
+                    }
+                  >
+                    <option value="NO">No</option>
+                    <option value="YES">Yes</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Video URL</label>
+                  <input
+                    type="url"
+                    value={sermonVideoUrl}
+                    onChange={(e) =>
+                      setSermonVideoUrl(e.target.value)
+                    }
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Audio URL</label>
+                  <input
+                    type="url"
+                    value={sermonAudioUrl}
+                    onChange={(e) =>
+                      setSermonAudioUrl(e.target.value)
+                    }
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Notes / Resource URL</label>
+                  <input
+                    type="url"
+                    value={sermonNotesUrl}
+                    onChange={(e) =>
+                      setSermonNotesUrl(e.target.value)
+                    }
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    value={sermonDescription}
+                    onChange={(e) =>
+                      setSermonDescription(e.target.value)
+                    }
+                    rows={4}
+                    placeholder="Sermon summary or teaching notes"
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="save-button"
+                  disabled={sermonSaving}
+                >
+                  {sermonSaving
+                    ? editingSermon
+                      ? 'Updating Sermon...'
+                      : 'Saving Sermon...'
+                    : editingSermon
+                      ? 'Update Sermon'
+                      : 'Save Sermon'}
+                </button>
+
+                {editingSermon && (
+                  <button
+                    type="button"
+                    className="back-button"
+                    onClick={cancelEditingSermon}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          {sermonError && authUser.role !== 'ADMIN' && (
+            <div className="form-error">
+              {sermonError}
+            </div>
+          )}
+          {sermons.length === 0 ? (
+            <div className="empty">
+              <div>📖</div>
+              <h3>No sermons yet</h3>
+              <p>
+                Sermons and ministry resources will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="members-list">
+              {sermons.map((sermon: ChurchSermon) => (
+                <div
+                  className="member-card"
+                  key={sermon.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>
+                        {sermon.featured ? '⭐ ' : ''}
+                        {sermon.title}
+                      </h3>
+
+                      <p className="membership-number">
+                        {sermon.speaker} · {sermon.status}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>Date:</strong>{' '}
+                      {sermon.sermon_date.slice(0, 10)}
+                    </p>
+
+                    <p>
+                      <strong>Scripture:</strong>{' '}
+                      {sermon.scripture || 'Not specified'}
+                    </p>
+
+                    <p>
+                      <strong>Description:</strong>{' '}
+                      {sermon.description || 'No description'}
+                    </p>
+
+                    <p>
+                      <strong>Featured:</strong>{' '}
+                      {sermon.featured ? 'Yes' : 'No'}
+                    </p>
+
+                    {sermon.video_url && (
+                      <p>
+                        <strong>Video:</strong>{' '}
+                        <a
+                          href={sermon.video_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Video
+                        </a>
+                      </p>
+                    )}
+
+                    {sermon.audio_url && (
+                      <p>
+                        <strong>Audio:</strong>{' '}
+                        <a
+                          href={sermon.audio_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Audio
+                        </a>
+                      </p>
+                    )}
+
+                    {sermon.notes_url && (
+                      <p>
+                        <strong>Notes:</strong>{' '}
+                        <a
+                          href={sermon.notes_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Resource
+                        </a>
+                      </p>
+                    )}
+                  </div>
+
+                  {authUser.role === 'ADMIN' && (
+                    <div className="member-actions">
+                      <button
+                        className="edit-button"
+                        onClick={() =>
+                          startEditingSermon(sermon)
+                        }
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="deactivate-button"
+                        onClick={() =>
+                          deleteSermon(sermon)
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      GIVING PAGE
      ========================= */
 
@@ -8139,6 +8714,17 @@ className="back-button no-print"
             {authUser.role === 'ADMIN'
               ? 'Manage Events'
               : 'View Events'}
+          </button>
+
+          <button
+            onClick={() => {
+              loadSermons();
+              setShowSermons(true);
+            }}
+          >
+            {authUser.role === 'ADMIN'
+              ? 'Manage Sermons & Resources'
+              : 'View Sermons & Resources'}
           </button>
 
           <button onClick={() => setShowPastoralCare(true)}>
