@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { getDatabasePool } from '../database/database-pool';
+
 @Injectable()
 export class MinistriesService {
   private async db() {
@@ -15,7 +17,28 @@ export class MinistriesService {
           CONCAT(mem.first_name, ' ', mem.last_name) AS leader_name
         FROM ministries m
         LEFT JOIN members mem ON mem.id = m.leader_id
-        ORDER BY m.created_at DESC
+        ORDER BY m.display_order ASC, m.created_at ASC
+      `);
+
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  async findPublic() {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(`
+        SELECT
+          id,
+          name,
+          description
+        FROM ministries
+        WHERE status = 'ACTIVE'
+          AND public_visible = TRUE
+        ORDER BY display_order ASC, created_at ASC
       `);
 
       return result.rows;
@@ -54,6 +77,9 @@ export class MinistriesService {
     name: string;
     description?: string | null;
     leaderId?: string | null;
+    status?: 'ACTIVE' | 'INACTIVE';
+    publicVisible?: boolean;
+    displayOrder?: number;
   }) {
     const client = await this.db();
 
@@ -63,15 +89,21 @@ export class MinistriesService {
         INSERT INTO ministries (
           name,
           description,
-          leader_id
+          leader_id,
+          status,
+          public_visible,
+          display_order
         )
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         `,
         [
           data.name.trim(),
           data.description?.trim() || null,
           data.leaderId || null,
+          data.status || 'ACTIVE',
+          data.publicVisible ?? false,
+          data.displayOrder ?? 0,
         ],
       );
 
@@ -87,6 +119,9 @@ export class MinistriesService {
       name?: string;
       description?: string | null;
       leaderId?: string | null;
+      status?: 'ACTIVE' | 'INACTIVE';
+      publicVisible?: boolean;
+      displayOrder?: number;
     },
   ) {
     const client = await this.db();
@@ -99,14 +134,19 @@ export class MinistriesService {
           name = COALESCE($1, name),
           description = COALESCE($2, description),
           leader_id = COALESCE($3, leader_id),
-          created_at = created_at
-        WHERE id = $4
+          status = COALESCE($4, status),
+          public_visible = COALESCE($5, public_visible),
+          display_order = COALESCE($6, display_order)
+        WHERE id = $7
         RETURNING *
         `,
         [
           data.name?.trim() || null,
           data.description?.trim() || null,
           data.leaderId ?? null,
+          data.status ?? null,
+          data.publicVisible ?? null,
+          data.displayOrder ?? null,
           id,
         ],
       );
@@ -147,5 +187,3 @@ export class MinistriesService {
     }
   }
 }
-
-import { getDatabasePool } from '../database/database-pool';

@@ -62,6 +62,11 @@ CREATE TABLE IF NOT EXISTS ministries (
   name VARCHAR(150) NOT NULL UNIQUE,
   description TEXT,
   leader_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE'
+    CHECK (status IN ('ACTIVE', 'INACTIVE')),
+  public_visible BOOLEAN NOT NULL DEFAULT FALSE,
+  display_order INTEGER NOT NULL DEFAULT 0
+    CHECK (display_order >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

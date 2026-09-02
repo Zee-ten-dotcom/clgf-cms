@@ -1,8 +1,12 @@
 import {
+  IsBoolean,
+  IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -19,4 +23,17 @@ export class CreateMinistryDto {
   @IsOptional()
   @IsUUID()
   leaderId?: string | null;
+
+  @IsOptional()
+  @IsIn(['ACTIVE', 'INACTIVE'])
+  status?: 'ACTIVE' | 'INACTIVE';
+
+  @IsOptional()
+  @IsBoolean()
+  publicVisible?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  displayOrder?: number;
 }

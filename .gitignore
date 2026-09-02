@@ -43,3 +43,6 @@ backend/backups/
 **/*.stable-*
 **/*.corrupted-*
 **/*.safe-before-*
+
+# Local data backups
+backend/ministries-backup-*.json

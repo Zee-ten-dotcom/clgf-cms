@@ -66,6 +66,9 @@ type Ministry = {
   description: string | null;
   leader_id: string | null;
   leader_name?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  public_visible: boolean;
+  display_order: number;
 };
 
 type HomeCell = {
@@ -556,6 +559,12 @@ function App() {
     const [showHomeCells, setShowHomeCells] = useState(false);
   const [ministryName, setMinistryName] = useState('');
   const [ministryDescription, setMinistryDescription] = useState('');
+  const [ministryStatus, setMinistryStatus] =
+    useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [ministryPublicVisible, setMinistryPublicVisible] =
+    useState(false);
+  const [ministryDisplayOrder, setMinistryDisplayOrder] =
+    useState('0');
   const [ministrySaving, setMinistrySaving] = useState(false);
   const [ministryError, setMinistryError] = useState('');
   const [editingMinistry, setEditingMinistry] = useState<Ministry | null>(null);
@@ -2944,6 +2953,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         body: JSON.stringify({
           name: ministryName.trim(),
           description: ministryDescription.trim() || null,
+          status: ministryStatus,
+          publicVisible: ministryPublicVisible,
+          displayOrder: Number(ministryDisplayOrder) || 0,
         }),
       });
 
@@ -2958,6 +2970,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setEditingMinistry(null);
       setMinistryName('');
       setMinistryDescription('');
+      setMinistryStatus('ACTIVE');
+      setMinistryPublicVisible(false);
+      setMinistryDisplayOrder('0');
 
       await loadMinistries();
     loadHomeCells();
@@ -3009,6 +3024,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setEditingMinistry(ministry);
     setMinistryName(ministry.name);
     setMinistryDescription(ministry.description || '');
+    setMinistryStatus(ministry.status || 'ACTIVE');
+    setMinistryPublicVisible(ministry.public_visible ?? false);
+    setMinistryDisplayOrder(String(ministry.display_order ?? 0));
     setMinistryError('');
   };
 
@@ -3016,6 +3034,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setEditingMinistry(null);
     setMinistryName('');
     setMinistryDescription('');
+    setMinistryStatus('ACTIVE');
+    setMinistryPublicVisible(false);
+    setMinistryDisplayOrder('0');
     setMinistryError('');
   };
 
@@ -8457,6 +8478,46 @@ className="back-button no-print"
                 />
               </div>
 
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  value={ministryStatus}
+                  onChange={(e) =>
+                    setMinistryStatus(
+                      e.target.value as 'ACTIVE' | 'INACTIVE',
+                    )
+                  }
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Display Order</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={ministryDisplayOrder}
+                  onChange={(e) =>
+                    setMinistryDisplayOrder(e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={ministryPublicVisible}
+                    onChange={(e) =>
+                      setMinistryPublicVisible(e.target.checked)
+                    }
+                  />{' '}
+                  Show on Public Website
+                </label>
+              </div>
+
               <div className="form-group full-width">
                 <label>Description</label>
 
@@ -8516,8 +8577,14 @@ className="back-button no-print"
                       </p>
                     </div>
 
-                    <span className="status active">
-                      ACTIVE
+                    <span
+                      className={
+                        ministry.status === 'ACTIVE'
+                          ? 'status active'
+                          : 'status inactive'
+                      }
+                    >
+                      {ministry.status}
                     </span>
                   </div>
 
@@ -8532,6 +8599,16 @@ className="back-button no-print"
                       <strong>Leader:</strong>{' '}
                       {ministry.leader_name?.trim() ||
                         'No leader assigned'}
+                    </p>
+
+                    <p>
+                      <strong>Public Website:</strong>{' '}
+                      {ministry.public_visible ? 'Visible' : 'Hidden'}
+                    </p>
+
+                    <p>
+                      <strong>Display Order:</strong>{' '}
+                      {ministry.display_order}
                     </p>
 
                     {authUser.role === 'ADMIN' && (
