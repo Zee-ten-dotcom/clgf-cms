@@ -79,6 +79,9 @@ type HomeCell = {
   leader_name?: string;
   meeting_day: string | null;
   meeting_time: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  public_visible: boolean;
+  display_order: number;
 };
 
 type AttendanceSession = {
@@ -554,6 +557,12 @@ function App() {
   const [homeCellMeetingDay, setHomeCellMeetingDay] = useState('');
   const [homeCellMeetingTime, setHomeCellMeetingTime] = useState('');
   const [homeCellLeaderId, setHomeCellLeaderId] = useState('');
+  const [homeCellStatus, setHomeCellStatus] =
+    useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [homeCellPublicVisible, setHomeCellPublicVisible] =
+    useState(false);
+  const [homeCellDisplayOrder, setHomeCellDisplayOrder] =
+    useState('0');
   const [homeCellSaving, setHomeCellSaving] = useState(false);
   const [homeCellError, setHomeCellError] = useState('');
     const [showHomeCells, setShowHomeCells] = useState(false);
@@ -3076,6 +3085,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setHomeCellLeaderId(homeCell.leader_id || '');
     setHomeCellMeetingDay(homeCell.meeting_day || '');
     setHomeCellMeetingTime(homeCell.meeting_time || '');
+    setHomeCellStatus(homeCell.status || 'ACTIVE');
+    setHomeCellPublicVisible(homeCell.public_visible ?? false);
+    setHomeCellDisplayOrder(String(homeCell.display_order ?? 0));
     setHomeCellError('');
   };
 
@@ -3086,6 +3098,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setHomeCellLeaderId('');
     setHomeCellMeetingDay('');
     setHomeCellMeetingTime('');
+    setHomeCellStatus('ACTIVE');
+    setHomeCellPublicVisible(false);
+    setHomeCellDisplayOrder('0');
     setHomeCellError('');
   };  const deleteHomeCell = async (id: string) => {
     const confirmed = window.confirm(
@@ -3144,6 +3159,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           leaderId: homeCellLeaderId || undefined,
           meetingDay: homeCellMeetingDay.trim() || undefined,
           meetingTime: homeCellMeetingTime.trim() || undefined,
+          status: homeCellStatus,
+          publicVisible: homeCellPublicVisible,
+          displayOrder: Number(homeCellDisplayOrder) || 0,
         }),
       });
 
@@ -3161,6 +3179,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setHomeCellLeaderId('');
       setHomeCellMeetingDay('');
       setHomeCellMeetingTime('');
+      setHomeCellStatus('ACTIVE');
+      setHomeCellPublicVisible(false);
+      setHomeCellDisplayOrder('0');
 
       await loadHomeCells();
     loadAttendance();
@@ -3170,6 +3191,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setHomeCellLeaderId('');
       setHomeCellMeetingDay('');
       setHomeCellMeetingTime('');
+      setHomeCellStatus('ACTIVE');
+      setHomeCellPublicVisible(false);
+      setHomeCellDisplayOrder('0');
 
       await loadHomeCells();
     loadAttendance();
@@ -8300,6 +8324,46 @@ className="back-button no-print"
                   placeholder="e.g. 17:00 - 18:30"
                 />
               </div>
+
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  value={homeCellStatus}
+                  onChange={(e) =>
+                    setHomeCellStatus(
+                      e.target.value as 'ACTIVE' | 'INACTIVE',
+                    )
+                  }
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Display Order</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={homeCellDisplayOrder}
+                  onChange={(e) =>
+                    setHomeCellDisplayOrder(e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={homeCellPublicVisible}
+                    onChange={(e) =>
+                      setHomeCellPublicVisible(e.target.checked)
+                    }
+                  />{' '}
+                  Show on Public Website
+                </label>
+              </div>
             </div>
 
             <div className="form-actions">
@@ -8373,6 +8437,22 @@ className="back-button no-print"
                       <strong>🕒 Meeting Time:</strong>{' '}
                       {homeCell.meeting_time || 'Not provided'}
                     </p>
+
+                    <p>
+                      <strong>Status:</strong>{' '}
+                      {homeCell.status || 'ACTIVE'}
+                    </p>
+
+                    <p>
+                      <strong>Public Website:</strong>{' '}
+                      {homeCell.public_visible ? 'Visible' : 'Hidden'}
+                    </p>
+
+                    <p>
+                      <strong>Display Order:</strong>{' '}
+                      {homeCell.display_order ?? 0}
+                    </p>
+
                   {authUser.role === 'ADMIN' && (
                     <div className="member-actions">
                       <button

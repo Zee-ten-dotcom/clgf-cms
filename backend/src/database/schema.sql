@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS home_cells (
   leader_id UUID REFERENCES members(id) ON DELETE SET NULL,
   meeting_day VARCHAR(30),
   meeting_time VARCHAR(30),
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  public_visible BOOLEAN NOT NULL DEFAULT FALSE,
+  display_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

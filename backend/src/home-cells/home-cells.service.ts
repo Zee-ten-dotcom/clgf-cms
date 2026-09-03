@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { getDatabasePool } from '../database/database-pool';
+
 @Injectable()
 export class HomeCellsService {
   private async db() {
@@ -15,7 +17,29 @@ export class HomeCellsService {
           CONCAT(m.first_name, ' ', m.last_name) AS leader_name
         FROM home_cells h
         LEFT JOIN members m ON m.id = h.leader_id
-        ORDER BY h.created_at DESC
+        ORDER BY h.display_order ASC, h.created_at DESC
+      `);
+
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  async findPublic() {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(`
+        SELECT
+          id,
+          name,
+          meeting_day,
+          meeting_time
+        FROM home_cells
+        WHERE status = 'ACTIVE'
+          AND public_visible = TRUE
+        ORDER BY display_order ASC, created_at ASC
       `);
 
       return result.rows;
@@ -56,6 +80,9 @@ export class HomeCellsService {
     leaderId?: string | null;
     meetingDay?: string;
     meetingTime?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    publicVisible?: boolean;
+    displayOrder?: number;
   }) {
     const client = await this.db();
 
@@ -71,9 +98,12 @@ export class HomeCellsService {
           location,
           leader_id,
           meeting_day,
-          meeting_time
+          meeting_time,
+          status,
+          public_visible,
+          display_order
         )
-        VALUES ($1,$2,$3,$4,$5)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING *
         `,
         [
@@ -82,6 +112,9 @@ export class HomeCellsService {
           data.leaderId ?? null,
           data.meetingDay?.trim() || null,
           data.meetingTime?.trim() || null,
+          data.status ?? 'ACTIVE',
+          data.publicVisible ?? false,
+          data.displayOrder ?? 0,
         ],
       );
 
@@ -99,6 +132,9 @@ export class HomeCellsService {
       leaderId?: string | null;
       meetingDay?: string;
       meetingTime?: string;
+      status?: 'ACTIVE' | 'INACTIVE';
+      publicVisible?: boolean;
+      displayOrder?: number;
     },
   ) {
     const client = await this.db();
@@ -112,8 +148,11 @@ export class HomeCellsService {
           location = COALESCE($2, location),
           leader_id = COALESCE($3, leader_id),
           meeting_day = COALESCE($4, meeting_day),
-          meeting_time = COALESCE($5, meeting_time)
-        WHERE id = $6
+          meeting_time = COALESCE($5, meeting_time),
+          status = COALESCE($6, status),
+          public_visible = COALESCE($7, public_visible),
+          display_order = COALESCE($8, display_order)
+        WHERE id = $9
         RETURNING *
         `,
         [
@@ -122,6 +161,9 @@ export class HomeCellsService {
           data.leaderId ?? null,
           data.meetingDay?.trim() || null,
           data.meetingTime?.trim() || null,
+          data.status ?? null,
+          data.publicVisible ?? null,
+          data.displayOrder ?? null,
           id,
         ],
       );
@@ -159,5 +201,3 @@ export class HomeCellsService {
     }
   }
 }
-
-import { getDatabasePool } from '../database/database-pool';

@@ -1,8 +1,12 @@
 import {
+  IsBoolean,
+  IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -29,4 +33,17 @@ export class CreateHomeCellDto {
   @IsString()
   @MaxLength(30)
   meetingTime?: string;
+
+  @IsOptional()
+  @IsIn(['ACTIVE', 'INACTIVE'])
+  status?: 'ACTIVE' | 'INACTIVE';
+
+  @IsOptional()
+  @IsBoolean()
+  publicVisible?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  displayOrder?: number;
 }
