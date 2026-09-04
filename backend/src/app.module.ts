@@ -19,6 +19,7 @@ import { validateEnv } from './config/env.validation';
 import { DatabaseLifecycleService } from './database/database-lifecycle.service';
 import { PublicPrayerRequestsModule } from './public-prayer-requests/public-prayer-requests.module';
 import { SermonsModule } from './sermons/sermons.module';
+import { ContactEnquiriesModule } from './contact-enquiries/contact-enquiries.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SermonsModule } from './sermons/sermons.module';
     UsersModule,
     PublicPrayerRequestsModule,
     SermonsModule,
+    ContactEnquiriesModule,
   ],
   controllers: [AppController],
   providers: [

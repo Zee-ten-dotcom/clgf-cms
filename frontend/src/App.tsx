@@ -292,6 +292,23 @@ type PublicPrayerRequest = {
   updated_at: string;
 };
 
+type ContactEnquiry = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  subject: string;
+  message: string;
+  status:
+    | 'NEW'
+    | 'IN_PROGRESS'
+    | 'RESPONDED'
+    | 'CLOSED';
+  source: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type LeadershipAssignment = {
   id: string;
   member_id: string;
@@ -422,6 +439,17 @@ function App() {
   const [publicPrayerError, setPublicPrayerError] =
     useState('');
   const [publicPrayerActionId, setPublicPrayerActionId] =
+    useState('');
+
+  const [contactEnquiries, setContactEnquiries] =
+    useState<ContactEnquiry[]>([]);
+  const [showContactEnquiries, setShowContactEnquiries] =
+    useState(false);
+  const [contactEnquiryLoading, setContactEnquiryLoading] =
+    useState(false);
+  const [contactEnquiryError, setContactEnquiryError] =
+    useState('');
+  const [contactEnquiryActionId, setContactEnquiryActionId] =
     useState('');
 
   const [leadershipAssignments, setLeadershipAssignments] =
@@ -852,6 +880,125 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       );
     } finally {
       setPublicPrayerActionId('');
+    }
+  };
+
+
+  const loadContactEnquiries = async () => {
+    if (!authUser || authUser.role !== 'ADMIN') {
+      return;
+    }
+
+    setContactEnquiryLoading(true);
+    setContactEnquiryError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/contact-enquiries`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load contact enquiries');
+      }
+
+      const data = await response.json();
+
+      setContactEnquiries(
+        Array.isArray(data) ? data : [],
+      );
+    } catch (err) {
+      console.error(
+        'Failed to load contact enquiries:',
+        err,
+      );
+      setContactEnquiryError(
+        'Unable to load contact enquiries.',
+      );
+    } finally {
+      setContactEnquiryLoading(false);
+    }
+  };
+
+  const updateContactEnquiryStatus = async (
+    enquiry: ContactEnquiry,
+    status: ContactEnquiry['status'],
+  ) => {
+    setContactEnquiryActionId(enquiry.id);
+    setContactEnquiryError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/contact-enquiries/${enquiry.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to update contact enquiry',
+        );
+      }
+
+      await loadContactEnquiries();
+    } catch (err) {
+      console.error(
+        'Failed to update contact enquiry:',
+        err,
+      );
+      setContactEnquiryError(
+        'Unable to update contact enquiry status.',
+      );
+    } finally {
+      setContactEnquiryActionId('');
+    }
+  };
+
+  const deleteContactEnquiry = async (
+    enquiry: ContactEnquiry,
+  ) => {
+    const confirmed = window.confirm(
+      'Delete contact enquiry from "' +
+        enquiry.name +
+        '"?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setContactEnquiryActionId(enquiry.id);
+    setContactEnquiryError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/contact-enquiries/${enquiry.id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to delete contact enquiry',
+        );
+      }
+
+      await loadContactEnquiries();
+    } catch (err) {
+      console.error(
+        'Failed to delete contact enquiry:',
+        err,
+      );
+      setContactEnquiryError(
+        'Unable to delete contact enquiry.',
+      );
+    } finally {
+      setContactEnquiryActionId('');
     }
   };
 
@@ -2214,6 +2361,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     if (authUser.role === 'ADMIN') {
       loadPublicPrayerRequests();
+      loadContactEnquiries();
       loadSystemUsers();
     }
   }, [authUser, accessToken]);
@@ -3787,6 +3935,247 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                       }
                     >
                       {publicPrayerActionId === request.id
+                        ? 'Working...'
+                        : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+
+  /* =========================
+     CONTACT ENQUIRIES MANAGEMENT PAGE
+     ========================= */
+
+  if (
+    showContactEnquiries &&
+    authUser.role === 'ADMIN'
+  ) {
+    const newEnquiries = contactEnquiries.filter(
+      (enquiry) => enquiry.status === 'NEW',
+    ).length;
+
+    const inProgressEnquiries = contactEnquiries.filter(
+      (enquiry) => enquiry.status === 'IN_PROGRESS',
+    ).length;
+
+    const completedEnquiries = contactEnquiries.filter(
+      (enquiry) =>
+        enquiry.status === 'RESPONDED' ||
+        enquiry.status === 'CLOSED',
+    ).length;
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Contact Enquiries</h2>
+              <p className="welcome">
+                Manage enquiries submitted through
+                the public website
+              </p>
+            </div>
+
+            <div className="member-actions">
+              <button
+                type="button"
+                className="save-button"
+                onClick={loadContactEnquiries}
+                disabled={contactEnquiryLoading}
+              >
+                {contactEnquiryLoading
+                  ? 'Refreshing...'
+                  : 'Refresh'}
+              </button>
+
+              <button
+                type="button"
+                className="back-button"
+                onClick={() =>
+                  setShowContactEnquiries(false)
+                }
+              >
+                ← Dashboard
+              </button>
+            </div>
+          </div>
+
+          <div className="event-stats">
+            <div className="event-stat-card">
+              <div>✉️</div>
+              <h3>Total Enquiries</h3>
+              <strong>{contactEnquiries.length}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>🟡</div>
+              <h3>New</h3>
+              <strong>{newEnquiries}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>🔵</div>
+              <h3>In Progress</h3>
+              <strong>{inProgressEnquiries}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>✅</div>
+              <h3>Responded / Closed</h3>
+              <strong>{completedEnquiries}</strong>
+            </div>
+          </div>
+
+          {contactEnquiryError && (
+            <div className="form-error">
+              {contactEnquiryError}
+            </div>
+          )}
+
+          <div className="members-list">
+            {contactEnquiryLoading ? (
+              <div className="empty">
+                <div>✉️</div>
+                <h3>Loading contact enquiries...</h3>
+              </div>
+            ) : contactEnquiries.length === 0 ? (
+              <div className="empty">
+                <div>✉️</div>
+                <h3>No contact enquiries found</h3>
+                <p>
+                  New website enquiries will appear here.
+                </p>
+              </div>
+            ) : (
+              contactEnquiries.map((enquiry) => (
+                <div
+                  className="member-card"
+                  key={enquiry.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>{enquiry.name}</h3>
+                      <p className="membership-number">
+                        {enquiry.subject}
+                      </p>
+                    </div>
+
+                    <span className="status active">
+                      {enquiry.status.replaceAll('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>Email:</strong>{' '}
+                      {enquiry.email || 'Not provided'}
+                    </p>
+
+                    <p>
+                      <strong>Phone:</strong>{' '}
+                      {enquiry.phone || 'Not provided'}
+                    </p>
+
+                    <p>
+                      <strong>Subject:</strong>{' '}
+                      {enquiry.subject}
+                    </p>
+
+                    <div>
+                      <strong>Message:</strong>
+                      <p style={{ whiteSpace: 'pre-wrap' }}>
+                        {enquiry.message}
+                      </p>
+                    </div>
+
+                    <p>
+                      <strong>Source:</strong>{' '}
+                      {enquiry.source}
+                    </p>
+
+                    <p>
+                      <strong>Received:</strong>{' '}
+                      {new Date(
+                        enquiry.created_at,
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Status</label>
+
+                      <select
+                        value={enquiry.status}
+                        disabled={
+                          contactEnquiryActionId === enquiry.id
+                        }
+                        onChange={(e) =>
+                          updateContactEnquiryStatus(
+                            enquiry,
+                            e.target.value as
+                              ContactEnquiry['status'],
+                          )
+                        }
+                      >
+                        <option value="NEW">New</option>
+                        <option value="IN_PROGRESS">
+                          In Progress
+                        </option>
+                        <option value="RESPONDED">
+                          Responded
+                        </option>
+                        <option value="CLOSED">
+                          Closed
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="deactivate-button"
+                      disabled={
+                        contactEnquiryActionId === enquiry.id
+                      }
+                      onClick={() =>
+                        deleteContactEnquiry(enquiry)
+                      }
+                    >
+                      {contactEnquiryActionId === enquiry.id
                         ? 'Working...'
                         : 'Delete'}
                     </button>
@@ -8904,6 +9293,17 @@ className="back-button no-print"
               }}
             >
               Manage Prayer Requests
+            </button>
+          )}
+
+          {authUser.role === 'ADMIN' && (
+            <button
+              onClick={() => {
+                loadContactEnquiries();
+                setShowContactEnquiries(true);
+              }}
+            >
+              Manage Contact Enquiries
             </button>
           )}
 

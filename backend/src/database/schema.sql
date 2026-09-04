@@ -392,3 +392,34 @@ CREATE INDEX IF NOT EXISTS idx_public_prayer_requests_status
 
 CREATE INDEX IF NOT EXISTS idx_public_prayer_requests_created_at
   ON public_prayer_requests(created_at DESC);
+
+-- ============================================================
+-- CONTACT ENQUIRIES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS contact_enquiries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  subject VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'NEW'
+    CHECK (
+      status IN (
+        'NEW',
+        'IN_PROGRESS',
+        'RESPONDED',
+        'CLOSED'
+      )
+    ),
+  source VARCHAR(50) NOT NULL DEFAULT 'WEBSITE',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_enquiries_status
+  ON contact_enquiries(status);
+
+CREATE INDEX IF NOT EXISTS idx_contact_enquiries_created_at
+  ON contact_enquiries(created_at DESC);
