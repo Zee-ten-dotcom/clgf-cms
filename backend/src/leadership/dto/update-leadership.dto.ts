@@ -1,9 +1,12 @@
 import {
+  IsBoolean,
   IsDateString,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -43,4 +46,13 @@ export class UpdateLeadershipDto {
   @IsOptional()
   @IsDateString()
   endDate?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  publicVisible?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  displayOrder?: number;
 }

@@ -343,6 +343,8 @@ type LeadershipAssignment = {
   status: string;
   start_date: string | null;
   end_date: string | null;
+  public_visible: boolean;
+  display_order: number;
   created_at: string;
   updated_at: string;
   membership_number: string;
@@ -536,6 +538,10 @@ function App() {
     useState('ACTIVE');
   const [leadershipStartDate, setLeadershipStartDate] = useState('');
   const [leadershipEndDate, setLeadershipEndDate] = useState('');
+  const [leadershipPublicVisible, setLeadershipPublicVisible] =
+    useState(false);
+  const [leadershipDisplayOrder, setLeadershipDisplayOrder] =
+    useState('0');
   const [leadershipSaving, setLeadershipSaving] = useState(false);
   const [leadershipError, setLeadershipError] = useState('');
   const [showPastoralCare, setShowPastoralCare] = useState(false);
@@ -1911,6 +1917,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         ? assignment.end_date.slice(0, 10)
         : '',
     );
+    setLeadershipPublicVisible(
+      assignment.public_visible ?? false,
+    );
+    setLeadershipDisplayOrder(
+      String(assignment.display_order ?? 0),
+    );
     setLeadershipError('');
   };
 
@@ -1924,6 +1936,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setLeadershipStatus('ACTIVE');
     setLeadershipStartDate('');
     setLeadershipEndDate('');
+    setLeadershipPublicVisible(false);
+    setLeadershipDisplayOrder('0');
     setLeadershipError('');
   };
 
@@ -1970,6 +1984,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             leadershipStartDate || undefined,
           endDate:
             leadershipEndDate || undefined,
+          publicVisible:
+            leadershipPublicVisible,
+          displayOrder:
+            Number(leadershipDisplayOrder || 0),
         }),
       });
 
@@ -5862,6 +5880,33 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     }
                   />
                 </div>
+
+                <div className="form-group">
+                  <label>Display Order</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={leadershipDisplayOrder}
+                    onChange={(e) =>
+                      setLeadershipDisplayOrder(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={leadershipPublicVisible}
+                      onChange={(e) =>
+                        setLeadershipPublicVisible(
+                          e.target.checked,
+                        )
+                      }
+                    />{' '}
+                    Public on website
+                  </label>
+                </div>
               </div>
 
               <div className="form-group">
@@ -5943,6 +5988,18 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   <p>
                     <strong>Status:</strong>{' '}
                     {assignment.status}
+                  </p>
+
+                  <p>
+                    <strong>Website:</strong>{' '}
+                    {assignment.public_visible
+                      ? 'Public'
+                      : 'Private'}
+                  </p>
+
+                  <p>
+                    <strong>Display Order:</strong>{' '}
+                    {assignment.display_order ?? 0}
                   </p>
 
                   {assignment.responsibility && (

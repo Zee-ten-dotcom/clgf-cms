@@ -92,6 +92,8 @@ export class LeadershipService {
     status?: string;
     startDate?: string;
     endDate?: string;
+    publicVisible?: boolean;
+    displayOrder?: number;
   }) {
     if (!data.memberId) {
       throw new BadRequestException('Member is required');
@@ -134,9 +136,11 @@ export class LeadershipService {
           responsibility,
           status,
           start_date,
-          end_date
+          end_date,
+          public_visible,
+          display_order
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         RETURNING *
         `,
         [
@@ -148,6 +152,8 @@ export class LeadershipService {
           data.status?.trim().toUpperCase() || 'ACTIVE',
           data.startDate || null,
           data.endDate || null,
+          data.publicVisible ?? false,
+          data.displayOrder ?? 0,
         ],
       );
 
@@ -168,6 +174,8 @@ export class LeadershipService {
       status?: string;
       startDate?: string | null;
       endDate?: string | null;
+      publicVisible?: boolean;
+      displayOrder?: number;
     },
   ) {
     const client = await this.db();
@@ -202,8 +210,10 @@ export class LeadershipService {
           status = $6,
           start_date = $7,
           end_date = $8,
+          public_visible = $9,
+          display_order = $10,
           updated_at = NOW()
-        WHERE id = $9
+        WHERE id = $11
         RETURNING *
         `,
         [
@@ -229,11 +239,54 @@ export class LeadershipService {
           data.endDate !== undefined
             ? data.endDate || null
             : existing.end_date,
+          data.publicVisible !== undefined
+            ? data.publicVisible
+            : existing.public_visible,
+          data.displayOrder !== undefined
+            ? data.displayOrder
+            : existing.display_order,
           id,
         ],
       );
 
       return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  async findPublic() {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        SELECT
+          l.id,
+          m.first_name,
+          m.last_name,
+          l.role_title,
+          l.role_type,
+          l.responsibility,
+          min.name AS ministry_name,
+          l.display_order
+        FROM leadership_assignments l
+        INNER JOIN members m
+          ON m.id = l.member_id
+        LEFT JOIN ministries min
+          ON min.id = l.ministry_id
+        WHERE
+          l.status = 'ACTIVE'
+          AND l.public_visible = TRUE
+        ORDER BY
+          l.display_order,
+          l.role_title,
+          m.first_name,
+          m.last_name
+        `,
+      );
+
+      return result.rows;
     } finally {
       client.release();
     }
