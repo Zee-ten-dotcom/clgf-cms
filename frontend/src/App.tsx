@@ -96,6 +96,18 @@ type WeeklyService = {
   display_order: number;
 };
 
+type Announcement = {
+  id: string;
+  title: string;
+  message: string;
+  announcement_type: string;
+  publish_date: string;
+  expiry_date: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  public_visible: boolean;
+  display_order: number;
+};
+
 type AttendanceSession = {
   id: string;
   service_date: string;
@@ -404,6 +416,10 @@ function App() {
     useState<WeeklyService[]>([]);
   const [showWeeklyServices, setShowWeeklyServices] =
     useState(false);
+  const [announcements, setAnnouncements] =
+    useState<Announcement[]>([]);
+  const [showAnnouncements, setShowAnnouncements] =
+    useState(false);
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
@@ -611,6 +627,24 @@ function App() {
   const [weeklyServiceError, setWeeklyServiceError] = useState('');
   const [editingWeeklyService, setEditingWeeklyService] =
     useState<WeeklyService | null>(null);
+
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementMessage, setAnnouncementMessage] = useState('');
+  const [announcementType, setAnnouncementType] = useState('GENERAL');
+  const [announcementPublishDate, setAnnouncementPublishDate] =
+    useState('');
+  const [announcementExpiryDate, setAnnouncementExpiryDate] =
+    useState('');
+  const [announcementStatus, setAnnouncementStatus] =
+    useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
+  const [announcementPublicVisible, setAnnouncementPublicVisible] =
+    useState(false);
+  const [announcementDisplayOrder, setAnnouncementDisplayOrder] =
+    useState('0');
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+  const [announcementError, setAnnouncementError] = useState('');
+  const [editingAnnouncement, setEditingAnnouncement] =
+    useState<Announcement | null>(null);
 
   const [homeCellName, setHomeCellName] = useState('');
   const [homeCellLocation, setHomeCellLocation] = useState('');
@@ -1367,6 +1401,24 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       })
       .catch((err) => {
         console.error('Failed to load weekly services:', err);
+      });
+  };
+
+
+  const loadAnnouncements = () => {
+    authFetch(`${API_BASE_URL}/announcements`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to load announcements');
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setAnnouncements(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load announcements:', err);
       });
   };
 
@@ -3402,6 +3454,141 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setHomeCellSaving(false);
     }
   };
+  const editAnnouncement = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setAnnouncementTitle(announcement.title);
+    setAnnouncementMessage(announcement.message);
+    setAnnouncementType(announcement.announcement_type || 'GENERAL');
+    setAnnouncementPublishDate(announcement.publish_date);
+    setAnnouncementExpiryDate(announcement.expiry_date || '');
+    setAnnouncementStatus(announcement.status || 'DRAFT');
+    setAnnouncementPublicVisible(
+      announcement.public_visible ?? false,
+    );
+    setAnnouncementDisplayOrder(
+      String(announcement.display_order ?? 0),
+    );
+    setAnnouncementError('');
+  };
+
+  const cancelEditAnnouncement = () => {
+    setEditingAnnouncement(null);
+    setAnnouncementTitle('');
+    setAnnouncementMessage('');
+    setAnnouncementType('GENERAL');
+    setAnnouncementPublishDate('');
+    setAnnouncementExpiryDate('');
+    setAnnouncementStatus('DRAFT');
+    setAnnouncementPublicVisible(false);
+    setAnnouncementDisplayOrder('0');
+    setAnnouncementError('');
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this announcement?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/announcements/${id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete announcement');
+      }
+
+      await loadAnnouncements();
+    } catch (err) {
+      console.error(err);
+      alert('Unable to delete announcement.');
+    }
+  };
+
+  const saveAnnouncement = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!announcementTitle.trim()) {
+      setAnnouncementError('Announcement title is required.');
+      return;
+    }
+
+    if (!announcementMessage.trim()) {
+      setAnnouncementError('Announcement message is required.');
+      return;
+    }
+
+    if (!announcementPublishDate) {
+      setAnnouncementError('Publish date is required.');
+      return;
+    }
+
+    if (
+      announcementExpiryDate &&
+      announcementExpiryDate < announcementPublishDate
+    ) {
+      setAnnouncementError(
+        'Expiry date cannot be before publish date.',
+      );
+      return;
+    }
+
+    setAnnouncementSaving(true);
+    setAnnouncementError('');
+
+    try {
+      const isEditing = editingAnnouncement !== null;
+
+      const url = isEditing
+        ? `${API_BASE_URL}/announcements/${editingAnnouncement.id}`
+        : `${API_BASE_URL}/announcements`;
+
+      const response = await authFetch(url, {
+        method: isEditing ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: announcementTitle.trim(),
+          message: announcementMessage.trim(),
+          announcementType:
+            announcementType.trim() || 'GENERAL',
+          publishDate: announcementPublishDate,
+          expiryDate: isEditing
+            ? announcementExpiryDate
+            : announcementExpiryDate || undefined,
+          status: announcementStatus,
+          publicVisible: announcementPublicVisible,
+          displayOrder:
+            Number(announcementDisplayOrder) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          isEditing
+            ? 'Failed to update announcement'
+            : 'Failed to create announcement',
+        );
+      }
+
+      cancelEditAnnouncement();
+      await loadAnnouncements();
+    } catch (err) {
+      console.error(err);
+      setAnnouncementError('Unable to save announcement.');
+    } finally {
+      setAnnouncementSaving(false);
+    }
+  };
+
   const editWeeklyService = (service: WeeklyService) => {
     setEditingWeeklyService(service);
     setWeeklyServiceName(service.name);
@@ -9034,6 +9221,293 @@ className="back-button no-print"
   }
 
   /* =========================
+     ANNOUNCEMENTS PAGE
+     ========================= */
+
+  if (showAnnouncements) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Announcements & Notices</h2>
+              <p className="welcome">
+                Manage public church announcements and notices
+              </p>
+            </div>
+
+            <button
+              className="back-button"
+              onClick={() => setShowAnnouncements(false)}
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          {authUser.role === 'ADMIN' && (
+            <form
+              className="member-form"
+              onSubmit={saveAnnouncement}
+            >
+              <h3>
+                {editingAnnouncement
+                  ? 'Edit Announcement'
+                  : 'Add New Announcement'}
+              </h3>
+
+              {announcementError && (
+                <div className="form-error">
+                  {announcementError}
+                </div>
+              )}
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    value={announcementTitle}
+                    onChange={(e) =>
+                      setAnnouncementTitle(e.target.value)
+                    }
+                    placeholder="Announcement title"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Type</label>
+                  <input
+                    type="text"
+                    value={announcementType}
+                    onChange={(e) =>
+                      setAnnouncementType(e.target.value)
+                    }
+                    placeholder="GENERAL"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Publish Date *</label>
+                  <input
+                    type="date"
+                    value={announcementPublishDate}
+                    onChange={(e) =>
+                      setAnnouncementPublishDate(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Expiry Date</label>
+                  <input
+                    type="date"
+                    value={announcementExpiryDate}
+                    onChange={(e) =>
+                      setAnnouncementExpiryDate(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={announcementStatus}
+                    onChange={(e) =>
+                      setAnnouncementStatus(
+                        e.target.value as
+                          | 'DRAFT'
+                          | 'PUBLISHED'
+                          | 'ARCHIVED',
+                      )
+                    }
+                  >
+                    <option value="DRAFT">Draft</option>
+                    <option value="PUBLISHED">Published</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Display Order</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={announcementDisplayOrder}
+                    onChange={(e) =>
+                      setAnnouncementDisplayOrder(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={announcementPublicVisible}
+                      onChange={(e) =>
+                        setAnnouncementPublicVisible(e.target.checked)
+                      }
+                    />{' '}
+                    Show on Public Website
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <label>Message *</label>
+                  <textarea
+                    value={announcementMessage}
+                    onChange={(e) =>
+                      setAnnouncementMessage(e.target.value)
+                    }
+                    placeholder="Announcement message"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="save-button"
+                  disabled={announcementSaving}
+                >
+                  {announcementSaving
+                    ? editingAnnouncement
+                      ? 'Updating Announcement...'
+                      : 'Saving Announcement...'
+                    : editingAnnouncement
+                      ? 'Update Announcement'
+                      : 'Add Announcement'}
+                </button>
+
+                {editingAnnouncement && (
+                  <button
+                    type="button"
+                    className="cancel-button"
+                    onClick={cancelEditAnnouncement}
+                    disabled={announcementSaving}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          <div className="members-list">
+            {announcements.length === 0 ? (
+              <div className="empty">
+                <div>📢</div>
+                <h3>No announcements found</h3>
+                <p>Add your first church announcement or notice.</p>
+              </div>
+            ) : (
+              announcements.map((announcement) => (
+                <div
+                  className="member-card"
+                  key={announcement.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>{announcement.title}</h3>
+                      <p className="membership-number">
+                        {announcement.announcement_type}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>Message:</strong>{' '}
+                      {announcement.message}
+                    </p>
+
+                    <p>
+                      <strong>Publish Date:</strong>{' '}
+                      {announcement.publish_date}
+                    </p>
+
+                    <p>
+                      <strong>Expiry Date:</strong>{' '}
+                      {announcement.expiry_date || 'No expiry date'}
+                    </p>
+
+                    <p>
+                      <strong>Status:</strong>{' '}
+                      {announcement.status}
+                    </p>
+
+                    <p>
+                      <strong>Public Website:</strong>{' '}
+                      {announcement.public_visible
+                        ? 'Visible'
+                        : 'Hidden'}
+                    </p>
+
+                    <p>
+                      <strong>Display Order:</strong>{' '}
+                      {announcement.display_order ?? 0}
+                    </p>
+
+                    {authUser.role === 'ADMIN' && (
+                      <div className="member-actions">
+                        <button
+                          className="edit-button"
+                          onClick={() =>
+                            editAnnouncement(announcement)
+                          }
+                        >
+                          Edit Announcement
+                        </button>
+
+                        <button
+                          className="deactivate-button"
+                          onClick={() =>
+                            deleteAnnouncement(announcement.id)
+                          }
+                        >
+                          Delete Announcement
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      HOME CELLS PAGE
      ========================= */
 
@@ -9694,6 +10168,17 @@ className="back-button no-print"
             {authUser.role === 'ADMIN'
               ? 'Manage Weekly Services'
               : 'View Weekly Services'}
+          </button>
+
+          <button
+            onClick={() => {
+              loadAnnouncements();
+              setShowAnnouncements(true);
+            }}
+          >
+            {authUser.role === 'ADMIN'
+              ? 'Manage Announcements'
+              : 'View Announcements'}
           </button>
 
           

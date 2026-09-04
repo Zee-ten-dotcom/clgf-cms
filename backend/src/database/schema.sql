@@ -449,3 +449,33 @@ CREATE INDEX IF NOT EXISTS idx_contact_enquiries_status
 
 CREATE INDEX IF NOT EXISTS idx_contact_enquiries_created_at
   ON contact_enquiries(created_at DESC);
+
+-- ============================================================
+-- ANNOUNCEMENTS / NOTICES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  announcement_type VARCHAR(50) NOT NULL DEFAULT 'GENERAL',
+  publish_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  expiry_date DATE,
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
+    CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')),
+  public_visible BOOLEAN NOT NULL DEFAULT FALSE,
+  display_order INTEGER NOT NULL DEFAULT 0
+    CHECK (display_order >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (expiry_date IS NULL OR expiry_date >= publish_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_status
+  ON announcements(status);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_publish_date
+  ON announcements(publish_date);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_display_order
+  ON announcements(display_order);
