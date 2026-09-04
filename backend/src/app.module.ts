@@ -20,6 +20,7 @@ import { DatabaseLifecycleService } from './database/database-lifecycle.service'
 import { PublicPrayerRequestsModule } from './public-prayer-requests/public-prayer-requests.module';
 import { SermonsModule } from './sermons/sermons.module';
 import { ContactEnquiriesModule } from './contact-enquiries/contact-enquiries.module';
+import { WeeklyServicesModule } from './weekly-services/weekly-services.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ContactEnquiriesModule } from './contact-enquiries/contact-enquiries.mo
     PublicPrayerRequestsModule,
     SermonsModule,
     ContactEnquiriesModule,
+    WeeklyServicesModule,
   ],
   controllers: [AppController],
   providers: [

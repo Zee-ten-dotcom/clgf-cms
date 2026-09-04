@@ -84,6 +84,18 @@ type HomeCell = {
   display_order: number;
 };
 
+type WeeklyService = {
+  id: string;
+  name: string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string | null;
+  description: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  public_visible: boolean;
+  display_order: number;
+};
+
 type AttendanceSession = {
   id: string;
   service_date: string;
@@ -388,6 +400,10 @@ function App() {
  const [members, setMembers] = useState<Member[]>([]);
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [homeCells, setHomeCells] = useState<HomeCell[]>([]);
+  const [weeklyServices, setWeeklyServices] =
+    useState<WeeklyService[]>([]);
+  const [showWeeklyServices, setShowWeeklyServices] =
+    useState(false);
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
@@ -580,6 +596,22 @@ function App() {
   const [error, setError] = useState('');
   const [showMembers, setShowMembers] = useState(false);
   const [showMinistries, setShowMinistries] = useState(false);
+  const [weeklyServiceName, setWeeklyServiceName] = useState('');
+  const [weeklyServiceDay, setWeeklyServiceDay] = useState('Sunday');
+  const [weeklyServiceStartTime, setWeeklyServiceStartTime] = useState('');
+  const [weeklyServiceEndTime, setWeeklyServiceEndTime] = useState('');
+  const [weeklyServiceDescription, setWeeklyServiceDescription] = useState('');
+  const [weeklyServiceStatus, setWeeklyServiceStatus] =
+    useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [weeklyServicePublicVisible, setWeeklyServicePublicVisible] =
+    useState(false);
+  const [weeklyServiceDisplayOrder, setWeeklyServiceDisplayOrder] =
+    useState('0');
+  const [weeklyServiceSaving, setWeeklyServiceSaving] = useState(false);
+  const [weeklyServiceError, setWeeklyServiceError] = useState('');
+  const [editingWeeklyService, setEditingWeeklyService] =
+    useState<WeeklyService | null>(null);
+
   const [homeCellName, setHomeCellName] = useState('');
   const [homeCellLocation, setHomeCellLocation] = useState('');
   const [homeCellMeetingDay, setHomeCellMeetingDay] = useState('');
@@ -1317,6 +1349,24 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       })
       .catch((err) => {
         console.error("Failed to load attendance:", err);
+      });
+  };
+
+
+  const loadWeeklyServices = () => {
+    authFetch(`${API_BASE_URL}/weekly-services`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to load weekly services');
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setWeeklyServices(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load weekly services:', err);
       });
   };
 
@@ -3352,6 +3402,121 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setHomeCellSaving(false);
     }
   };
+  const editWeeklyService = (service: WeeklyService) => {
+    setEditingWeeklyService(service);
+    setWeeklyServiceName(service.name);
+    setWeeklyServiceDay(service.day_of_week);
+    setWeeklyServiceStartTime(service.start_time.slice(0, 5));
+    setWeeklyServiceEndTime(
+      service.end_time ? service.end_time.slice(0, 5) : '',
+    );
+    setWeeklyServiceDescription(service.description || '');
+    setWeeklyServiceStatus(service.status || 'ACTIVE');
+    setWeeklyServicePublicVisible(service.public_visible ?? false);
+    setWeeklyServiceDisplayOrder(String(service.display_order ?? 0));
+    setWeeklyServiceError('');
+  };
+
+  const cancelEditWeeklyService = () => {
+    setEditingWeeklyService(null);
+    setWeeklyServiceName('');
+    setWeeklyServiceDay('Sunday');
+    setWeeklyServiceStartTime('');
+    setWeeklyServiceEndTime('');
+    setWeeklyServiceDescription('');
+    setWeeklyServiceStatus('ACTIVE');
+    setWeeklyServicePublicVisible(false);
+    setWeeklyServiceDisplayOrder('0');
+    setWeeklyServiceError('');
+  };
+
+  const deleteWeeklyService = async (id: string) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this weekly service?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/weekly-services/${id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete weekly service');
+      }
+
+      await loadWeeklyServices();
+    } catch (err) {
+      console.error(err);
+      alert('Unable to delete weekly service.');
+    }
+  };
+
+  const saveWeeklyService = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!weeklyServiceName.trim()) {
+      setWeeklyServiceError('Service name is required.');
+      return;
+    }
+
+    if (!weeklyServiceStartTime) {
+      setWeeklyServiceError('Start time is required.');
+      return;
+    }
+
+    setWeeklyServiceSaving(true);
+    setWeeklyServiceError('');
+
+    try {
+      const isEditing = editingWeeklyService !== null;
+
+      const url = isEditing
+        ? `${API_BASE_URL}/weekly-services/${editingWeeklyService.id}`
+        : `${API_BASE_URL}/weekly-services`;
+
+      const response = await authFetch(url, {
+        method: isEditing ? 'PATCH' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: weeklyServiceName.trim(),
+          dayOfWeek: weeklyServiceDay,
+          startTime: weeklyServiceStartTime,
+          endTime: weeklyServiceEndTime || undefined,
+          description:
+            weeklyServiceDescription.trim() || undefined,
+          status: weeklyServiceStatus,
+          publicVisible: weeklyServicePublicVisible,
+          displayOrder: Number(weeklyServiceDisplayOrder) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          isEditing
+            ? 'Failed to update weekly service'
+            : 'Failed to create weekly service',
+        );
+      }
+
+      cancelEditWeeklyService();
+      await loadWeeklyServices();
+    } catch (err) {
+      console.error(err);
+      setWeeklyServiceError('Unable to save weekly service.');
+    } finally {
+      setWeeklyServiceSaving(false);
+    }
+  };
+
     const loadAttendanceReport = async () => {
     try {
       const params = new URLSearchParams();
@@ -8584,6 +8749,291 @@ className="back-button no-print"
     );
   }
   /* =========================
+     WEEKLY SERVICES PAGE
+     ========================= */
+
+  if (showWeeklyServices) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Weekly Services</h2>
+              <p className="welcome">
+                Manage recurring church services shown on the public website
+              </p>
+            </div>
+
+            <button
+              className="back-button"
+              onClick={() => setShowWeeklyServices(false)}
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          {authUser.role === 'ADMIN' && (
+            <form
+              className="member-form"
+              onSubmit={saveWeeklyService}
+            >
+              <h3>
+                {editingWeeklyService
+                  ? 'Edit Weekly Service'
+                  : 'Add New Weekly Service'}
+              </h3>
+
+              {weeklyServiceError && (
+                <div className="form-error">
+                  {weeklyServiceError}
+                </div>
+              )}
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Service Name *</label>
+                  <input
+                    type="text"
+                    value={weeklyServiceName}
+                    onChange={(e) =>
+                      setWeeklyServiceName(e.target.value)
+                    }
+                    placeholder="e.g. Sunday Worship"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Day *</label>
+                  <select
+                    value={weeklyServiceDay}
+                    onChange={(e) =>
+                      setWeeklyServiceDay(e.target.value)
+                    }
+                  >
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Start Time *</label>
+                  <input
+                    type="time"
+                    value={weeklyServiceStartTime}
+                    onChange={(e) =>
+                      setWeeklyServiceStartTime(e.target.value)
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>End Time</label>
+                  <input
+                    type="time"
+                    value={weeklyServiceEndTime}
+                    onChange={(e) =>
+                      setWeeklyServiceEndTime(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    value={weeklyServiceDescription}
+                    onChange={(e) =>
+                      setWeeklyServiceDescription(e.target.value)
+                    }
+                    placeholder="Optional service description"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={weeklyServiceStatus}
+                    onChange={(e) =>
+                      setWeeklyServiceStatus(
+                        e.target.value as 'ACTIVE' | 'INACTIVE',
+                      )
+                    }
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Display Order</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={weeklyServiceDisplayOrder}
+                    onChange={(e) =>
+                      setWeeklyServiceDisplayOrder(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={weeklyServicePublicVisible}
+                      onChange={(e) =>
+                        setWeeklyServicePublicVisible(e.target.checked)
+                      }
+                    />{' '}
+                    Show on Public Website
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="save-button"
+                  disabled={weeklyServiceSaving}
+                >
+                  {weeklyServiceSaving
+                    ? editingWeeklyService
+                      ? 'Updating Weekly Service...'
+                      : 'Saving Weekly Service...'
+                    : editingWeeklyService
+                      ? 'Update Weekly Service'
+                      : 'Add Weekly Service'}
+                </button>
+
+                {editingWeeklyService && (
+                  <button
+                    type="button"
+                    className="cancel-button"
+                    onClick={cancelEditWeeklyService}
+                    disabled={weeklyServiceSaving}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          <div className="members-list">
+            {weeklyServices.length === 0 ? (
+              <div className="empty">
+                <div>⛪</div>
+                <h3>No weekly services found</h3>
+                <p>Add your first recurring church service.</p>
+              </div>
+            ) : (
+              weeklyServices.map((service) => (
+                <div
+                  className="member-card"
+                  key={service.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>{service.name}</h3>
+                      <p className="membership-number">
+                        Weekly Service
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>📅 Day:</strong>{' '}
+                      {service.day_of_week}
+                    </p>
+
+                    <p>
+                      <strong>🕒 Time:</strong>{' '}
+                      {service.start_time.slice(0, 5)}
+                      {service.end_time
+                        ? ` - ${service.end_time.slice(0, 5)}`
+                        : ''}
+                    </p>
+
+                    <p>
+                      <strong>Description:</strong>{' '}
+                      {service.description || 'Not provided'}
+                    </p>
+
+                    <p>
+                      <strong>Status:</strong>{' '}
+                      {service.status}
+                    </p>
+
+                    <p>
+                      <strong>Public Website:</strong>{' '}
+                      {service.public_visible ? 'Visible' : 'Hidden'}
+                    </p>
+
+                    <p>
+                      <strong>Display Order:</strong>{' '}
+                      {service.display_order ?? 0}
+                    </p>
+
+                    {authUser.role === 'ADMIN' && (
+                      <div className="member-actions">
+                        <button
+                          className="edit-button"
+                          onClick={() => editWeeklyService(service)}
+                        >
+                          Edit Weekly Service
+                        </button>
+
+                        <button
+                          className="deactivate-button"
+                          onClick={() => deleteWeeklyService(service.id)}
+                        >
+                          Delete Weekly Service
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      HOME CELLS PAGE
      ========================= */
 
@@ -9233,6 +9683,17 @@ className="back-button no-print"
             {authUser.role === 'ADMIN'
               ? 'Manage Home Cells'
               : 'View Home Cells'}
+          </button>
+
+          <button
+            onClick={() => {
+              loadWeeklyServices();
+              setShowWeeklyServices(true);
+            }}
+          >
+            {authUser.role === 'ADMIN'
+              ? 'Manage Weekly Services'
+              : 'View Weekly Services'}
           </button>
 
           

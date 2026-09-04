@@ -88,6 +88,32 @@ CREATE TABLE IF NOT EXISTS home_cells (
 );
 
 -- ============================================================
+-- WEEKLY SERVICES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS weekly_services (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(150) NOT NULL,
+  day_of_week VARCHAR(20) NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME,
+  description TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+    CHECK (status IN ('ACTIVE', 'INACTIVE')),
+  public_visible BOOLEAN NOT NULL DEFAULT FALSE,
+  display_order INTEGER NOT NULL DEFAULT 0
+    CHECK (display_order >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_services_status
+  ON weekly_services(status);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_services_display_order
+  ON weekly_services(display_order);
+
+-- ============================================================
 -- LEGACY ATTENDANCE
 -- Retained because it exists in the live database.
 -- ============================================================
