@@ -510,6 +510,8 @@ function App() {
     useState<SystemUser[]>([]);
   const [showUsers, setShowUsers] = useState(false);
   const [showAuditLog, setShowAuditLog] = useState(false);
+  const [dashboardMenuOpen, setDashboardMenuOpen] =
+    useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditSummary, setAuditSummary] =
     useState<AuditSummary | null>(null);
@@ -10640,7 +10642,17 @@ className="back-button no-print"
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-brand">
-          <div className="dashboard-menu-icon">☰</div>
+          <button
+            type="button"
+            className="dashboard-menu-icon"
+            aria-label="Open navigation menu"
+            aria-expanded={dashboardMenuOpen}
+            onClick={() =>
+              setDashboardMenuOpen((open) => !open)
+            }
+          >
+            ☰
+          </button>
 
           <div>
             <h1>CLGF CMS</h1>
@@ -10673,7 +10685,22 @@ className="back-button no-print"
       </header>
 
       <div className="dashboard-layout">
-        <aside className="dashboard-sidebar">
+        <aside
+          className={
+            dashboardMenuOpen
+              ? 'dashboard-sidebar dashboard-sidebar-open'
+              : 'dashboard-sidebar'
+          }
+          onClick={(event) => {
+            if (
+              (event.target as HTMLElement).closest(
+                'button',
+              )
+            ) {
+              setDashboardMenuOpen(false);
+            }
+          }}
+        >
           <button className="sidebar-active">
             <span>⌂</span>
             Dashboard
@@ -10804,6 +10831,15 @@ className="back-button no-print"
             </>
           )}
         </aside>
+
+        {dashboardMenuOpen && (
+          <button
+            type="button"
+            className="dashboard-menu-overlay"
+            aria-label="Close navigation menu"
+            onClick={() => setDashboardMenuOpen(false)}
+          />
+        )}
 
         <main className="dashboard-content">
           <section className="dashboard-logo-area">
