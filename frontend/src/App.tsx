@@ -10808,9 +10808,17 @@ className="back-button no-print"
             Sermons & Resources
           </button>
 
-          <button onClick={() => setShowEvents(true)}>
+          <button
+            className="sidebar-badge-button"
+            onClick={() => setShowEvents(true)}
+          >
             <span>▣</span>
-            Events
+            <span className="sidebar-nav-label">Events</span>
+            {dashboardUpcomingEvents > 0 && (
+              <span className="sidebar-notification-badge">
+                {dashboardUpcomingEvents}
+              </span>
+            )}
           </button>
 
           <button onClick={() => setShowGiving(true)}>
@@ -10823,9 +10831,19 @@ className="back-button no-print"
             Finance
           </button>
 
-          <button onClick={() => setShowPastoralCare(true)}>
+          <button
+            className="sidebar-badge-button"
+            onClick={() => setShowPastoralCare(true)}
+          >
             <span>♣</span>
-            Pastoral Care
+            <span className="sidebar-nav-label">
+              Pastoral Care
+            </span>
+            {dashboardPastoralFollowUps > 0 && (
+              <span className="sidebar-notification-badge">
+                {dashboardPastoralFollowUps}
+              </span>
+            )}
           </button>
 
           <button onClick={() => setShowLeadership(true)}>
@@ -10861,23 +10879,39 @@ className="back-button no-print"
               </button>
 
               <button
+                className="sidebar-badge-button"
                 onClick={() => {
                   loadPublicPrayerRequests();
                   setShowPublicPrayerRequests(true);
                 }}
               >
                 <span>†</span>
-                Prayer Requests
+                <span className="sidebar-nav-label">
+                  Prayer Requests
+                </span>
+                {dashboardOpenPrayerRequests > 0 && (
+                  <span className="sidebar-notification-badge">
+                    {dashboardOpenPrayerRequests}
+                  </span>
+                )}
               </button>
 
               <button
+                className="sidebar-badge-button"
                 onClick={() => {
                   loadContactEnquiries();
                   setShowContactEnquiries(true);
                 }}
               >
                 <span>✉</span>
-                Contact Enquiries
+                <span className="sidebar-nav-label">
+                  Contact Enquiries
+                </span>
+                {dashboardNewContactEnquiries > 0 && (
+                  <span className="sidebar-notification-badge">
+                    {dashboardNewContactEnquiries}
+                  </span>
+                )}
               </button>
 
               <button
