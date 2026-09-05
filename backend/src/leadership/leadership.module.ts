@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { LeadershipController } from './leadership.controller';
 import { PublicLeadershipController } from './public-leadership.controller';
 import { LeadershipService } from './leadership.service';
+import { LeadershipPhotoService } from './leadership-photo.service';
 
 import { AuthModule } from '../auth/auth.module';
 import { AuditModule } from '../audit/audit.module';
@@ -18,6 +19,7 @@ import { AuditModule } from '../audit/audit.module';
   ],
   providers: [
     LeadershipService,
+    LeadershipPhotoService,
   ],
 })
 export class LeadershipModule {}

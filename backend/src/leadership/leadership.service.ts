@@ -255,6 +255,37 @@ export class LeadershipService {
     }
   }
 
+  async updatePhotoUrl(
+    id: string,
+    photoUrl: string | null,
+  ) {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        UPDATE leadership_assignments
+        SET
+          photo_url = $1,
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+        `,
+        [photoUrl, id],
+      );
+
+      if (result.rows.length === 0) {
+        throw new BadRequestException(
+          'Leadership assignment not found',
+        );
+      }
+
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
   async findPublic() {
     const client = await this.db();
 
@@ -269,6 +300,7 @@ export class LeadershipService {
           l.role_type,
           l.responsibility,
           min.name AS ministry_name,
+          l.photo_url,
           l.display_order
         FROM leadership_assignments l
         INNER JOIN members m

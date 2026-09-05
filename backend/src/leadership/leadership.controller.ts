@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,11 +9,16 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import { LeadershipService } from './leadership.service';
+import { LeadershipPhotoService } from './leadership-photo.service';
 import { AuditService } from '../audit/audit.service';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -30,6 +36,7 @@ export class LeadershipController {
   constructor(
     private readonly leadershipService: LeadershipService,
     private readonly auditService: AuditService,
+    private readonly leadershipPhotoService: LeadershipPhotoService,
   ) {}
 
   @Get()
@@ -110,6 +117,94 @@ export class LeadershipController {
     });
 
     return assignment;
+  }
+
+  @Roles('ADMIN')
+  @Post(':id/photo')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1,
+      },
+    }),
+  )
+  async uploadPhoto(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() request: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException(
+        'Leader photo is required',
+      );
+    }
+
+    await this.leadershipService.findOne(id);
+
+    const photoUrl =
+      await this.leadershipPhotoService.upload(
+        id,
+        file,
+      );
+
+    const assignment =
+      await this.leadershipService.updatePhotoUrl(
+        id,
+        photoUrl,
+      );
+
+    await this.auditService.log({
+      actor: request.user,
+      action: 'UPDATE',
+      module: 'LEADERSHIP',
+      entityType: 'LEADERSHIP_ASSIGNMENT',
+      entityId: assignment.id,
+      description: 'Updated leadership photo',
+      metadata: {
+        photoUpdated: true,
+      },
+    });
+
+    return {
+      id: assignment.id,
+      photo_url: assignment.photo_url,
+    };
+  }
+
+  @Roles('ADMIN')
+  @Delete(':id/photo')
+  async removePhoto(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: any,
+  ) {
+    await this.leadershipService.findOne(id);
+
+    await this.leadershipPhotoService.remove(id);
+
+    const assignment =
+      await this.leadershipService.updatePhotoUrl(
+        id,
+        null,
+      );
+
+    await this.auditService.log({
+      actor: request.user,
+      action: 'UPDATE',
+      module: 'LEADERSHIP',
+      entityType: 'LEADERSHIP_ASSIGNMENT',
+      entityId: assignment.id,
+      description: 'Removed leadership photo',
+      metadata: {
+        photoRemoved: true,
+      },
+    });
+
+    return {
+      id: assignment.id,
+      photo_url: null,
+    };
   }
 
   @Roles('ADMIN')

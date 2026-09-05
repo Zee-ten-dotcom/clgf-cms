@@ -345,6 +345,7 @@ type LeadershipAssignment = {
   end_date: string | null;
   public_visible: boolean;
   display_order: number;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
   membership_number: string;
@@ -542,6 +543,10 @@ function App() {
     useState(false);
   const [leadershipDisplayOrder, setLeadershipDisplayOrder] =
     useState('0');
+  const [leadershipPhotoFile, setLeadershipPhotoFile] =
+    useState<File | null>(null);
+  const [leadershipPhotoUploading, setLeadershipPhotoUploading] =
+    useState(false);
   const [leadershipSaving, setLeadershipSaving] = useState(false);
   const [leadershipError, setLeadershipError] = useState('');
   const [showPastoralCare, setShowPastoralCare] = useState(false);
@@ -1923,6 +1928,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setLeadershipDisplayOrder(
       String(assignment.display_order ?? 0),
     );
+    setLeadershipPhotoFile(null);
     setLeadershipError('');
   };
 
@@ -1938,6 +1944,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setLeadershipEndDate('');
     setLeadershipPublicVisible(false);
     setLeadershipDisplayOrder('0');
+    setLeadershipPhotoFile(null);
     setLeadershipError('');
   };
 
@@ -2006,6 +2013,110 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       );
     } finally {
       setLeadershipSaving(false);
+    }
+  };
+
+  const uploadLeadershipPhoto = async () => {
+    if (!editingLeadership) {
+      setLeadershipError(
+        'Save the leadership assignment before adding a photo.',
+      );
+      return;
+    }
+
+    if (!leadershipPhotoFile) {
+      setLeadershipError('Choose a photo first.');
+      return;
+    }
+
+    setLeadershipPhotoUploading(true);
+    setLeadershipError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', leadershipPhotoFile);
+
+      const response = await authFetch(
+        `${API_BASE_URL}/leadership/${editingLeadership.id}/photo`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to upload leadership photo');
+      }
+
+      const result = await response.json();
+
+      setEditingLeadership((current) =>
+        current
+          ? {
+              ...current,
+              photo_url: result.photo_url ?? null,
+            }
+          : current,
+      );
+
+      setLeadershipPhotoFile(null);
+      loadLeadership();
+    } catch (err) {
+      console.error(err);
+      setLeadershipError(
+        'Unable to upload leader photo. Use JPG, PNG or WebP up to 5 MB.',
+      );
+    } finally {
+      setLeadershipPhotoUploading(false);
+    }
+  };
+
+  const removeLeadershipPhoto = async () => {
+    if (!editingLeadership?.photo_url) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Remove this leader photo?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setLeadershipPhotoUploading(true);
+    setLeadershipError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/leadership/${editingLeadership.id}/photo`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to remove leadership photo');
+      }
+
+      setEditingLeadership((current) =>
+        current
+          ? {
+              ...current,
+              photo_url: null,
+            }
+          : current,
+      );
+
+      setLeadershipPhotoFile(null);
+      loadLeadership();
+    } catch (err) {
+      console.error(err);
+      setLeadershipError(
+        'Unable to remove leader photo.',
+      );
+    } finally {
+      setLeadershipPhotoUploading(false);
     }
   };
 
@@ -5921,6 +6032,78 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 />
               </div>
 
+              <div className="form-group">
+                <label>Leader Photo</label>
+
+                {!editingLeadership ? (
+                  <p>
+                    Save the leadership assignment first, then edit it to add a photo.
+                  </p>
+                ) : (
+                  <>
+                    {editingLeadership.photo_url && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <img
+                          src={editingLeadership.photo_url}
+                          alt={
+                            editingLeadership.first_name +
+                            ' ' +
+                            editingLeadership.last_name
+                          }
+                          style={{
+                            width: '120px',
+                            height: '120px',
+                            objectFit: 'cover',
+                            borderRadius: '50%',
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) =>
+                        setLeadershipPhotoFile(
+                          e.target.files?.[0] || null,
+                        )
+                      }
+                      disabled={leadershipPhotoUploading}
+                    />
+
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        onClick={uploadLeadershipPhoto}
+                        disabled={
+                          leadershipPhotoUploading ||
+                          !leadershipPhotoFile
+                        }
+                      >
+                        {leadershipPhotoUploading
+                          ? 'Uploading...'
+                          : 'Upload Photo'}
+                      </button>
+
+                      {editingLeadership.photo_url && (
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={removeLeadershipPhoto}
+                          disabled={leadershipPhotoUploading}
+                        >
+                          Remove Photo
+                        </button>
+                      )}
+                    </div>
+
+                    <p>
+                      JPG, PNG or WebP. Maximum size 5 MB.
+                    </p>
+                  </>
+                )}
+              </div>
+
               {leadershipError && (
                 <p className="error">{leadershipError}</p>
               )}
@@ -6000,6 +6183,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   <p>
                     <strong>Display Order:</strong>{' '}
                     {assignment.display_order ?? 0}
+                  </p>
+
+                  <p>
+                    <strong>Photo:</strong>{' '}
+                    {assignment.photo_url ? 'Added' : 'Not added'}
                   </p>
 
                   {assignment.responsibility && (

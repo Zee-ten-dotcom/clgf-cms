@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS ministries (
   public_visible BOOLEAN NOT NULL DEFAULT FALSE,
   display_order INTEGER NOT NULL DEFAULT 0
     CHECK (display_order >= 0),
+  photo_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
