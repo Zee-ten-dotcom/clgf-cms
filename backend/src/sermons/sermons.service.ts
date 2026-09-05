@@ -309,6 +309,49 @@ export class SermonsService {
     }
   }
 
+  async updateMediaUrl(
+    id: string,
+    media: 'video' | 'audio' | 'notes',
+    url: string | null,
+  ) {
+    const columns = {
+      video: 'video_url',
+      audio: 'audio_url',
+      notes: 'notes_url',
+    } as const;
+
+    const column = columns[media];
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        UPDATE sermons
+        SET
+          ${column} = $1,
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING
+          *,
+          sermon_date::text AS sermon_date_text
+        `,
+        [url, id],
+      );
+
+      if (result.rows.length === 0) {
+        throw new BadRequestException(
+          'Sermon not found',
+        );
+      }
+
+      return this.normalizeSermonRow(
+        result.rows[0],
+      );
+    } finally {
+      client.release();
+    }
+  }
+
   async remove(id: string) {
     const client = await this.db();
 

@@ -462,6 +462,20 @@ function App() {
   const [sermonSaving, setSermonSaving] = useState(false);
   const [sermonError, setSermonError] = useState('');
 
+  const [sermonVideoFile, setSermonVideoFile] =
+    useState<File | null>(null);
+  const [sermonAudioFile, setSermonAudioFile] =
+    useState<File | null>(null);
+  const [sermonNotesFile, setSermonNotesFile] =
+    useState<File | null>(null);
+
+  const [sermonVideoUploading, setSermonVideoUploading] =
+    useState(false);
+  const [sermonAudioUploading, setSermonAudioUploading] =
+    useState(false);
+  const [sermonNotesUploading, setSermonNotesUploading] =
+    useState(false);
+
   const [pastoralCareRecords, setPastoralCareRecords] =
     useState<PastoralCareRecord[]>([]);
 
@@ -1642,6 +1656,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setSermonNotesUrl('');
     setSermonStatus('DRAFT');
     setSermonFeatured(false);
+    setSermonVideoFile(null);
+    setSermonAudioFile(null);
+    setSermonNotesFile(null);
     setSermonError('');
   };
 
@@ -1721,6 +1738,184 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       setSermonError('Unable to save sermon.');
     } finally {
       setSermonSaving(false);
+    }
+  };
+
+  const uploadSermonMedia = async (
+    type: 'video' | 'audio' | 'notes',
+  ) => {
+    if (!editingSermon) {
+      setSermonError(
+        'Save the sermon first before uploading files.',
+      );
+      return;
+    }
+
+    const file =
+      type === 'video'
+        ? sermonVideoFile
+        : type === 'audio'
+          ? sermonAudioFile
+          : sermonNotesFile;
+
+    if (!file) {
+      setSermonError(
+        `Choose a ${type} file first.`,
+      );
+      return;
+    }
+
+    const setUploading =
+      type === 'video'
+        ? setSermonVideoUploading
+        : type === 'audio'
+          ? setSermonAudioUploading
+          : setSermonNotesUploading;
+
+    setUploading(true);
+    setSermonError('');
+
+    try {
+      const formData = new FormData();
+      formData.append(type, file);
+
+      const response = await authFetch(
+        `${API_BASE_URL}/sermons/${editingSermon.id}/${type}`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to upload sermon ${type}`,
+        );
+      }
+
+      const result = await response.json();
+
+      setEditingSermon((current) =>
+        current
+          ? {
+              ...current,
+              video_url:
+                type === 'video'
+                  ? result.video_url ?? null
+                  : current.video_url,
+              audio_url:
+                type === 'audio'
+                  ? result.audio_url ?? null
+                  : current.audio_url,
+              notes_url:
+                type === 'notes'
+                  ? result.notes_url ?? null
+                  : current.notes_url,
+            }
+          : current,
+      );
+
+      if (type === 'video') {
+        setSermonVideoUrl(result.video_url ?? '');
+        setSermonVideoFile(null);
+      }
+
+      if (type === 'audio') {
+        setSermonAudioUrl(result.audio_url ?? '');
+        setSermonAudioFile(null);
+      }
+
+      if (type === 'notes') {
+        setSermonNotesUrl(result.notes_url ?? '');
+        setSermonNotesFile(null);
+      }
+
+      await loadSermons();
+    } catch (err) {
+      console.error(
+        `Failed to upload sermon ${type}:`,
+        err,
+      );
+      setSermonError(
+        `Unable to upload sermon ${type}.`,
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeSermonMedia = async (
+    type: 'video' | 'audio' | 'notes',
+  ) => {
+    if (!editingSermon) {
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Remove this sermon ${type}?`,
+      )
+    ) {
+      return;
+    }
+
+    setSermonError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/sermons/${editingSermon.id}/${type}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to remove sermon ${type}`,
+        );
+      }
+
+      setEditingSermon((current) =>
+        current
+          ? {
+              ...current,
+              video_url:
+                type === 'video'
+                  ? null
+                  : current.video_url,
+              audio_url:
+                type === 'audio'
+                  ? null
+                  : current.audio_url,
+              notes_url:
+                type === 'notes'
+                  ? null
+                  : current.notes_url,
+            }
+          : current,
+      );
+
+      if (type === 'video') {
+        setSermonVideoUrl('');
+      }
+
+      if (type === 'audio') {
+        setSermonAudioUrl('');
+      }
+
+      if (type === 'notes') {
+        setSermonNotesUrl('');
+      }
+
+      await loadSermons();
+    } catch (err) {
+      console.error(
+        `Failed to remove sermon ${type}:`,
+        err,
+      );
+      setSermonError(
+        `Unable to remove sermon ${type}.`,
+      );
     }
   };
 
@@ -7552,6 +7747,48 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     }
                     placeholder="https://..."
                   />
+
+                  {editingSermon && (
+                    <div className="form-actions">
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        onChange={(e) =>
+                          setSermonVideoFile(
+                            e.target.files?.[0] || null,
+                          )
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="save-button"
+                        disabled={
+                          !sermonVideoFile ||
+                          sermonVideoUploading
+                        }
+                        onClick={() =>
+                          uploadSermonMedia('video')
+                        }
+                      >
+                        {sermonVideoUploading
+                          ? 'Uploading Video...'
+                          : 'Upload Video'}
+                      </button>
+
+                      {sermonVideoUrl && (
+                        <button
+                          type="button"
+                          className="back-button"
+                          onClick={() =>
+                            removeSermonMedia('video')
+                          }
+                        >
+                          Remove Video
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -7564,6 +7801,48 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     }
                     placeholder="https://..."
                   />
+
+                  {editingSermon && (
+                    <div className="form-actions">
+                      <input
+                        type="file"
+                        accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/ogg"
+                        onChange={(e) =>
+                          setSermonAudioFile(
+                            e.target.files?.[0] || null,
+                          )
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="save-button"
+                        disabled={
+                          !sermonAudioFile ||
+                          sermonAudioUploading
+                        }
+                        onClick={() =>
+                          uploadSermonMedia('audio')
+                        }
+                      >
+                        {sermonAudioUploading
+                          ? 'Uploading Audio...'
+                          : 'Upload Audio'}
+                      </button>
+
+                      {sermonAudioUrl && (
+                        <button
+                          type="button"
+                          className="back-button"
+                          onClick={() =>
+                            removeSermonMedia('audio')
+                          }
+                        >
+                          Remove Audio
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -7576,6 +7855,48 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     }
                     placeholder="https://..."
                   />
+
+                  {editingSermon && (
+                    <div className="form-actions">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) =>
+                          setSermonNotesFile(
+                            e.target.files?.[0] || null,
+                          )
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="save-button"
+                        disabled={
+                          !sermonNotesFile ||
+                          sermonNotesUploading
+                        }
+                        onClick={() =>
+                          uploadSermonMedia('notes')
+                        }
+                      >
+                        {sermonNotesUploading
+                          ? 'Uploading Notes...'
+                          : 'Upload PDF Notes'}
+                      </button>
+
+                      {sermonNotesUrl && (
+                        <button
+                          type="button"
+                          className="back-button"
+                          onClick={() =>
+                            removeSermonMedia('notes')
+                          }
+                        >
+                          Remove Notes
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
