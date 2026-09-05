@@ -1269,8 +1269,9 @@ footer {
   width: min(320px, 78%);
   height: auto;
   margin: 0 auto 18px;
-  border-radius: 14px;
+  border-radius: 16px;
   object-fit: contain;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
 }
 
 .dashboard-branding .welcome {
@@ -1314,7 +1315,7 @@ footer {
 }
 
 .dashboard-topbar {
-  min-height: 78px;
+  min-height: 70px;
   background: linear-gradient(
     110deg,
     #ad8100,
@@ -1326,7 +1327,7 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 12px 24px 12px 28px;
+  padding: 9px 22px 9px 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -1403,14 +1404,14 @@ footer {
 .dashboard-layout {
   flex: 1;
   display: grid;
-  grid-template-columns: 265px minmax(0, 1fr);
+  grid-template-columns: 235px minmax(0, 1fr);
   min-height: 0;
 }
 
 .dashboard-sidebar {
   background: #ffffff;
   border-right: 1px solid #e4e7ec;
-  padding: 14px 10px 24px;
+  padding: 10px 8px 20px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1418,7 +1419,7 @@ footer {
 
 .dashboard-sidebar button {
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -1426,7 +1427,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 17px;
+  padding: 9px 14px;
   cursor: pointer;
   text-align: left;
   font-size: 15px;
@@ -1461,17 +1462,17 @@ footer {
   width: 100%;
   max-width: 1270px;
   margin: 0 auto;
-  padding: 18px 24px 28px;
+  padding: 12px 22px 24px;
 }
 
 .dashboard-logo-area {
   text-align: center;
-  padding: 0 0 14px;
+  padding: 0 0 10px;
 }
 
 .dashboard-reference-logo {
   display: block;
-  width: min(270px, 45vw);
+  width: min(220px, 38vw);
   height: auto;
   margin: 0 auto;
   border-radius: 14px;
@@ -1488,8 +1489,8 @@ footer {
   border: 1px solid #f2ead8;
   border-radius: 14px;
   text-align: center;
-  padding: 25px 20px 18px;
-  margin-bottom: 18px;
+  padding: 20px 18px 16px;
+  margin-bottom: 14px;
 }
 
 .dashboard-welcome-panel h2 {
@@ -1522,14 +1523,14 @@ footer {
 .dashboard-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .dashboard-stat {
-  min-height: 132px;
+  min-height: 118px;
   border: 0;
   border-radius: 15px;
-  padding: 20px;
+  padding: 17px;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -1546,12 +1547,12 @@ footer {
 
 .dashboard-stat .stat-icon {
   flex: 0 0 auto;
-  width: 55px;
-  height: 55px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 27px;
+  font-size: 24px;
   background: rgba(255, 255, 255, 0.55);
 }
 
@@ -1643,7 +1644,7 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 24px 14px 289px;
+  padding: 14px 22px 14px 257px;
   color: #555d68;
   font-size: 14px;
 }
@@ -1654,7 +1655,7 @@ footer {
 
 @media (max-width: 1000px) {
   .dashboard-layout {
-    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-columns: 200px minmax(0, 1fr);
   }
 
   .dashboard-sidebar button {
@@ -1667,7 +1668,7 @@ footer {
   }
 
   .dashboard-footer {
-    padding-left: 234px;
+    padding-left: 222px;
   }
 }
 
@@ -1720,7 +1721,7 @@ footer {
   }
 
   .dashboard-reference-logo {
-    width: min(240px, 70vw);
+    width: min(205px, 58vw);
   }
 
   .dashboard-stat-grid {
