@@ -2365,3 +2365,139 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   DASHBOARD ANNOUNCEMENTS
+   ========================= */
+
+.dashboard-announcements {
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.05);
+}
+
+.dashboard-announcements-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.dashboard-announcements-heading h2 {
+  margin: 0;
+  color: #20242a;
+  font-size: 20px;
+}
+
+.dashboard-announcements-heading p {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.dashboard-announcements-heading button {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #d4a62c;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #8a6810;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-announcements-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-announcement-card {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #fafafa;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-announcement-card:hover {
+  background: #fff8e7;
+}
+
+.dashboard-announcement-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff4cc;
+  color: #96700e;
+  font-weight: 800;
+}
+
+.dashboard-announcement-card > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-announcement-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-announcement-top strong {
+  color: #344054;
+  font-size: 13px;
+}
+
+.dashboard-announcement-top span {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fff4cc;
+  color: #8a6810;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.dashboard-announcement-card p {
+  margin: 5px 0;
+  color: #475467;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dashboard-announcement-card small {
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.dashboard-announcements-empty {
+  padding: 20px 10px;
+  color: #98a2b3;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 650px) {
+  .dashboard-announcements-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-announcements-heading button {
+    width: 100%;
+  }
+}

@@ -2832,6 +2832,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadSystemUsers();
       loadRecentAuditLogs();
       loadWeeklyServices();
+      loadAnnouncements();
     }
   }, [authUser, accessToken]);
 
@@ -10743,6 +10744,27 @@ className="back-button no-print"
     )
     .slice(0, 4);
 
+
+  const dashboardAnnouncementItems = announcements
+    .filter((announcement) => {
+      const publishDate = announcement.publish_date.slice(0, 10);
+      const expiryDate = announcement.expiry_date
+        ? announcement.expiry_date.slice(0, 10)
+        : '';
+
+      return (
+        announcement.status === 'PUBLISHED' &&
+        publishDate <= eventToday &&
+        (!expiryDate || expiryDate >= eventToday)
+      );
+    })
+    .sort(
+      (a, b) =>
+        a.display_order - b.display_order ||
+        b.publish_date.localeCompare(a.publish_date),
+    )
+    .slice(0, 3);
+
   return (
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
@@ -11222,6 +11244,88 @@ className="back-button no-print"
                   )}
                 </div>
               </div>
+            </section>
+          )}
+
+          {authUser.role === 'ADMIN' && (
+            <section className="dashboard-announcements">
+              <div className="dashboard-announcements-heading">
+                <div>
+                  <h2>Announcements & Notices</h2>
+                  <p>
+                    Current published notices for church
+                    administration.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    loadAnnouncements();
+                    setShowAnnouncements(true);
+                  }}
+                >
+                  Manage Announcements
+                </button>
+              </div>
+
+              {dashboardAnnouncementItems.length === 0 ? (
+                <div className="dashboard-announcements-empty">
+                  No current published announcements.
+                </div>
+              ) : (
+                <div className="dashboard-announcements-list">
+                  {dashboardAnnouncementItems.map(
+                    (announcement) => (
+                      <button
+                        key={announcement.id}
+                        type="button"
+                        className="dashboard-announcement-card"
+                        onClick={() => {
+                          loadAnnouncements();
+                          setShowAnnouncements(true);
+                        }}
+                      >
+                        <div className="dashboard-announcement-icon">
+                          !
+                        </div>
+
+                        <div>
+                          <div className="dashboard-announcement-top">
+                            <strong>
+                              {announcement.title}
+                            </strong>
+
+                            <span>
+                              {announcement.announcement_type}
+                            </span>
+                          </div>
+
+                          <p>{announcement.message}</p>
+
+                          <small>
+                            Published{' '}
+                            {new Date(
+                              announcement.publish_date.slice(
+                                0,
+                                10,
+                              ) + 'T00:00:00',
+                            ).toLocaleDateString()}
+                            {announcement.expiry_date
+                              ? ` · Expires ${new Date(
+                                  announcement.expiry_date.slice(
+                                    0,
+                                    10,
+                                  ) + 'T00:00:00',
+                                ).toLocaleDateString()}`
+                              : ''}
+                          </small>
+                        </div>
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
             </section>
           )}
 
