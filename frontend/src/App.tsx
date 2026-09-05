@@ -10662,9 +10662,21 @@ className="back-button no-print"
       <main className="main">
         <h2>Church Dashboard</h2>
 
-        <p className="welcome">
-          Welcome to the Church Management System
-        </p>
+        <section className="dashboard-branding">
+          <img
+            src="/branding/clgf-logo.png"
+            alt="The City Of The Living God Fellowship"
+            className="dashboard-logo"
+          />
+
+          <p className="welcome">
+            Welcome to the Church Management System
+          </p>
+
+          <p className="dashboard-motto">
+            The Lord is Our Help.
+          </p>
+        </section>
 
         {loading && <p>Loading members...</p>}
 
