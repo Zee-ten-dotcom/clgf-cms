@@ -10638,6 +10638,38 @@ className="back-button no-print"
      ========================= */
 
 
+  const dashboardOpenPrayerRequests =
+    publicPrayerRequests.filter(
+      (request) =>
+        request.status === 'OPEN' ||
+        request.status === 'IN_PROGRESS' ||
+        request.status === 'FOLLOW_UP',
+    ).length;
+
+  const dashboardNewContactEnquiries =
+    contactEnquiries.filter(
+      (enquiry) => enquiry.status === 'NEW',
+    ).length;
+
+  const dashboardPastoralFollowUps =
+    pastoralCareRecords.filter((record) => {
+      const followUpDate = record.follow_up_date
+        ? record.follow_up_date.slice(0, 10)
+        : '';
+
+      const isClosed =
+        record.status === 'COMPLETED' ||
+        record.status === 'CLOSED';
+
+      return (
+        !!followUpDate &&
+        followUpDate <= pastoralTodayKey &&
+        !isClosed
+      );
+    }).length;
+
+  const dashboardUpcomingEvents = upcomingEventsCount;
+
   return (
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
@@ -10948,6 +10980,86 @@ className="back-button no-print"
               </div>
             </button>
           </section>
+
+          {authUser.role === 'ADMIN' && (
+            <section className="dashboard-attention">
+              <div className="dashboard-attention-heading">
+                <div>
+                  <h2>Needs Attention</h2>
+                  <p>
+                    Quick access to items requiring leadership
+                    follow-up.
+                  </p>
+                </div>
+              </div>
+
+              <div className="dashboard-attention-grid">
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() =>
+                    setShowPublicPrayerRequests(true)
+                  }
+                >
+                  <span className="attention-icon">🙏</span>
+                  <div>
+                    <strong>
+                      {dashboardOpenPrayerRequests}
+                    </strong>
+                    <h3>Open Prayer Requests</h3>
+                    <small>Review prayer requests →</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() =>
+                    setShowContactEnquiries(true)
+                  }
+                >
+                  <span className="attention-icon">✉</span>
+                  <div>
+                    <strong>
+                      {dashboardNewContactEnquiries}
+                    </strong>
+                    <h3>New Contact Enquiries</h3>
+                    <small>Review enquiries →</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() => setShowPastoralCare(true)}
+                >
+                  <span className="attention-icon">♥</span>
+                  <div>
+                    <strong>
+                      {dashboardPastoralFollowUps}
+                    </strong>
+                    <h3>Pastoral Follow-ups</h3>
+                    <small>Due or overdue →</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() => setShowEvents(true)}
+                >
+                  <span className="attention-icon">◷</span>
+                  <div>
+                    <strong>
+                      {dashboardUpcomingEvents}
+                    </strong>
+                    <h3>Upcoming Events</h3>
+                    <small>View event schedule →</small>
+                  </div>
+                </button>
+              </div>
+            </section>
+          )}
 
           {authUser.role === 'ADMIN' && (
             <button
