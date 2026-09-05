@@ -2939,16 +2939,23 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     givingSummary?.totalGiving ?? 0;
 
   const filteredMembers = members.filter((member) => {
-    const text = search.toLowerCase();
+    const text = search.trim().toLowerCase();
 
     return (
-      member.first_name.toLowerCase().includes(text) ||
-      member.last_name.toLowerCase().includes(text) ||
-      member.membership_number.toLowerCase().includes(text) ||
-      member.phone.toLowerCase().includes(text) ||
-      member.email.toLowerCase().includes(text)
+      (member.first_name || '').toLowerCase().includes(text) ||
+      (member.last_name || '').toLowerCase().includes(text) ||
+      (member.membership_number || '')
+        .toLowerCase()
+        .includes(text) ||
+      (member.phone || '').toLowerCase().includes(text) ||
+      (member.email || '').toLowerCase().includes(text)
     );
   });
+
+
+  const dashboardMemberSearchResults = search.trim()
+    ? filteredMembers.slice(0, 5)
+    : [];
 
   const updateForm = (
     field: keyof MemberForm,
@@ -11108,6 +11115,100 @@ className="back-button no-print"
                 <small>View ministries →</small>
               </div>
             </button>
+          </section>
+
+          <section className="dashboard-member-search">
+            <div className="dashboard-member-search-heading">
+              <div>
+                <h2>Find a Member</h2>
+                <p>
+                  Search by name, membership number, phone or email.
+                </p>
+              </div>
+            </div>
+
+            <div className="dashboard-member-search-box">
+              <span>⌕</span>
+
+              <input
+                type="text"
+                placeholder="Search church members..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Clear member search"
+                  onClick={() => setSearch('')}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {search.trim() && (
+              <div className="dashboard-member-results">
+                {dashboardMemberSearchResults.length === 0 ? (
+                  <div className="dashboard-member-empty">
+                    No matching members found.
+                  </div>
+                ) : (
+                  <>
+                    {dashboardMemberSearchResults.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        className="dashboard-member-result"
+                        onClick={() => {
+                          setSearch(member.membership_number);
+                          setShowMembers(true);
+                        }}
+                      >
+                        <div className="dashboard-member-result-icon">
+                          👤
+                        </div>
+
+                        <div>
+                          <strong>
+                            {member.first_name}{' '}
+                            {member.last_name}
+                          </strong>
+
+                          <small>
+                            {member.membership_number}
+                            {member.phone
+                              ? ` · ${member.phone}`
+                              : ''}
+                          </small>
+                        </div>
+
+                        <span
+                          className={
+                            member.status === 'ACTIVE'
+                              ? 'dashboard-member-status active'
+                              : 'dashboard-member-status inactive'
+                          }
+                        >
+                          {member.status}
+                        </span>
+                      </button>
+                    ))}
+
+                    {filteredMembers.length > 5 && (
+                      <button
+                        type="button"
+                        className="dashboard-member-view-all"
+                        onClick={() => setShowMembers(true)}
+                      >
+                        View all {filteredMembers.length} matches
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </section>
 
           {authUser.role === 'ADMIN' && (

@@ -2501,3 +2501,150 @@ footer {
     width: 100%;
   }
 }
+
+/* =========================
+   DASHBOARD MEMBER SEARCH
+   ========================= */
+
+.dashboard-member-search {
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.05);
+}
+
+.dashboard-member-search-heading h2 {
+  margin: 0;
+  color: #20242a;
+  font-size: 20px;
+}
+
+.dashboard-member-search-heading p {
+  margin: 4px 0 12px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.dashboard-member-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.dashboard-member-search-box > span {
+  color: #a77b12;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dashboard-member-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #344054;
+  font-size: 13px;
+}
+
+.dashboard-member-search-box button {
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.dashboard-member-results {
+  margin-top: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.dashboard-member-result {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 0;
+  border-radius: 11px;
+  background: #fafafa;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-member-result:hover {
+  background: #fff8e7;
+}
+
+.dashboard-member-result-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff4cc;
+}
+
+.dashboard-member-result > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-member-result strong {
+  display: block;
+  color: #344054;
+  font-size: 13px;
+}
+
+.dashboard-member-result small {
+  display: block;
+  margin-top: 2px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.dashboard-member-status {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.dashboard-member-status.active {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.dashboard-member-status.inactive {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.dashboard-member-view-all {
+  padding: 9px 12px;
+  border: 1px solid #d4a62c;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #8a6810;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-member-empty {
+  padding: 16px 10px;
+  color: #98a2b3;
+  font-size: 12px;
+  text-align: center;
+}
