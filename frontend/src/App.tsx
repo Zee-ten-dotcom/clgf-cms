@@ -11022,6 +11022,109 @@ className="back-button no-print"
           </section>
 
           {authUser.role === 'ADMIN' && (
+            <section className="dashboard-quick-actions">
+              <div className="dashboard-quick-heading">
+                <h2>Quick Actions</h2>
+                <p>
+                  Start common church administration tasks.
+                </p>
+              </div>
+
+              <div className="dashboard-quick-grid">
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={openAddMember}
+                >
+                  <span>＋</span>
+                  <div>
+                    <strong>Add Member</strong>
+                    <small>Register a new member</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={() => {
+                    setAttendanceDate('');
+                    setAttendanceType('');
+                    setAttendanceNotes('');
+                    setAttendanceError('');
+                    setShowAttendance(true);
+                  }}
+                >
+                  <span>✓</span>
+                  <div>
+                    <strong>Record Attendance</strong>
+                    <small>Create attendance session</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={() => {
+                    cancelEditingGiving();
+                    setShowGiving(true);
+                  }}
+                >
+                  <span>♥</span>
+                  <div>
+                    <strong>Add Giving</strong>
+                    <small>Record a giving entry</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={() => {
+                    cancelEditingEvent();
+                    setShowEvents(true);
+                  }}
+                >
+                  <span>▣</span>
+                  <div>
+                    <strong>Add Event</strong>
+                    <small>Create a church event</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={() => {
+                    cancelEditingPastoralCare();
+                    setShowPastoralCare(true);
+                  }}
+                >
+                  <span>♡</span>
+                  <div>
+                    <strong>Add Pastoral Care</strong>
+                    <small>Start a care record</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="dashboard-quick-card"
+                  onClick={() => {
+                    cancelEditingSermon();
+                    setShowSermons(true);
+                  }}
+                >
+                  <span>▶</span>
+                  <div>
+                    <strong>Add Sermon</strong>
+                    <small>Create a sermon resource</small>
+                  </div>
+                </button>
+              </div>
+            </section>
+          )}
+
+          {authUser.role === 'ADMIN' && (
             <section className="dashboard-attention">
               <div className="dashboard-attention-heading">
                 <div>
