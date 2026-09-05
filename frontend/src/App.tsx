@@ -513,6 +513,12 @@ function App() {
   const [dashboardMenuOpen, setDashboardMenuOpen] =
     useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [recentAuditLogs, setRecentAuditLogs] =
+    useState<AuditLog[]>([]);
+  const [recentAuditLoading, setRecentAuditLoading] =
+    useState(false);
+  const [recentAuditError, setRecentAuditError] =
+    useState('');
   const [auditSummary, setAuditSummary] =
     useState<AuditSummary | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -2427,6 +2433,39 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     URL.revokeObjectURL(url);
   };
 
+  const loadRecentAuditLogs = async () => {
+    if (!authUser || authUser.role !== 'ADMIN') return;
+
+    setRecentAuditLoading(true);
+    setRecentAuditError('');
+
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', '5');
+
+      const response = await authFetch(
+        `${API_BASE_URL}/audit?${params.toString()}`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load recent activity');
+      }
+
+      const data = await response.json();
+
+      setRecentAuditLogs(
+        Array.isArray(data) ? data : [],
+      );
+    } catch (err) {
+      console.error(err);
+      setRecentAuditError(
+        'Unable to load recent activity.',
+      );
+    } finally {
+      setRecentAuditLoading(false);
+    }
+  };
+
   const loadAuditSummary = async () => {
     if (!authUser || authUser.role !== 'ADMIN') return;
 
@@ -2791,6 +2830,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadPublicPrayerRequests();
       loadContactEnquiries();
       loadSystemUsers();
+      loadRecentAuditLogs();
     }
   }, [authUser, accessToken]);
 
@@ -11058,6 +11098,91 @@ className="back-button no-print"
                   </div>
                 </button>
               </div>
+            </section>
+          )}
+
+          {authUser.role === 'ADMIN' && (
+            <section className="dashboard-recent-activity">
+              <div className="dashboard-recent-heading">
+                <div>
+                  <h2>Recent Activity</h2>
+                  <p>
+                    Latest administrative actions across the CMS.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="dashboard-view-activity"
+                  onClick={() => {
+                    loadAuditLogs();
+                    loadAuditSummary();
+                    setShowAuditLog(true);
+                  }}
+                >
+                  View Full Activity Log
+                </button>
+              </div>
+
+              {recentAuditError && (
+                <p className="dashboard-recent-error">
+                  {recentAuditError}
+                </p>
+              )}
+
+              {recentAuditLoading ? (
+                <div className="dashboard-recent-empty">
+                  Loading recent activity...
+                </div>
+              ) : recentAuditLogs.length === 0 ? (
+                <div className="dashboard-recent-empty">
+                  No recent activity found.
+                </div>
+              ) : (
+                <div className="dashboard-recent-list">
+                  {recentAuditLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="dashboard-recent-item"
+                    >
+                      <div className="dashboard-recent-marker">
+                        ●
+                      </div>
+
+                      <div className="dashboard-recent-content">
+                        <div className="dashboard-recent-top">
+                          <strong>
+                            {log.module.replaceAll('_', ' ')}
+                          </strong>
+
+                          <span>
+                            {log.action.replaceAll('_', ' ')}
+                          </span>
+                        </div>
+
+                        <p>
+                          {log.description ||
+                            log.entity_type?.replaceAll(
+                              '_',
+                              ' ',
+                            ) ||
+                            'CMS activity'}
+                        </p>
+
+                        <small>
+                          {log.actor_name ||
+                            log.actor_email ||
+                            'System'}
+                          {' • '}
+                          {new Date(
+                            log.created_at,
+                          ).toLocaleString()}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
