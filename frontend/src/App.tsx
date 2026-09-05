@@ -2831,6 +2831,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadContactEnquiries();
       loadSystemUsers();
       loadRecentAuditLogs();
+      loadWeeklyServices();
     }
   }, [authUser, accessToken]);
 
@@ -10710,6 +10711,38 @@ className="back-button no-print"
 
   const dashboardUpcomingEvents = upcomingEventsCount;
 
+  const dashboardUpcomingEventItems = events
+    .filter((event) => {
+      const date = event.event_date.slice(0, 10);
+
+      return (
+        date >= eventToday &&
+        event.status !== 'COMPLETED' &&
+        event.status !== 'CANCELLED'
+      );
+    })
+    .sort((a, b) => {
+      const aKey =
+        a.event_date.slice(0, 10) +
+        (a.start_time || '23:59');
+
+      const bKey =
+        b.event_date.slice(0, 10) +
+        (b.start_time || '23:59');
+
+      return aKey.localeCompare(bKey);
+    })
+    .slice(0, 3);
+
+  const dashboardWeeklyServiceItems = weeklyServices
+    .filter((service) => service.status === 'ACTIVE')
+    .sort(
+      (a, b) =>
+        a.display_order - b.display_order ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, 4);
+
   return (
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
@@ -11054,6 +11087,143 @@ className="back-button no-print"
               </div>
             </button>
           </section>
+
+          {authUser.role === 'ADMIN' && (
+            <section className="dashboard-schedule">
+              <div className="dashboard-schedule-heading">
+                <div>
+                  <h2>Upcoming Schedule</h2>
+                  <p>
+                    A quick view of upcoming events and recurring
+                    church services.
+                  </p>
+                </div>
+              </div>
+
+              <div className="dashboard-schedule-grid">
+                <div className="dashboard-schedule-panel">
+                  <div className="dashboard-schedule-panel-heading">
+                    <div>
+                      <strong>Upcoming Events</strong>
+                      <small>
+                        {dashboardUpcomingEvents} scheduled
+                      </small>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowEvents(true)}
+                    >
+                      View All
+                    </button>
+                  </div>
+
+                  {dashboardUpcomingEventItems.length === 0 ? (
+                    <div className="dashboard-schedule-empty">
+                      No upcoming events scheduled.
+                    </div>
+                  ) : (
+                    <div className="dashboard-schedule-list">
+                      {dashboardUpcomingEventItems.map((event) => (
+                        <button
+                          key={event.id}
+                          type="button"
+                          className="dashboard-schedule-item"
+                          onClick={() => setShowEvents(true)}
+                        >
+                          <span className="dashboard-schedule-icon">
+                            ▣
+                          </span>
+
+                          <div>
+                            <strong>{event.title}</strong>
+
+                            <small>
+                              {new Date(
+                                event.event_date.slice(0, 10) +
+                                  'T00:00:00',
+                              ).toLocaleDateString()}
+                              {event.start_time
+                                ? ` · ${event.start_time.slice(
+                                    0,
+                                    5,
+                                  )}`
+                                : ''}
+                            </small>
+
+                            {event.location && (
+                              <small>{event.location}</small>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="dashboard-schedule-panel">
+                  <div className="dashboard-schedule-panel-heading">
+                    <div>
+                      <strong>Weekly Services</strong>
+                      <small>
+                        {dashboardWeeklyServiceItems.length} shown
+                      </small>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        loadWeeklyServices();
+                        setShowWeeklyServices(true);
+                      }}
+                    >
+                      Manage
+                    </button>
+                  </div>
+
+                  {dashboardWeeklyServiceItems.length === 0 ? (
+                    <div className="dashboard-schedule-empty">
+                      No active weekly services found.
+                    </div>
+                  ) : (
+                    <div className="dashboard-schedule-list">
+                      {dashboardWeeklyServiceItems.map((service) => (
+                        <button
+                          key={service.id}
+                          type="button"
+                          className="dashboard-schedule-item"
+                          onClick={() => {
+                            loadWeeklyServices();
+                            setShowWeeklyServices(true);
+                          }}
+                        >
+                          <span className="dashboard-schedule-icon">
+                            ◷
+                          </span>
+
+                          <div>
+                            <strong>{service.name}</strong>
+
+                            <small>
+                              {service.day_of_week}
+                              {' · '}
+                              {service.start_time.slice(0, 5)}
+                              {service.end_time
+                                ? `–${service.end_time.slice(
+                                    0,
+                                    5,
+                                  )}`
+                                : ''}
+                            </small>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           {authUser.role === 'ADMIN' && (
             <section className="dashboard-quick-actions">
