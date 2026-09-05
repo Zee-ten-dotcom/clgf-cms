@@ -10637,153 +10637,66 @@ className="back-button no-print"
 
 
   return (
-    <div className="app">
-      <header className="header">
-        <div>
-          <h1>CLGF CMS</h1>
-          <p>The City Of The Living God Fellowship</p>
+    <div className="dashboard-shell">
+      <header className="dashboard-topbar">
+        <div className="dashboard-topbar-brand">
+          <div className="dashboard-menu-icon">☰</div>
+
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
         </div>
 
-        <div className="admin">
-            <span>
-              {authUser.firstName} {authUser.lastName}
-            </span>
+        <div className="dashboard-user">
+          <div className="dashboard-user-icon">●</div>
 
-            <button
-              type="button"
-              className="logout-button"
-              onClick={logout}
-            >
-              Logout
-            </button>
+          <div className="dashboard-user-details">
+            <strong>
+              {authUser.firstName} {authUser.lastName}
+            </strong>
+            <span>
+              {authUser.role === 'ADMIN'
+                ? 'Administrator'
+                : authUser.role}
+            </span>
           </div>
+
+          <button
+            type="button"
+            className="dashboard-logout"
+            onClick={logout}
+          >
+            ↪ Logout
+          </button>
+        </div>
       </header>
 
-      <main className="main">
-        <h2>Church Dashboard</h2>
-
-        <section className="dashboard-branding">
-          <img
-            src="/branding/clgf-logo.png"
-            alt="The City Of The Living God Fellowship"
-            className="dashboard-logo"
-          />
-
-          <p className="welcome">
-            Welcome to the Church Management System
-          </p>
-
-          <p className="dashboard-motto">
-            The Lord is Our Help.
-          </p>
-        </section>
-
-        {loading && <p>Loading members...</p>}
-
-        {error && <p className="error">{error}</p>}
-
-        <div className="cards">
-          <div className="card">
-            <span>👥</span>
-            <h3>Total Members</h3>
-            <strong>{totalMembers}</strong>
-          </div>
-
-          <div className="card">
-            <span>🟢</span>
-            <h3>Active Members</h3>
-            <strong>{activeMembers}</strong>
-          </div>
-
-          <div className="card">
-            <span>⚪</span>
-            <h3>Inactive Members</h3>
-            <strong>{inactiveMembers}</strong>
-          </div>
-
-          <div className="card">
-            <span>🏠</span>
-            <h3>Home Cells</h3>
-            <strong>{homeCells.length}</strong>
-          </div>
-          <div className="card">
-            <span>📋</span>
-            <h3>Attendance</h3>
-            <strong>{attendanceSessions.length}</strong>
-          </div>
-
-          <div className="card">
-            <span>🙏</span>
-            <h3>Ministries</h3>
-            <strong>{ministries.length}</strong>
-          </div>
-        </div>
-
-        <div className="actions">
-          {authUser.role === 'ADMIN' && (
-            <button onClick={openAddMember}>
-              + Add Member
-            </button>
-          )}
+      <div className="dashboard-layout">
+        <aside className="dashboard-sidebar">
+          <button className="sidebar-active">
+            <span>⌂</span>
+            Dashboard
+          </button>
 
           <button onClick={() => setShowMembers(true)}>
-            View Members
+            <span>♟</span>
+            Members
           </button>
 
+          <button onClick={() => setShowMinistries(true)}>
+            <span>♟</span>
+            Ministries
+          </button>
 
           <button onClick={() => setShowHomeCells(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Home Cells'
-              : 'View Home Cells'}
-          </button>
-
-          <button
-            onClick={() => {
-              loadWeeklyServices();
-              setShowWeeklyServices(true);
-            }}
-          >
-            {authUser.role === 'ADMIN'
-              ? 'Manage Weekly Services'
-              : 'View Weekly Services'}
-          </button>
-
-          <button
-            onClick={() => {
-              loadAnnouncements();
-              setShowAnnouncements(true);
-            }}
-          >
-            {authUser.role === 'ADMIN'
-              ? 'Manage Announcements'
-              : 'View Announcements'}
-          </button>
-
-          
-            
-         
-                    <button onClick={() => setShowMinistries(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Ministries'
-              : 'View Ministries'}
+            <span>⌂</span>
+            Home Cells
           </button>
 
           <button onClick={() => setShowAttendance(true)}>
-            Manage Attendance
-          </button>
-
-          <button onClick={() => setShowFinance(true)}>
-            View Finance
-          </button>
-
-          <button onClick={() => setShowGiving(true)}>
-            View Giving
-          </button>
-
-          <button onClick={() => setShowEvents(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Events'
-              : 'View Events'}
+            <span>✓</span>
+            Attendance
           </button>
 
           <button
@@ -10792,85 +10705,237 @@ className="back-button no-print"
               setShowSermons(true);
             }}
           >
-            {authUser.role === 'ADMIN'
-              ? 'Manage Sermons & Resources'
-              : 'View Sermons & Resources'}
+            <span>▤</span>
+            Sermons & Resources
+          </button>
+
+          <button onClick={() => setShowEvents(true)}>
+            <span>▣</span>
+            Events
+          </button>
+
+          <button onClick={() => setShowGiving(true)}>
+            <span>♥</span>
+            Giving
+          </button>
+
+          <button onClick={() => setShowFinance(true)}>
+            <span>▥</span>
+            Finance
           </button>
 
           <button onClick={() => setShowPastoralCare(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Pastoral Care'
-              : 'View Pastoral Care'}
+            <span>♣</span>
+            Pastoral Care
           </button>
 
           <button onClick={() => setShowLeadership(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Leadership'
-              : 'View Leadership'}
+            <span>♟</span>
+            Leadership
           </button>
-
-          {authUser.role === 'ADMIN' && (
-            <button
-              onClick={() => {
-                loadPublicPrayerRequests();
-                setShowPublicPrayerRequests(true);
-              }}
-            >
-              Manage Prayer Requests
-            </button>
-          )}
-
-          {authUser.role === 'ADMIN' && (
-            <button
-              onClick={() => {
-                loadContactEnquiries();
-                setShowContactEnquiries(true);
-              }}
-            >
-              Manage Contact Enquiries
-            </button>
-          )}
-
-          {authUser.role === 'ADMIN' && (
-            <button
-              onClick={() => {
-                loadSystemUsers();
-                setShowUsers(true);
-              }}
-            >
-              Manage Users
-            </button>
-          )}
-
-
-          {authUser.role === 'ADMIN' && (
-            <button
-              onClick={() => {
-                loadAuditLogs();
-                loadAuditSummary();
-                setShowAuditLog(true);
-              }}
-            >
-              Activity Log
-            </button>
-          )}
 
           <button onClick={() => setShowReports(true)}>
-            {authUser.role === 'ADMIN'
-              ? 'Manage Reports'
-              : 'View Reports'}
+            <span>▤</span>
+            Reports
           </button>
 
-        </div>
-      </main>
+          {authUser.role === 'ADMIN' && (
+            <>
+              <button
+                onClick={() => {
+                  loadWeeklyServices();
+                  setShowWeeklyServices(true);
+                }}
+              >
+                <span>◷</span>
+                Weekly Services
+              </button>
 
-      <footer>
-        © 2026 The City Of The Living God Fellowship
+              <button
+                onClick={() => {
+                  loadAnnouncements();
+                  setShowAnnouncements(true);
+                }}
+              >
+                <span>!</span>
+                Announcements
+              </button>
+
+              <button
+                onClick={() => {
+                  loadPublicPrayerRequests();
+                  setShowPublicPrayerRequests(true);
+                }}
+              >
+                <span>†</span>
+                Prayer Requests
+              </button>
+
+              <button
+                onClick={() => {
+                  loadContactEnquiries();
+                  setShowContactEnquiries(true);
+                }}
+              >
+                <span>✉</span>
+                Contact Enquiries
+              </button>
+
+              <button
+                onClick={() => {
+                  loadSystemUsers();
+                  setShowUsers(true);
+                }}
+              >
+                <span>●</span>
+                Users
+              </button>
+
+              <button
+                onClick={() => {
+                  loadAuditLogs();
+                  loadAuditSummary();
+                  setShowAuditLog(true);
+                }}
+              >
+                <span>≡</span>
+                Activity Log
+              </button>
+            </>
+          )}
+        </aside>
+
+        <main className="dashboard-content">
+          <section className="dashboard-logo-area">
+            <img
+              src="/branding/clgf-logo.png"
+              alt="The City Of The Living God Fellowship"
+              className="dashboard-reference-logo"
+            />
+          </section>
+
+          <section className="dashboard-welcome-panel">
+            <h2>
+              Welcome to the Church Management System
+            </h2>
+
+            <p>
+              Manage members, ministries, attendance, giving,
+              events and more — for the glory of God.
+            </p>
+
+            <div className="dashboard-help">
+              “The Lord is Our Help.”
+            </div>
+          </section>
+
+          {loading && (
+            <p className="dashboard-loading">
+              Loading members...
+            </p>
+          )}
+
+          {error && (
+            <p className="error">{error}</p>
+          )}
+
+          <section className="dashboard-stat-grid">
+            <button
+              className="dashboard-stat stat-members"
+              onClick={() => setShowMembers(true)}
+            >
+              <span className="stat-icon">👥</span>
+              <div>
+                <h3>Total Members</h3>
+                <strong>{totalMembers}</strong>
+                <small>View all members →</small>
+              </div>
+            </button>
+
+            <button
+              className="dashboard-stat stat-active"
+              onClick={() => setShowMembers(true)}
+            >
+              <span className="stat-icon">●</span>
+              <div>
+                <h3>Active Members</h3>
+                <strong>{activeMembers}</strong>
+                <small>View active members →</small>
+              </div>
+            </button>
+
+            <button
+              className="dashboard-stat stat-inactive"
+              onClick={() => setShowMembers(true)}
+            >
+              <span className="stat-icon">●</span>
+              <div>
+                <h3>Inactive Members</h3>
+                <strong>{inactiveMembers}</strong>
+                <small>View inactive members →</small>
+              </div>
+            </button>
+
+            <button
+              className="dashboard-stat stat-home"
+              onClick={() => setShowHomeCells(true)}
+            >
+              <span className="stat-icon">⌂</span>
+              <div>
+                <h3>Home Cells</h3>
+                <strong>{homeCells.length}</strong>
+                <small>View home cells →</small>
+              </div>
+            </button>
+
+            <button
+              className="dashboard-stat stat-attendance"
+              onClick={() => setShowAttendance(true)}
+            >
+              <span className="stat-icon">▣</span>
+              <div>
+                <h3>Attendance</h3>
+                <strong>{attendanceSessions.length}</strong>
+                <small>View attendance →</small>
+              </div>
+            </button>
+
+            <button
+              className="dashboard-stat stat-ministries"
+              onClick={() => setShowMinistries(true)}
+            >
+              <span className="stat-icon">♟</span>
+              <div>
+                <h3>Ministries</h3>
+                <strong>{ministries.length}</strong>
+                <small>View ministries →</small>
+              </div>
+            </button>
+          </section>
+
+          {authUser.role === 'ADMIN' && (
+            <button
+              type="button"
+              className="dashboard-add-member"
+              onClick={openAddMember}
+            >
+              + Add New Member
+            </button>
+          )}
+        </main>
+      </div>
+
+      <footer className="dashboard-footer">
+        <span>
+          © 2026 The City Of The Living God Fellowship
+        </span>
+
+        <strong>The Lord is Our Help.</strong>
       </footer>
     </div>
   );
-}
 
+}
 
 // ACTIVITY_LOG_PATCH_TEST
 export default App;
