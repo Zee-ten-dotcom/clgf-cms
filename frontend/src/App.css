@@ -2829,3 +2829,90 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Quick Attendance Register */
+.attendance-quick-register {
+  margin: 22px 0 18px;
+  padding: 18px;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.attendance-register-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.attendance-register-heading h3 {
+  margin: 0 0 4px;
+}
+
+.attendance-register-heading p {
+  margin: 0;
+  color: #666;
+}
+
+.attendance-register-heading > strong {
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.attendance-register-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attendance-register-tools input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.attendance-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attendance-filter-button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #d6d6d6;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.attendance-filter-button.active {
+  border-color: #b58a16;
+  background: #f5e7b8;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .attendance-register-heading {
+    flex-direction: column;
+  }
+
+  .attendance-register-heading > strong {
+    white-space: normal;
+  }
+
+  .attendance-status-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attendance-filter-button {
+    width: 100%;
+  }
+}

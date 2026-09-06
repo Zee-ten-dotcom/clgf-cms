@@ -427,6 +427,10 @@ function App() {
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceSessionDetail | null>(null);
+  const [attendanceMemberSearch, setAttendanceMemberSearch] =
+    useState('');
+  const [attendanceStatusFilter, setAttendanceStatusFilter] =
+    useState<'ALL' | 'NOT_MARKED' | 'PRESENT' | 'ABSENT'>('ALL');
   const [memberAttendanceHistory, setMemberAttendanceHistory] =
     useState<MemberAttendanceHistory | null>(null);
 
@@ -9330,6 +9334,49 @@ className="back-button no-print"
      ========================= */
 
   if (showAttendance) {
+    const activeAttendanceMembers = members.filter(
+      (member) => member.status === 'ACTIVE',
+    );
+
+    const filteredAttendanceMembers = activeAttendanceMembers.filter(
+      (member) => {
+        const searchText = attendanceMemberSearch
+          .trim()
+          .toLowerCase();
+
+        const matchesSearch =
+          !searchText ||
+          (member.first_name || '')
+            .toLowerCase()
+            .includes(searchText) ||
+          (member.last_name || '')
+            .toLowerCase()
+            .includes(searchText) ||
+          (member.membership_number || '')
+            .toLowerCase()
+            .includes(searchText);
+
+        if (!matchesSearch) {
+          return false;
+        }
+
+        if (!selectedAttendance || attendanceStatusFilter === 'ALL') {
+          return true;
+        }
+
+        const record = selectedAttendance.records.find(
+          (attendanceRecord) =>
+            attendanceRecord.member_id === member.id,
+        );
+
+        if (attendanceStatusFilter === 'NOT_MARKED') {
+          return !record;
+        }
+
+        return record?.status === attendanceStatusFilter;
+      },
+    );
+
     return (
       <div className="app">
         <header className="header">
@@ -9717,10 +9764,71 @@ className="back-button no-print"
                 </p>
               </div>
 
-                            <div className="members-list">
-                {members
-                  .filter((member) => member.status === 'ACTIVE')
-                  .map((member) => {
+              <div className="attendance-quick-register">
+                <div className="attendance-register-heading">
+                  <div>
+                    <h3>Quick Attendance Register</h3>
+                    <p>
+                      Search members and filter by attendance status
+                    </p>
+                  </div>
+
+                  <strong>
+                    Showing {filteredAttendanceMembers.length} of{' '}
+                    {activeAttendanceMembers.length}
+                  </strong>
+                </div>
+
+                <div className="attendance-register-tools">
+                  <input
+                    type="search"
+                    value={attendanceMemberSearch}
+                    onChange={(e) =>
+                      setAttendanceMemberSearch(e.target.value)
+                    }
+                    placeholder="Search name or membership number..."
+                    aria-label="Search attendance members"
+                  />
+
+                  <div className="attendance-status-filters">
+                    {(
+                      [
+                        ['ALL', 'All'],
+                        ['NOT_MARKED', 'Not Marked'],
+                        ['PRESENT', 'Present'],
+                        ['ABSENT', 'Absent'],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={
+                          attendanceStatusFilter === value
+                            ? 'attendance-filter-button active'
+                            : 'attendance-filter-button'
+                        }
+                        onClick={() =>
+                          setAttendanceStatusFilter(value)
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="members-list">
+                {filteredAttendanceMembers.length === 0 ? (
+                  <div className="empty">
+                    <div>🔎</div>
+                    <h3>No members found</h3>
+                    <p>
+                      Try another search or attendance filter.
+                    </p>
+                  </div>
+                ) : (
+                  filteredAttendanceMembers.map((member) => {
                     const attendanceRecord =
                       selectedAttendance.records.find(
                         (record) =>
@@ -9839,7 +9947,8 @@ className="back-button no-print"
                         </div>  
                       </div>
                     );
-                  })}
+                  })
+                )}
               </div>
             </div>
           )}
