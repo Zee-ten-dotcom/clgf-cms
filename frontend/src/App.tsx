@@ -401,6 +401,8 @@ function App() {
 
   const [editingEvent, setEditingEvent] =
     useState<ChurchEvent | null>(null);
+  const [selectedEventProfile, setSelectedEventProfile] =
+    useState<ChurchEvent | null>(null);
 
   const [eventTitle, setEventTitle] = useState('');
   const [eventDescription, setEventDescription] = useState('');
@@ -1523,6 +1525,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         setError('Unable to connect to the CLGF server');
         setLoading(false);
       });
+  };
+
+  const openEventProfile = (event: ChurchEvent) => {
+    setSelectedEventProfile(event);
+    window.scrollTo(0, 0);
   };
 
   const startEditingEvent = (
@@ -7528,6 +7535,209 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     EVENT PROFILE
+     ========================= */
+
+  if (selectedEventProfile && showEvents) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Event Profile</h2>
+              <p className="welcome">
+                Event details, schedule and attendance
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedEventProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Events
+            </button>
+          </div>
+
+          <section className="member-profile-hero">
+            <div>
+              <span className="member-profile-label">
+                {selectedEventProfile.event_type ||
+                  'Church Event'}
+              </span>
+
+              <h2>{selectedEventProfile.title}</h2>
+
+              <p>
+                {selectedEventProfile.description ||
+                  'No description provided.'}
+              </p>
+            </div>
+
+            <span
+              className={
+                selectedEventProfile.status === 'CANCELLED' ||
+                selectedEventProfile.status === 'POSTPONED'
+                  ? 'status inactive'
+                  : 'status active'
+              }
+            >
+              {selectedEventProfile.status}
+            </span>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Event Information</h3>
+                <p>Current event schedule and details</p>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    startEditingEvent(selectedEventProfile);
+                    setSelectedEventProfile(null);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Edit Event
+                </button>
+              )}
+            </div>
+
+            <div className="member-profile-grid">
+              <div>
+                <span>Date</span>
+                <strong>
+                  {selectedEventProfile.event_date.slice(0, 10)}
+                </strong>
+              </div>
+
+              <div>
+                <span>Start Time</span>
+                <strong>
+                  {selectedEventProfile.start_time
+                    ? selectedEventProfile.start_time.slice(0, 5)
+                    : 'Not set'}
+                </strong>
+              </div>
+
+              <div>
+                <span>End Time</span>
+                <strong>
+                  {selectedEventProfile.end_time
+                    ? selectedEventProfile.end_time.slice(0, 5)
+                    : 'Not set'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Location</span>
+                <strong>
+                  {selectedEventProfile.location ||
+                    'Not specified'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Event Type</span>
+                <strong>
+                  {selectedEventProfile.event_type ||
+                    'Church Event'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Status</span>
+                <strong>{selectedEventProfile.status}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Attendance</h3>
+                <p>Attendance register linked to this event</p>
+              </div>
+            </div>
+
+            <div className="member-profile-grid">
+              <div>
+                <span>Register Status</span>
+                <strong>
+                  {selectedEventProfile.attendance_session_id
+                    ? 'Attendance register created'
+                    : 'No attendance register yet'}
+                </strong>
+              </div>
+            </div>
+
+            <div className="member-actions">
+              <button
+                type="button"
+                className="save-button"
+                onClick={() =>
+                  takeEventAttendance(selectedEventProfile)
+                }
+              >
+                {selectedEventProfile.attendance_session_id
+                  ? '📋 Open Attendance'
+                  : '✅ Take Attendance'}
+              </button>
+            </div>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Description</h3>
+                <p>Event notes and information</p>
+              </div>
+            </div>
+
+            <p>
+              {selectedEventProfile.description ||
+                'No description has been provided for this event.'}
+            </p>
+          </section>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      EVENTS PAGE
      ========================= */
 
@@ -7921,6 +8131,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 <div className="member-actions">
                   <button
                     type="button"
+                    className="back-button"
+                    onClick={() => openEventProfile(event)}
+                  >
+                    View Profile
+                  </button>
+
+                  <button
+                    type="button"
                     className="save-button"
                     onClick={() =>
                       takeEventAttendance(event)
@@ -8010,6 +8228,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 </div>
 
                 <div className="member-actions">
+                  <button
+                    type="button"
+                    className="back-button"
+                    onClick={() => openEventProfile(event)}
+                  >
+                    View Profile
+                  </button>
+
                   <button
                     type="button"
                     className="save-button"
