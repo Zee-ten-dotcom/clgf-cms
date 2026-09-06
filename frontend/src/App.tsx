@@ -595,6 +595,9 @@ function App() {
 
   const [editingPastoralCare, setEditingPastoralCare] =
     useState<PastoralCareRecord | null>(null);
+  const [selectedPastoralCareProfile, setSelectedPastoralCareProfile] =
+    useState<PastoralCareRecord | null>(null);
+
 
   const [pastoralMemberId, setPastoralMemberId] = useState('');
   const [pastoralCareType, setPastoralCareType] =
@@ -1990,6 +1993,13 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   };
 
+  const openPastoralCareProfile = (
+    record: PastoralCareRecord,
+  ) => {
+    setSelectedPastoralCareProfile(record);
+    window.scrollTo(0, 0);
+  };
+
   const startEditingPastoralCare = (
     record: PastoralCareRecord,
   ) => {
@@ -2815,6 +2825,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setMemberProfilePastoralCare([]);
     setSelectedMinistryProfile(null);
     setSelectedHomeCellProfile(null);
+    setSelectedPastoralCareProfile(null);
 
     setAuthUser(null);
     setAccessToken('');
@@ -6944,10 +6955,204 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     PASTORAL CARE CASE PROFILE
+     ========================= */
+
+  if (
+    selectedPastoralCareProfile &&
+    showPastoralCare &&
+    (authUser.role === 'ADMIN' || authUser.role === 'LEADER')
+  ) {
+    const pastoralCaseClosed =
+      selectedPastoralCareProfile.status === 'COMPLETED' ||
+      selectedPastoralCareProfile.status === 'CLOSED';
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Pastoral Care Case</h2>
+              <p className="welcome">
+                Confidential member care record
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedPastoralCareProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Pastoral Care
+            </button>
+          </div>
+
+          <div className="member-profile-hero">
+            <div>
+              <p className="membership-number">
+                {selectedPastoralCareProfile.membership_number}
+              </p>
+
+              <h2>
+                {selectedPastoralCareProfile.first_name}{' '}
+                {selectedPastoralCareProfile.last_name}
+              </h2>
+
+              <p>
+                {selectedPastoralCareProfile.care_type}
+              </p>
+            </div>
+
+            <span
+              className={
+                pastoralCaseClosed
+                  ? 'status inactive'
+                  : 'status active'
+              }
+            >
+              {selectedPastoralCareProfile.status}
+            </span>
+          </div>
+
+          <div className="member-form">
+            <div className="page-header">
+              <div>
+                <h3>Case Information</h3>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    startEditingPastoralCare(
+                      selectedPastoralCareProfile,
+                    );
+                    setSelectedPastoralCareProfile(null);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Edit Case
+                </button>
+              )}
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Care Type</label>
+                <strong>
+                  {selectedPastoralCareProfile.care_type}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Priority</label>
+                <strong>
+                  {selectedPastoralCareProfile.priority}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Status</label>
+                <strong>
+                  {selectedPastoralCareProfile.status}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Care Date</label>
+                <strong>
+                  {selectedPastoralCareProfile.care_date.slice(
+                    0,
+                    10,
+                  )}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Follow-up Date</label>
+                <strong>
+                  {selectedPastoralCareProfile.follow_up_date
+                    ? selectedPastoralCareProfile.follow_up_date.slice(
+                        0,
+                        10,
+                      )
+                    : 'Not scheduled'}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Assigned Leader</label>
+                <strong>
+                  {selectedPastoralCareProfile
+                    .assigned_leader_first_name
+                    ? selectedPastoralCareProfile
+                        .assigned_leader_first_name +
+                      ' ' +
+                      (selectedPastoralCareProfile
+                        .assigned_leader_last_name || '')
+                    : 'Not assigned'}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="member-form">
+            <h3>Subject</h3>
+            <p>
+              {selectedPastoralCareProfile.subject ||
+                'No subject recorded'}
+            </p>
+          </div>
+
+          <div className="member-form">
+            <h3>Confidential Notes</h3>
+            <p>
+              {selectedPastoralCareProfile.notes ||
+                'No notes recorded'}
+            </p>
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      PASTORAL CARE PAGE
      ========================= */
 
-  if (showPastoralCare) {
+  if (
+    showPastoralCare &&
+    (authUser.role === 'ADMIN' || authUser.role === 'LEADER')
+  ) {
     return (
       <div className="app">
         <header className="header">
@@ -7498,6 +7703,18 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                       <strong>Notes:</strong>{' '}
                       {record.notes || 'No notes'}
                     </p>
+                  </div>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() =>
+                        openPastoralCareProfile(record)
+                      }
+                    >
+                      View Case
+                    </button>
                   </div>
 
                   {authUser.role === 'ADMIN' && (
@@ -12189,20 +12406,23 @@ className="back-button no-print"
             Finance
           </button>
 
-          <button
-            className="sidebar-badge-button"
-            onClick={() => setShowPastoralCare(true)}
-          >
-            <span>♣</span>
-            <span className="sidebar-nav-label">
-              Pastoral Care
-            </span>
-            {dashboardPastoralFollowUps > 0 && (
-              <span className="sidebar-notification-badge">
-                {dashboardPastoralFollowUps}
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button
+              className="sidebar-badge-button"
+              onClick={() => setShowPastoralCare(true)}
+            >
+              <span>♣</span>
+              <span className="sidebar-nav-label">
+                Pastoral Care
               </span>
-            )}
-          </button>
+              {dashboardPastoralFollowUps > 0 && (
+                <span className="sidebar-notification-badge">
+                  {dashboardPastoralFollowUps}
+                </span>
+              )}
+            </button>
+          )}
 
           <button onClick={() => setShowLeadership(true)}>
             <span>♟</span>
@@ -12876,20 +13096,25 @@ className="back-button no-print"
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  className="attention-card"
-                  onClick={() => setShowPastoralCare(true)}
-                >
-                  <span className="attention-icon">♥</span>
-                  <div>
-                    <strong>
-                      {dashboardPastoralFollowUps}
-                    </strong>
-                    <h3>Pastoral Follow-ups</h3>
-                    <small>Due or overdue →</small>
-                  </div>
-                </button>
+                {(authUser.role === 'ADMIN' ||
+                  authUser.role === 'LEADER') && (
+                  <button
+                    type="button"
+                    className="attention-card"
+                    onClick={() =>
+                      setShowPastoralCare(true)
+                    }
+                  >
+                    <span className="attention-icon">♥</span>
+                    <div>
+                      <strong>
+                        {dashboardPastoralFollowUps}
+                      </strong>
+                      <h3>Pastoral Follow-ups</h3>
+                      <small>Due or overdue →</small>
+                    </div>
+                  </button>
+                )}
 
                 <button
                   type="button"

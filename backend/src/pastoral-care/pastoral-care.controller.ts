@@ -32,6 +32,7 @@ export class PastoralCareController {
     private readonly auditService: AuditService,
   ) {}
 
+  @Roles('ADMIN', 'LEADER')
   @Get()
   findAll(
     @Query() query: PastoralCareQueryDto,
@@ -42,6 +43,7 @@ export class PastoralCareController {
     );
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(
     @Param('id', new ParseUUIDPipe()) id: string,
