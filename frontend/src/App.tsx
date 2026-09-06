@@ -429,6 +429,20 @@ function App() {
     useState<AttendanceSessionDetail | null>(null);
   const [memberAttendanceHistory, setMemberAttendanceHistory] =
     useState<MemberAttendanceHistory | null>(null);
+
+  const [selectedMemberProfile, setSelectedMemberProfile] =
+    useState<Member | null>(null);
+  const [memberProfileAttendance, setMemberProfileAttendance] =
+    useState<MemberAttendanceHistory | null>(null);
+  const [memberProfileLeadership, setMemberProfileLeadership] =
+    useState<LeadershipAssignment[]>([]);
+  const [memberProfilePastoralCare, setMemberProfilePastoralCare] =
+    useState<PastoralCareRecord[]>([]);
+  const [memberProfileLoading, setMemberProfileLoading] =
+    useState(false);
+  const [memberProfileError, setMemberProfileError] =
+    useState('');
+
   const [attendanceReport, setAttendanceReport] =
     useState<AttendanceReport | null>(null);
   const [financeTransactions, setFinanceTransactions] =
@@ -2748,6 +2762,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
       const data: LoginResponse = await response.json();
 
+      setSelectedMemberProfile(null);
+      setMemberProfileAttendance(null);
+      setMemberProfileLeadership([]);
+      setMemberProfilePastoralCare([]);
+      window.scrollTo(0, 0);
+
       setAuthUser(data.user);
       setAccessToken(data.accessToken);
 
@@ -2774,10 +2794,17 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     localStorage.removeItem('clgf_access_token');
     localStorage.removeItem('clgf_auth_user');
 
+    setSelectedMemberProfile(null);
+    setMemberProfileAttendance(null);
+    setMemberProfileLeadership([]);
+    setMemberProfilePastoralCare([]);
+
     setAuthUser(null);
     setAccessToken('');
     setLoginPassword('');
     setLoginError('');
+
+    window.scrollTo(0, 0);
   };
 
   useEffect(() => {
@@ -3391,6 +3418,340 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     MEMBER PROFILE
+     ========================= */
+
+  if (selectedMemberProfile) {
+    const activeLeadership = memberProfileLeadership.filter(
+      (assignment) => assignment.status === 'ACTIVE',
+    );
+
+    const openPastoralCare = memberProfilePastoralCare.filter(
+      (record) =>
+        record.status === 'OPEN' ||
+        record.status === 'IN_PROGRESS' ||
+        record.status === 'FOLLOW_UP',
+    );
+
+    const latestPastoralCare =
+      [...memberProfilePastoralCare].sort(
+        (a, b) =>
+          new Date(b.care_date).getTime() -
+          new Date(a.care_date).getTime(),
+      )[0];
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Member Profile</h2>
+              <p className="welcome">
+                Membership and church involvement overview
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedMemberProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Members
+            </button>
+          </div>
+
+          <section className="member-profile-hero">
+            <div>
+              <p className="member-profile-label">
+                CLGF MEMBER
+              </p>
+
+              <h2>
+                {selectedMemberProfile.first_name}{' '}
+                {selectedMemberProfile.last_name}
+              </h2>
+
+              <p className="membership-number">
+                {selectedMemberProfile.membership_number}
+              </p>
+            </div>
+
+            <span
+              className={
+                selectedMemberProfile.status === 'ACTIVE'
+                  ? 'status active'
+                  : 'status inactive'
+              }
+            >
+              {selectedMemberProfile.status}
+            </span>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Personal Information</h3>
+                <p>Contact and membership details</p>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    const member = selectedMemberProfile;
+                    setSelectedMemberProfile(null);
+                    editMember(member);
+                  }}
+                >
+                  Edit Member
+                </button>
+              )}
+            </div>
+
+            <div className="member-profile-grid">
+              <div>
+                <span>Phone</span>
+                <strong>
+                  {selectedMemberProfile.phone || 'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Email</span>
+                <strong>
+                  {selectedMemberProfile.email || 'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Date of Birth</span>
+                <strong>
+                  {selectedMemberProfile.date_of_birth
+                    ? selectedMemberProfile.date_of_birth.slice(0, 10)
+                    : 'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Gender</span>
+                <strong>
+                  {selectedMemberProfile.gender || 'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Marital Status</span>
+                <strong>
+                  {selectedMemberProfile.marital_status ||
+                    'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Address</span>
+                <strong>
+                  {selectedMemberProfile.address || 'Not provided'}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          {memberProfileLoading && (
+            <div className="member-profile-loading">
+              Loading church involvement...
+            </div>
+          )}
+
+          {memberProfileError && (
+            <p className="error">{memberProfileError}</p>
+          )}
+
+          {!memberProfileLoading && (
+            <>
+              <section className="member-profile-section">
+                <div className="member-profile-heading">
+                  <div>
+                    <h3>Attendance</h3>
+                    <p>Member attendance summary</p>
+                  </div>
+                </div>
+
+                {memberProfileAttendance ? (
+                  <>
+                    <div className="member-profile-stats">
+                      <div>
+                        <span>Total Sessions</span>
+                        <strong>
+                          {memberProfileAttendance.summary.totalSessions}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Present</span>
+                        <strong>
+                          {memberProfileAttendance.summary.present}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Absent</span>
+                        <strong>
+                          {memberProfileAttendance.summary.absent}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Not Marked</span>
+                        <strong>
+                          {memberProfileAttendance.summary.notMarked}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Attendance Rate</span>
+                        <strong>
+                          {memberProfileAttendance.summary.attendanceRate}%
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="member-profile-history">
+                      <h4>Recent Attendance</h4>
+
+                      {memberProfileAttendance.history.length === 0 ? (
+                        <p>No attendance history yet.</p>
+                      ) : (
+                        memberProfileAttendance.history
+                          .slice(0, 5)
+                          .map((item) => (
+                            <div
+                              className="member-profile-history-row"
+                              key={item.session_id}
+                            >
+                              <div>
+                                <strong>{item.service_type}</strong>
+                                <span>
+                                  {item.service_date.slice(0, 10)}
+                                </span>
+                              </div>
+
+                              <strong>
+                                {item.attendance_status}
+                              </strong>
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p>No attendance information available.</p>
+                )}
+              </section>
+
+              <section className="member-profile-section">
+                <div className="member-profile-heading">
+                  <div>
+                    <h3>Leadership & Ministry</h3>
+                    <p>Current leadership assignments</p>
+                  </div>
+                </div>
+
+                {activeLeadership.length === 0 ? (
+                  <p>
+                    No active leadership assignment recorded.
+                  </p>
+                ) : (
+                  <div className="member-profile-role-list">
+                    {activeLeadership.map((assignment) => (
+                      <div
+                        className="member-profile-role"
+                        key={assignment.id}
+                      >
+                        <div>
+                          <strong>
+                            {assignment.role_title}
+                          </strong>
+                          <span>
+                            {assignment.ministry_name ||
+                              'Church Leadership'}
+                          </span>
+                        </div>
+
+                        {assignment.responsibility && (
+                          <p>{assignment.responsibility}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="member-profile-section">
+                <div className="member-profile-heading">
+                  <div>
+                    <h3>Pastoral Care</h3>
+                    <p>
+                      Care summary without private notes
+                    </p>
+                  </div>
+                </div>
+
+                <div className="member-profile-stats member-profile-stats-small">
+                  <div>
+                    <span>Total Records</span>
+                    <strong>
+                      {memberProfilePastoralCare.length}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Open / Follow-up</span>
+                    <strong>{openPastoralCare.length}</strong>
+                  </div>
+
+                  <div>
+                    <span>Latest Care Date</span>
+                    <strong className="member-profile-date">
+                      {latestPastoralCare
+                        ? latestPastoralCare.care_date.slice(0, 10)
+                        : 'None'}
+                    </strong>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  /* =========================
      MEMBERS PAGE
      ========================= */
 
@@ -3522,14 +3883,23 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     {member.address || 'Not provided'}
                   </p>
                 </div>
-                {authUser.role === 'ADMIN' && (
-                  <div className="member-actions">
-                    <button
-                      className="edit-button"
-                      onClick={() => editMember(member)}
-                    >
-                      Edit Member
-                    </button>
+                <div className="member-actions">
+                  <button
+                    type="button"
+                    className="back-button"
+                    onClick={() => openMemberProfile(member)}
+                  >
+                    View Profile
+                  </button>
+
+                  {authUser.role === 'ADMIN' && (
+                    <>
+                      <button
+                        className="edit-button"
+                        onClick={() => editMember(member)}
+                      >
+                        Edit Member
+                      </button>
 
                     {member.status === 'ACTIVE' ? (
                       <button
@@ -3546,8 +3916,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                         Reactivate Member
                       </button>
                     )}
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
                 ))}
               </div>
@@ -4110,6 +4481,73 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       alert('Unable to load attendance report.');
     }
   };
+  async function openMemberProfile(member: Member) {
+    window.scrollTo(0, 0);
+    setSelectedMemberProfile(member);
+    setMemberProfileLoading(true);
+    setMemberProfileError('');
+    setMemberProfileAttendance(null);
+    setMemberProfileLeadership([]);
+    setMemberProfilePastoralCare([]);
+
+    try {
+      const [
+        attendanceResponse,
+        leadershipResponse,
+        pastoralResponse,
+      ] = await Promise.all([
+        authFetch(
+          `${API_BASE_URL}/attendance/member/${member.id}/history`,
+        ),
+        authFetch(`${API_BASE_URL}/leadership`),
+        authFetch(`${API_BASE_URL}/pastoral-care`),
+      ]);
+
+      if (
+        !attendanceResponse.ok ||
+        !leadershipResponse.ok ||
+        !pastoralResponse.ok
+      ) {
+        throw new Error('Failed to load member profile');
+      }
+
+      const [
+        attendanceData,
+        leadershipData,
+        pastoralData,
+      ] = await Promise.all([
+        attendanceResponse.json(),
+        leadershipResponse.json(),
+        pastoralResponse.json(),
+      ]);
+
+      setMemberProfileAttendance(attendanceData);
+
+      setMemberProfileLeadership(
+        Array.isArray(leadershipData)
+          ? leadershipData.filter(
+              (item) => item.member_id === member.id,
+            )
+          : [],
+      );
+
+      setMemberProfilePastoralCare(
+        Array.isArray(pastoralData)
+          ? pastoralData.filter(
+              (item) => item.member_id === member.id,
+            )
+          : [],
+      );
+    } catch (err) {
+      console.error(err);
+      setMemberProfileError(
+        'Unable to load the complete member profile.',
+      );
+    } finally {
+      setMemberProfileLoading(false);
+    }
+  }
+
   const openMemberAttendanceHistory = async (memberId: string) => {
     try {
       const response = await authFetch(
