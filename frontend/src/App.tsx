@@ -732,6 +732,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [formError, setFormError] = useState('');
   const [editingHomeCell, setEditingHomeCell] =
     useState<HomeCell | null>(null);
+  const [selectedHomeCellProfile, setSelectedHomeCellProfile] =
+    useState<HomeCell | null>(null);
   const startEditingFinance = (
     transaction: FinanceTransaction,
   ) => {
@@ -2805,6 +2807,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setMemberProfileLeadership([]);
     setMemberProfilePastoralCare([]);
     setSelectedMinistryProfile(null);
+    setSelectedHomeCellProfile(null);
 
     setAuthUser(null);
     setAccessToken('');
@@ -4086,6 +4089,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       alert('Unable to delete ministry.');
     }
   };
+  const openHomeCellProfile = (homeCell: HomeCell) => {
+    setSelectedHomeCellProfile(homeCell);
+    window.scrollTo(0, 0);
+  };
+
   const editHomeCell = (homeCell: HomeCell) => {
     setEditingHomeCell(homeCell);
     setHomeCellName(homeCell.name);
@@ -10680,6 +10688,221 @@ className="back-button no-print"
   }
 
   /* =========================
+     HOME CELL PROFILE
+     ========================= */
+
+  if (selectedHomeCellProfile && showHomeCells) {
+    const homeCellLeaderMember = members.find(
+      (member) =>
+        member.id === selectedHomeCellProfile.leader_id,
+    );
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Home Cell Profile</h2>
+              <p className="welcome">
+                Home cell details, leader and meeting schedule
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedHomeCellProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Home Cells
+            </button>
+          </div>
+
+          <section className="member-profile-hero">
+            <div>
+              <span className="member-profile-label">
+                Home Cell
+              </span>
+
+              <h2>{selectedHomeCellProfile.name}</h2>
+
+              <p>
+                {selectedHomeCellProfile.location ||
+                  'No location has been provided.'}
+              </p>
+            </div>
+
+            <span
+              className={
+                selectedHomeCellProfile.status === 'ACTIVE'
+                  ? 'status active'
+                  : 'status inactive'
+              }
+            >
+              {selectedHomeCellProfile.status}
+            </span>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Home Cell Information</h3>
+                <p>Current home cell configuration</p>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    editHomeCell(selectedHomeCellProfile);
+                    setSelectedHomeCellProfile(null);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Edit Home Cell
+                </button>
+              )}
+            </div>
+
+            <div className="member-profile-grid">
+              <div>
+                <span>Location</span>
+                <strong>
+                  {selectedHomeCellProfile.location ||
+                    'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Meeting Day</span>
+                <strong>
+                  {selectedHomeCellProfile.meeting_day ||
+                    'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Meeting Time</span>
+                <strong>
+                  {selectedHomeCellProfile.meeting_time ||
+                    'Not provided'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Assigned Leader</span>
+                <strong>
+                  {selectedHomeCellProfile.leader_name?.trim() ||
+                    'No leader assigned'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Status</span>
+                <strong>
+                  {selectedHomeCellProfile.status}
+                </strong>
+              </div>
+
+              <div>
+                <span>Public Website</span>
+                <strong>
+                  {selectedHomeCellProfile.public_visible
+                    ? 'Visible'
+                    : 'Hidden'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Display Order</span>
+                <strong>
+                  {selectedHomeCellProfile.display_order}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Home Cell Leader</h3>
+                <p>
+                  Member currently assigned to lead this home cell
+                </p>
+              </div>
+            </div>
+
+            {homeCellLeaderMember ? (
+              <div className="member-profile-grid">
+                <div>
+                  <span>Name</span>
+                  <strong>
+                    {homeCellLeaderMember.first_name}{' '}
+                    {homeCellLeaderMember.last_name}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Membership Number</span>
+                  <strong>
+                    {homeCellLeaderMember.membership_number}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Phone</span>
+                  <strong>
+                    {homeCellLeaderMember.phone ||
+                      'Not provided'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Email</span>
+                  <strong>
+                    {homeCellLeaderMember.email ||
+                      'Not provided'}
+                  </strong>
+                </div>
+              </div>
+            ) : (
+              <p>No home cell leader is currently assigned.</p>
+            )}
+          </section>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      HOME CELLS PAGE
      ========================= */
 
@@ -10937,6 +11160,16 @@ className="back-button no-print"
                       <strong>Display Order:</strong>{' '}
                       {homeCell.display_order ?? 0}
                     </p>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() => openHomeCellProfile(homeCell)}
+                    >
+                      View Profile
+                    </button>
+                  </div>
 
                   {authUser.role === 'ADMIN' && (
                     <div className="member-actions">
