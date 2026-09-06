@@ -722,6 +722,8 @@ function App() {
   const [ministrySaving, setMinistrySaving] = useState(false);
   const [ministryError, setMinistryError] = useState('');
   const [editingMinistry, setEditingMinistry] = useState<Ministry | null>(null);
+  const [selectedMinistryProfile, setSelectedMinistryProfile] =
+    useState<Ministry | null>(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [search, setSearch] = useState('');
 const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -2802,6 +2804,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setMemberProfileAttendance(null);
     setMemberProfileLeadership([]);
     setMemberProfilePastoralCare([]);
+    setSelectedMinistryProfile(null);
 
     setAuthUser(null);
     setAccessToken('');
@@ -3936,6 +3939,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   }
 
+
+  const openMinistryProfile = (ministry: Ministry) => {
+    setSelectedMinistryProfile(ministry);
+    window.scrollTo(0, 0);
+  };
 
   const saveMinistry = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -10960,6 +10968,278 @@ className="back-button no-print"
     );
   }
   /* =========================
+     MINISTRY PROFILE
+     ========================= */
+
+  if (selectedMinistryProfile && showMinistries) {
+    const ministryAssignments = leadershipAssignments.filter(
+      (assignment) =>
+        assignment.ministry_id === selectedMinistryProfile.id,
+    );
+
+    const activeMinistryAssignments = ministryAssignments.filter(
+      (assignment) => assignment.status === 'ACTIVE',
+    );
+
+    const ministryLeaderMember = members.find(
+      (member) =>
+        member.id === selectedMinistryProfile.leader_id,
+    );
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Ministry Profile</h2>
+              <p className="welcome">
+                Ministry details, leadership and responsibility
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedMinistryProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Ministries
+            </button>
+          </div>
+
+          <section className="member-profile-hero">
+            <div>
+              <span className="member-profile-label">
+                Ministry
+              </span>
+
+              <h2>{selectedMinistryProfile.name}</h2>
+
+              <p>
+                {selectedMinistryProfile.description ||
+                  'No ministry description has been provided.'}
+              </p>
+            </div>
+
+            <span
+              className={
+                selectedMinistryProfile.status === 'ACTIVE'
+                  ? 'status active'
+                  : 'status inactive'
+              }
+            >
+              {selectedMinistryProfile.status}
+            </span>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Ministry Information</h3>
+                <p>Current ministry configuration</p>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    editMinistry(selectedMinistryProfile);
+                    setSelectedMinistryProfile(null);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Edit Ministry
+                </button>
+              )}
+            </div>
+
+            <div className="member-profile-grid">
+              <div>
+                <span>Status</span>
+                <strong>
+                  {selectedMinistryProfile.status}
+                </strong>
+              </div>
+
+              <div>
+                <span>Public Website</span>
+                <strong>
+                  {selectedMinistryProfile.public_visible
+                    ? 'Visible'
+                    : 'Hidden'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Display Order</span>
+                <strong>
+                  {selectedMinistryProfile.display_order}
+                </strong>
+              </div>
+
+              <div>
+                <span>Assigned Leader</span>
+                <strong>
+                  {selectedMinistryProfile.leader_name?.trim() ||
+                    'No leader assigned'}
+                </strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Ministry Leader</h3>
+                <p>Member currently assigned as ministry leader</p>
+              </div>
+            </div>
+
+            {ministryLeaderMember ? (
+              <div className="member-profile-grid">
+                <div>
+                  <span>Name</span>
+                  <strong>
+                    {ministryLeaderMember.first_name}{' '}
+                    {ministryLeaderMember.last_name}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Membership Number</span>
+                  <strong>
+                    {ministryLeaderMember.membership_number}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Phone</span>
+                  <strong>
+                    {ministryLeaderMember.phone ||
+                      'Not provided'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Email</span>
+                  <strong>
+                    {ministryLeaderMember.email ||
+                      'Not provided'}
+                  </strong>
+                </div>
+              </div>
+            ) : (
+              <p>No ministry leader is currently assigned.</p>
+            )}
+          </section>
+
+          <section className="member-profile-section">
+            <div className="member-profile-heading">
+              <div>
+                <h3>Leadership Assignments</h3>
+                <p>
+                  Roles connected directly to this ministry
+                </p>
+              </div>
+            </div>
+
+            <div className="member-profile-stats member-profile-stats-small">
+              <div>
+                <span>Total Assignments</span>
+                <strong>{ministryAssignments.length}</strong>
+              </div>
+
+              <div>
+                <span>Active</span>
+                <strong>{activeMinistryAssignments.length}</strong>
+              </div>
+
+              <div>
+                <span>Inactive</span>
+                <strong>
+                  {ministryAssignments.length -
+                    activeMinistryAssignments.length}
+                </strong>
+              </div>
+            </div>
+
+            {ministryAssignments.length === 0 ? (
+              <p>
+                No leadership assignments are linked to this ministry.
+              </p>
+            ) : (
+              <div className="member-profile-role-list">
+                {ministryAssignments.map((assignment) => (
+                  <div
+                    className="member-profile-role"
+                    key={assignment.id}
+                  >
+                    <div>
+                      <strong>
+                        {assignment.first_name}{' '}
+                        {assignment.last_name}
+                      </strong>
+
+                      <span>
+                        {assignment.role_title} ·{' '}
+                        {assignment.status}
+                      </span>
+                    </div>
+
+                    {assignment.responsibility && (
+                      <p>{assignment.responsibility}</p>
+                    )}
+
+                    {(assignment.start_date ||
+                      assignment.end_date) && (
+                      <p>
+                        {assignment.start_date
+                          ? `Started: ${assignment.start_date.slice(0, 10)}`
+                          : 'Start date not recorded'}
+                        {assignment.end_date
+                          ? ` · Ended: ${assignment.end_date.slice(0, 10)}`
+                          : ''}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+  /* =========================
      MINISTRIES PAGE
      ========================= */
 
@@ -11197,6 +11477,16 @@ className="back-button no-print"
                         </select>
                       </div>
                     )}
+                  </div>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() => openMinistryProfile(ministry)}
+                    >
+                      View Profile
+                    </button>
                   </div>
 
                   {authUser.role === 'ADMIN' && (
