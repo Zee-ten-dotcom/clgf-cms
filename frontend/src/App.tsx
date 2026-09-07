@@ -1431,10 +1431,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       financialReportTo,
     );
 
-    loadGivingSummary(
-      financialReportFrom,
-      financialReportTo,
-    );
+    if (authUser.role === 'ADMIN') {
+      loadGivingSummary(
+        financialReportFrom,
+        financialReportTo,
+      );
+    }
   };
 
   const loadAttendance = () => {
@@ -6025,7 +6027,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      REPORTS & ADMINISTRATION PAGE
      ========================= */
 
-  if (showReports) {
+  if (
+    showReports &&
+    (authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER')
+  ) {
     return (
       <div
           className={
@@ -6213,13 +6219,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 </strong>
               </div>
 
-              <div className="event-stat-card">
-                <div>🎁</div>
-                <h3>Total Giving</h3>
-                <strong>
-                  R {reportTotalGiving.toFixed(2)}
-                </strong>
-              </div>
+              {authUser.role === 'ADMIN' && (
+                <div className="event-stat-card">
+                  <div>🎁</div>
+                  <h3>Total Giving</h3>
+                  <strong>
+                    R {reportTotalGiving.toFixed(2)}
+                  </strong>
+                </div>
+              )}
             </div>
           </div>
 
@@ -6417,7 +6425,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   setFinancialReportFrom('');
                   setFinancialReportTo('');
                   loadFinanceSummary();
-                  loadGivingSummary();
+
+                  if (authUser.role === 'ADMIN') {
+                    loadGivingSummary();
+                  }
                 }}
               >
                 Clear Dates
@@ -6459,13 +6470,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     </strong>
                   </div>
 
-                  <div className="event-stat-card">
-                    <div>🎁</div>
-                    <h3>Giving</h3>
-                    <strong>
-                      R {(givingSummary?.totalGiving ?? 0).toFixed(2)}
-                    </strong>
-                  </div>
+                  {authUser.role === 'ADMIN' && (
+                    <div className="event-stat-card">
+                      <div>🎁</div>
+                      <h3>Giving</h3>
+                      <strong>
+                        R {(givingSummary?.totalGiving ?? 0).toFixed(2)}
+                      </strong>
+                    </div>
+                  )}
                 </div>
 
                 <div className="members-list">
@@ -6509,7 +6522,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   )}
                 </div>
 
-                {givingSummary && (
+                {authUser.role === 'ADMIN' &&
+                  givingSummary && (
                   <div className="members-list">
                     <h3>Giving Breakdown</h3>
 
@@ -12678,10 +12692,13 @@ className="back-button no-print"
             Leadership
           </button>
 
-          <button onClick={() => setShowReports(true)}>
-            <span>▤</span>
-            Reports
-          </button>
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button onClick={() => setShowReports(true)}>
+              <span>▤</span>
+              Reports
+            </button>
+          )}
 
           {authUser.role === 'ADMIN' && (
             <>

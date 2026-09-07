@@ -45,6 +45,7 @@ export class AttendanceController {
     );
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get('report')
   getAttendanceReport(
     @Query() query: DateRangeQueryDto,
