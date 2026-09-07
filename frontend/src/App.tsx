@@ -2878,10 +2878,16 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       return;
     }
 
-    loadFinanceTransactions();
+    if (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    ) {
+      loadFinanceTransactions();
+      loadFinanceSummary();
+    }
+
     loadGivingRecords();
     loadGivingSummary();
-    loadFinanceSummary();
 
     loadEvents();
     loadPastoralCare();
@@ -9652,7 +9658,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      FINANCE PAGE
      ========================= */
 
-  if (showFinance) {
+  if (
+    showFinance &&
+    (authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER')
+  ) {
     return (
       <div className="app">
         <header className="header">
@@ -12630,10 +12640,13 @@ className="back-button no-print"
             Giving
           </button>
 
-          <button onClick={() => setShowFinance(true)}>
-            <span>▥</span>
-            Finance
-          </button>
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button onClick={() => setShowFinance(true)}>
+              <span>▥</span>
+              Finance
+            </button>
+          )}
 
           {(authUser.role === 'ADMIN' ||
             authUser.role === 'LEADER') && (

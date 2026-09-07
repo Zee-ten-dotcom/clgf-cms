@@ -30,6 +30,7 @@ export class FinanceController {
     private readonly auditService: AuditService,
   ) {}
 
+  @Roles('ADMIN', 'LEADER')
   @Get()
   findAll(
     @Query() query: DateRangeQueryDto,
@@ -40,6 +41,7 @@ export class FinanceController {
     );
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get('summary')
   getSummary(
     @Query() query: DateRangeQueryDto,
@@ -50,6 +52,7 @@ export class FinanceController {
     );
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.financeService.findOne(id);
