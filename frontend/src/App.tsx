@@ -2908,12 +2908,18 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadWeeklyServices();
     }
 
+    if (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    ) {
+      loadAnnouncements();
+    }
+
     if (authUser.role === 'ADMIN') {
       loadPublicPrayerRequests();
       loadContactEnquiries();
       loadSystemUsers();
       loadRecentAuditLogs();
-      loadAnnouncements();
     }
   }, [authUser, accessToken]);
 
@@ -11115,7 +11121,13 @@ className="back-button no-print"
      ANNOUNCEMENTS PAGE
      ========================= */
 
-  if (showAnnouncements) {
+  if (
+    showAnnouncements &&
+    (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    )
+  ) {
     return (
       <div className="app">
         <header className="header">
@@ -12723,18 +12735,23 @@ className="back-button no-print"
             </button>
           )}
 
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button
+              onClick={() => {
+                loadAnnouncements();
+                setShowAnnouncements(true);
+              }}
+            >
+              <span>!</span>
+              Announcements
+            </button>
+          )}
+
           {authUser.role === 'ADMIN' && (
             <>
-              <button
-                onClick={() => {
-                  loadAnnouncements();
-                  setShowAnnouncements(true);
-                }}
-              >
-                <span>!</span>
-                Announcements
-              </button>
-
               <button
                 className="sidebar-badge-button"
                 onClick={() => {

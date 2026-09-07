@@ -29,11 +29,13 @@ export class AnnouncementsController {
     private readonly auditService: AuditService,
   ) {}
 
+  @Roles('ADMIN', 'LEADER')
   @Get()
   findAll() {
     return this.announcementsService.findAll();
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(
     @Param('id', new ParseUUIDPipe()) id: string,
