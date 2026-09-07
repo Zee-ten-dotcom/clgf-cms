@@ -523,6 +523,8 @@ function App() {
 
   const [leadershipAssignments, setLeadershipAssignments] =
     useState<LeadershipAssignment[]>([]);
+  const [selectedLeadershipProfile, setSelectedLeadershipProfile] =
+    useState<LeadershipAssignment | null>(null);
   const [showLeadership, setShowLeadership] = useState(false);
   const [showReports, setShowReports] = useState(false);
 
@@ -2142,6 +2144,13 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   };
 
+  const openLeadershipProfile = (
+    assignment: LeadershipAssignment,
+  ) => {
+    setSelectedLeadershipProfile(assignment);
+    window.scrollTo(0, 0);
+  };
+
   const startEditingLeadership = (
     assignment: LeadershipAssignment,
   ) => {
@@ -2826,6 +2835,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setSelectedMinistryProfile(null);
     setSelectedHomeCellProfile(null);
     setSelectedPastoralCareProfile(null);
+    setSelectedLeadershipProfile(null);
 
     setAuthUser(null);
     setAccessToken('');
@@ -6543,6 +6553,214 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      LEADERSHIP PAGE
      ========================= */
 
+  /* =========================
+     LEADERSHIP PROFILE
+     ========================= */
+
+  if (selectedLeadershipProfile && showLeadership) {
+    const leadershipActive =
+      selectedLeadershipProfile.status === 'ACTIVE';
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Leadership Profile</h2>
+              <p className="welcome">
+                Leadership role and assignment details
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setSelectedLeadershipProfile(null);
+                window.scrollTo(0, 0);
+              }}
+            >
+              ← Leadership
+            </button>
+          </div>
+
+          <div className="member-profile-hero">
+            <div>
+              {selectedLeadershipProfile.photo_url && (
+                <img
+                  src={selectedLeadershipProfile.photo_url}
+                  alt={
+                    selectedLeadershipProfile.first_name +
+                    ' ' +
+                    selectedLeadershipProfile.last_name
+                  }
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    marginBottom: '16px',
+                  }}
+                />
+              )}
+
+              <p className="membership-number">
+                {selectedLeadershipProfile.membership_number}
+              </p>
+
+              <h2>
+                {selectedLeadershipProfile.first_name}{' '}
+                {selectedLeadershipProfile.last_name}
+              </h2>
+
+              <p>
+                {selectedLeadershipProfile.role_title}
+              </p>
+            </div>
+
+            <span
+              className={
+                leadershipActive
+                  ? 'status active'
+                  : 'status inactive'
+              }
+            >
+              {selectedLeadershipProfile.status}
+            </span>
+          </div>
+
+          <div className="member-form">
+            <div className="page-header">
+              <div>
+                <h3>Leadership Assignment</h3>
+              </div>
+
+              {authUser.role === 'ADMIN' && (
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => {
+                    startEditingLeadership(
+                      selectedLeadershipProfile,
+                    );
+                    setSelectedLeadershipProfile(null);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Edit Assignment
+                </button>
+              )}
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Role Title</label>
+                <strong>
+                  {selectedLeadershipProfile.role_title}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Role Type</label>
+                <strong>
+                  {selectedLeadershipProfile.role_type}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Ministry</label>
+                <strong>
+                  {selectedLeadershipProfile.ministry_name ||
+                    'Church-wide'}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Status</label>
+                <strong>
+                  {selectedLeadershipProfile.status}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Start Date</label>
+                <strong>
+                  {selectedLeadershipProfile.start_date
+                    ? selectedLeadershipProfile.start_date.slice(
+                        0,
+                        10,
+                      )
+                    : 'Not recorded'}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>End Date</label>
+                <strong>
+                  {selectedLeadershipProfile.end_date
+                    ? selectedLeadershipProfile.end_date.slice(
+                        0,
+                        10,
+                      )
+                    : 'Ongoing'}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Website</label>
+                <strong>
+                  {selectedLeadershipProfile.public_visible
+                    ? 'Public'
+                    : 'Private'}
+                </strong>
+              </div>
+
+              <div className="form-group">
+                <label>Display Order</label>
+                <strong>
+                  {selectedLeadershipProfile.display_order ?? 0}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="member-form">
+            <h3>Responsibility</h3>
+            <p>
+              {selectedLeadershipProfile.responsibility ||
+                'No responsibility recorded.'}
+            </p>
+          </div>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
   if (showLeadership) {
     return (
       <div className="app">
@@ -6918,6 +7136,17 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                       {assignment.responsibility}
                     </p>
                   )}
+
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openLeadershipProfile(assignment)
+                      }
+                    >
+                      View Profile
+                    </button>
+                  </div>
 
                   {authUser.role === 'ADMIN' && (
                     <div className="form-actions">
