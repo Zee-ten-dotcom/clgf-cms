@@ -1431,7 +1431,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       financialReportTo,
     );
 
-    if (authUser.role === 'ADMIN') {
+    if (authUser?.role === 'ADMIN') {
       loadGivingSummary(
         financialReportFrom,
         financialReportTo,
@@ -2901,12 +2901,18 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     loadHomeCells();
     loadAttendance();
 
+    if (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    ) {
+      loadWeeklyServices();
+    }
+
     if (authUser.role === 'ADMIN') {
       loadPublicPrayerRequests();
       loadContactEnquiries();
       loadSystemUsers();
       loadRecentAuditLogs();
-      loadWeeklyServices();
       loadAnnouncements();
     }
   }, [authUser, accessToken]);
@@ -10820,7 +10826,11 @@ className="back-button no-print"
      WEEKLY SERVICES PAGE
      ========================= */
 
-  if (showWeeklyServices) {
+  if (
+    showWeeklyServices &&
+    (authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER')
+  ) {
     return (
       <div className="app">
         <header className="header">
@@ -12700,18 +12710,21 @@ className="back-button no-print"
             </button>
           )}
 
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button
+              onClick={() => {
+                loadWeeklyServices();
+                setShowWeeklyServices(true);
+              }}
+            >
+              <span>◷</span>
+              Weekly Services
+            </button>
+          )}
+
           {authUser.role === 'ADMIN' && (
             <>
-              <button
-                onClick={() => {
-                  loadWeeklyServices();
-                  setShowWeeklyServices(true);
-                }}
-              >
-                <span>◷</span>
-                Weekly Services
-              </button>
-
               <button
                 onClick={() => {
                   loadAnnouncements();
