@@ -205,6 +205,30 @@ export class UsersService {
         throw new BadRequestException('Invalid role');
       }
 
+      if (
+        existing.role === 'ADMIN' &&
+        existing.is_active &&
+        role !== 'ADMIN'
+      ) {
+        const adminResult = await client.query(
+          `
+          SELECT COUNT(*)::int AS count
+          FROM users
+          WHERE role = 'ADMIN'
+            AND is_active = true
+          `,
+        );
+
+        const activeAdmins =
+          Number(adminResult.rows[0]?.count || 0);
+
+        if (activeAdmins <= 1) {
+          throw new BadRequestException(
+            'The last active administrator cannot be changed to another role',
+          );
+        }
+      }
+
       const duplicate = await client.query(
         `
         SELECT id
