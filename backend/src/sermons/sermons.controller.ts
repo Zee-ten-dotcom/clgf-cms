@@ -36,11 +36,13 @@ export class SermonsController {
     private readonly sermonMediaService: SermonMediaService,
   ) {}
 
+  @Roles('ADMIN', 'LEADER')
   @Get()
   findAll() {
     return this.sermonsService.findAll();
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(
     @Param('id', new ParseUUIDPipe()) id: string,

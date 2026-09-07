@@ -2913,6 +2913,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       authUser.role === 'LEADER'
     ) {
       loadAnnouncements();
+      loadSermons();
     }
 
     if (authUser.role === 'ADMIN') {
@@ -8770,7 +8771,13 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      SERMONS & RESOURCES PAGE
      ========================= */
 
-  if (showSermons) {
+  if (
+    showSermons &&
+    (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    )
+  ) {
     const publishedSermons = sermons.filter(
       (sermon) => sermon.status === 'PUBLISHED',
     ).length;
@@ -12653,15 +12660,20 @@ className="back-button no-print"
             Attendance
           </button>
 
-          <button
-            onClick={() => {
-              loadSermons();
-              setShowSermons(true);
-            }}
-          >
-            <span>▤</span>
-            Sermons & Resources
-          </button>
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button
+              onClick={() => {
+                loadSermons();
+                setShowSermons(true);
+              }}
+            >
+              <span>▤</span>
+              Sermons & Resources
+            </button>
+          )}
 
           <button
             className="sidebar-badge-button"
