@@ -2886,8 +2886,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadFinanceSummary();
     }
 
-    loadGivingRecords();
-    loadGivingSummary();
+    if (authUser.role === 'ADMIN') {
+      loadGivingRecords();
+      loadGivingSummary();
+    }
 
     loadEvents();
     loadPastoralCare();
@@ -9259,7 +9261,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      GIVING PAGE
      ========================= */
 
-  if (showGiving) {
+  if (
+    showGiving &&
+    authUser.role === 'ADMIN'
+  ) {
     return (
       <div className="app">
         <header className="header">
@@ -12635,10 +12640,12 @@ className="back-button no-print"
             )}
           </button>
 
-          <button onClick={() => setShowGiving(true)}>
-            <span>♥</span>
-            Giving
-          </button>
+          {authUser.role === 'ADMIN' && (
+            <button onClick={() => setShowGiving(true)}>
+              <span>♥</span>
+              Giving
+            </button>
+          )}
 
           {(authUser.role === 'ADMIN' ||
             authUser.role === 'LEADER') && (

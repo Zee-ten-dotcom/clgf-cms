@@ -22,6 +22,7 @@ import { CreateGivingDto } from './dto/create-giving.dto';
 import { UpdateGivingDto } from './dto/update-giving.dto';
 import { DateRangeQueryDto } from '../common/dto/date-range-query.dto';
 
+@Roles('ADMIN')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('giving')
 export class GivingController {
