@@ -3586,9 +3586,132 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   });
 
+  const globalSearchText = search.trim().toLowerCase();
 
-  const dashboardMemberSearchResults = search.trim()
-    ? filteredMembers.slice(0, 5)
+  const includesGlobalSearch = (...values: unknown[]) =>
+    values.some((value) =>
+      String(value ?? '')
+        .toLowerCase()
+        .includes(globalSearchText),
+    );
+
+  const globalSearchResults = globalSearchText
+    ? [
+        ...members
+          .filter((member) =>
+            includesGlobalSearch(
+              member.first_name,
+              member.last_name,
+              member.membership_number,
+              member.phone,
+              member.email,
+            ),
+          )
+          .slice(0, 3)
+          .map((member) => ({
+            id: `member-${member.id}`,
+            type: 'Member',
+            title: `${member.first_name} ${member.last_name}`,
+            detail: member.membership_number || '',
+            open: () => setShowMembers(true),
+          })),
+
+        ...visitors
+          .filter((visitor) =>
+            includesGlobalSearch(
+              visitor.first_name,
+              visitor.last_name,
+              visitor.phone,
+              visitor.email,
+              visitor.invited_by,
+              visitor.visit_context,
+              visitor.follow_up_status,
+            ),
+          )
+          .slice(0, 3)
+          .map((visitor) => ({
+            id: `visitor-${visitor.id}`,
+            type: 'Visitor',
+            title: `${visitor.first_name} ${visitor.last_name}`,
+            detail: visitor.follow_up_status || visitor.status,
+            open: () => setShowVisitors(true),
+          })),
+
+        ...ministries
+          .filter((ministry) =>
+            includesGlobalSearch(
+              ministry.name,
+              ministry.description,
+              ministry.status,
+            ),
+          )
+          .slice(0, 3)
+          .map((ministry) => ({
+            id: `ministry-${ministry.id}`,
+            type: 'Ministry',
+            title: ministry.name,
+            detail: ministry.status || '',
+            open: () => setShowMinistries(true),
+          })),
+
+        ...homeCells
+          .filter((cell) =>
+            includesGlobalSearch(
+              cell.name,
+              cell.location,
+              cell.meeting_day,
+              cell.status,
+            ),
+          )
+          .slice(0, 3)
+          .map((cell) => ({
+            id: `home-cell-${cell.id}`,
+            type: 'Home Cell',
+            title: cell.name,
+            detail: cell.location || '',
+            open: () => setShowHomeCells(true),
+          })),
+
+        ...events
+          .filter((event) =>
+            includesGlobalSearch(
+              event.title,
+              event.description,
+              event.location,
+              event.event_type,
+              event.status,
+            ),
+          )
+          .slice(0, 3)
+          .map((event) => ({
+            id: `event-${event.id}`,
+            type: 'Event',
+            title: event.title,
+            detail: event.event_date || '',
+            open: () => setShowEvents(true),
+          })),
+
+        ...leadershipAssignments
+          .filter((record) =>
+            includesGlobalSearch(
+              record.first_name,
+              record.last_name,
+              record.membership_number,
+              record.role_title,
+              record.role_type,
+              record.ministry_name,
+            ),
+          )
+          .slice(0, 3)
+          .map((record) => ({
+            id: `leadership-${record.id}`,
+            type: 'Leadership',
+            title:
+              `${record.first_name} ${record.last_name}`.trim(),
+            detail: record.role_title || record.role_type || '',
+            open: () => setShowLeadership(true),
+          })),
+      ].slice(0, 12)
     : [];
 
   const updateForm = (
@@ -14880,9 +15003,10 @@ className="back-button no-print"
           <section className="dashboard-member-search">
             <div className="dashboard-member-search-heading">
               <div>
-                <h2>Find a Member</h2>
+                <h2>Global Search</h2>
                 <p>
-                  Search by name, membership number, phone or email.
+                  Search members, visitors, ministries, home cells,
+                  events and leadership.
                 </p>
               </div>
             </div>
@@ -14891,8 +15015,8 @@ className="back-button no-print"
               <span>⌕</span>
 
               <input
-                type="text"
-                placeholder="Search church members..."
+                type="search"
+                placeholder="Search across CLGF CMS..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -14900,7 +15024,7 @@ className="back-button no-print"
               {search && (
                 <button
                   type="button"
-                  aria-label="Clear member search"
+                  aria-label="Clear global search"
                   onClick={() => setSearch('')}
                 >
                   ×
@@ -14910,62 +15034,37 @@ className="back-button no-print"
 
             {search.trim() && (
               <div className="dashboard-member-results">
-                {dashboardMemberSearchResults.length === 0 ? (
+                {globalSearchResults.length === 0 ? (
                   <div className="dashboard-member-empty">
-                    No matching members found.
+                    No matching records found.
                   </div>
                 ) : (
-                  <>
-                    {dashboardMemberSearchResults.map((member) => (
-                      <button
-                        key={member.id}
-                        type="button"
-                        className="dashboard-member-result"
-                        onClick={() => {
-                          setSearch(member.membership_number);
-                          setShowMembers(true);
-                        }}
-                      >
-                        <div className="dashboard-member-result-icon">
-                          👤
-                        </div>
+                  globalSearchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      type="button"
+                      className="dashboard-member-result"
+                      onClick={() => {
+                        result.open();
+                        setSearch('');
+                      }}
+                    >
+                      <div className="dashboard-member-result-icon">
+                        ⌕
+                      </div>
 
-                        <div>
-                          <strong>
-                            {member.first_name}{' '}
-                            {member.last_name}
-                          </strong>
+                      <div>
+                        <strong>{result.title}</strong>
+                        <small>
+                          {result.detail || 'Open record'}
+                        </small>
+                      </div>
 
-                          <small>
-                            {member.membership_number}
-                            {member.phone
-                              ? ` · ${member.phone}`
-                              : ''}
-                          </small>
-                        </div>
-
-                        <span
-                          className={
-                            member.status === 'ACTIVE'
-                              ? 'dashboard-member-status active'
-                              : 'dashboard-member-status inactive'
-                          }
-                        >
-                          {member.status}
-                        </span>
-                      </button>
-                    ))}
-
-                    {filteredMembers.length > 5 && (
-                      <button
-                        type="button"
-                        className="dashboard-member-view-all"
-                        onClick={() => setShowMembers(true)}
-                      >
-                        View all {filteredMembers.length} matches
-                      </button>
-                    )}
-                  </>
+                      <span className="dashboard-member-status active">
+                        {result.type}
+                      </span>
+                    </button>
+                  ))
                 )}
               </div>
             )}
