@@ -633,6 +633,7 @@ function App() {
   const [selectedLeadershipProfile, setSelectedLeadershipProfile] =
     useState<LeadershipAssignment | null>(null);
   const [showLeadership, setShowLeadership] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showReports, setShowReports] = useState(false);
 
   const [systemUsers, setSystemUsers] =
@@ -14548,6 +14549,14 @@ className="back-button no-print"
 
   const dashboardUpcomingEvents = upcomingEventsCount;
 
+  const dashboardNotificationCount =
+    dashboardPastoralFollowUps +
+    dashboardUpcomingEvents +
+    (authUser?.role === 'ADMIN'
+      ? dashboardOpenPrayerRequests +
+        dashboardNewContactEnquiries
+      : 0);
+
   const dashboardUpcomingEventItems = events
     .filter((event) => {
       const date = event.event_date.slice(0, 10);
@@ -14716,6 +14725,24 @@ className="back-button no-print"
             >
               <span>▤</span>
               Sermons & Resources
+            </button>
+          )}
+
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button
+              className="sidebar-badge-button"
+              onClick={() => setShowNotifications(true)}
+            >
+              <span>🔔</span>
+              <span className="sidebar-nav-label">
+                Notifications
+              </span>
+              {dashboardNotificationCount > 0 && (
+                <span className="sidebar-notification-badge">
+                  {dashboardNotificationCount}
+                </span>
+              )}
             </button>
           )}
 
@@ -14893,6 +14920,96 @@ className="back-button no-print"
         )}
 
         <main className="dashboard-content">
+          {showNotifications && (
+            <section className="dashboard-attention">
+              <div className="dashboard-attention-heading">
+                <div>
+                  <h2>Notifications Center</h2>
+                  <p>
+                    Items that may need your attention.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(false)}
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+
+              <div className="dashboard-attention-grid">
+                {authUser.role === 'ADMIN' && (
+                  <button
+                    type="button"
+                    className="attention-card"
+                    onClick={() => {
+                      setShowNotifications(false);
+                      setShowPublicPrayerRequests(true);
+                    }}
+                  >
+                    <span className="attention-icon">🙏</span>
+                    <div>
+                      <strong>{dashboardOpenPrayerRequests}</strong>
+                      <h3>Open Prayer Requests</h3>
+                      <small>Review prayer requests →</small>
+                    </div>
+                  </button>
+                )}
+
+                {authUser.role === 'ADMIN' && (
+                  <button
+                    type="button"
+                    className="attention-card"
+                    onClick={() => {
+                      setShowNotifications(false);
+                      setShowContactEnquiries(true);
+                    }}
+                  >
+                    <span className="attention-icon">✉</span>
+                    <div>
+                      <strong>{dashboardNewContactEnquiries}</strong>
+                      <h3>New Contact Enquiries</h3>
+                      <small>Review enquiries →</small>
+                    </div>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() => {
+                    setShowNotifications(false);
+                    setShowPastoralCare(true);
+                  }}
+                >
+                  <span className="attention-icon">♥</span>
+                  <div>
+                    <strong>{dashboardPastoralFollowUps}</strong>
+                    <h3>Pastoral Follow-ups</h3>
+                    <small>Due or overdue →</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() => {
+                    setShowNotifications(false);
+                    setShowEvents(true);
+                  }}
+                >
+                  <span className="attention-icon">◷</span>
+                  <div>
+                    <strong>{dashboardUpcomingEvents}</strong>
+                    <h3>Upcoming Events</h3>
+                    <small>View event schedule →</small>
+                  </div>
+                </button>
+              </div>
+            </section>
+          )}
+
           <section className="dashboard-logo-area">
             <img
               src="/branding/clgf-logo.png"
