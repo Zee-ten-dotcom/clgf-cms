@@ -639,6 +639,23 @@ function App() {
   const [systemUsers, setSystemUsers] =
     useState<SystemUser[]>([]);
   const [showUsers, setShowUsers] = useState(false);
+  const [showBackups, setShowBackups] = useState(false);
+  const [databaseBackups, setDatabaseBackups] = useState<
+    Array<{
+      name: string;
+      size: number;
+      createdAt: string;
+    }>
+  >([]);
+  const [backupStatus, setBackupStatus] = useState<{
+    pgDumpAvailable: boolean;
+    pgRestoreAvailable: boolean;
+    restoreTargetConfigured: boolean;
+    liveRestoreProtected: boolean;
+  } | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupCreating, setBackupCreating] = useState(false);
+  const [backupError, setBackupError] = useState('');
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [dashboardMenuOpen, setDashboardMenuOpen] =
     useState(false);
@@ -2010,6 +2027,118 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       );
     } finally {
       setChurchSettingsLoading(false);
+    }
+  };
+
+
+  const loadBackups = async () => {
+    setBackupLoading(true);
+    setBackupError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/backups`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load database backups');
+      }
+
+      const data = await response.json();
+
+      setDatabaseBackups(data.backups || []);
+      setBackupStatus(data.status || null);
+    } catch (err) {
+      console.error(
+        'Failed to load database backups:',
+        err,
+      );
+
+      setBackupError(
+        'Unable to load database backup information.',
+      );
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const createDatabaseBackup = async () => {
+    setBackupCreating(true);
+    setBackupError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/backups`,
+        {
+          method: 'POST',
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Database backup failed',
+        );
+      }
+
+      await loadBackups();
+
+      window.alert(
+        'Database backup created and verified successfully.',
+      );
+    } catch (err) {
+      console.error(
+        'Failed to create database backup:',
+        err,
+      );
+
+      setBackupError(
+        err instanceof Error
+          ? err.message
+          : 'Database backup failed.',
+      );
+    } finally {
+      setBackupCreating(false);
+    }
+  };
+
+  const downloadDatabaseBackup = async (
+    name: string,
+  ) => {
+    setBackupError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/backups/${encodeURIComponent(
+          name,
+        )}/download`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Backup download failed');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = name;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(
+        'Failed to download database backup:',
+        err,
+      );
+
+      setBackupError(
+        'Unable to download this database backup.',
+      );
     }
   };
 
@@ -6476,6 +6605,208 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       </div>
     );
   }
+
+  /* =========================
+     BACKUP & RESTORE PAGE
+     ========================= */
+
+  if (
+    showBackups &&
+    authUser?.role === 'ADMIN'
+  ) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>
+              The City Of The Living God Fellowship
+            </p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName}{' '}
+              {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Backup & Restore</h2>
+              <p className="welcome">
+                Create and download secure database
+                backups
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() =>
+                setShowBackups(false)
+              }
+            >
+              Back
+            </button>
+          </div>
+
+          {backupError && (
+            <p className="error">
+              {backupError}
+            </p>
+          )}
+
+          <section className="form-card">
+            <h3>Database Backup</h3>
+
+            {backupLoading ? (
+              <p>Checking backup service...</p>
+            ) : (
+              <>
+                <p>
+                  PostgreSQL backup tool:{' '}
+                  <strong>
+                    {backupStatus?.pgDumpAvailable
+                      ? 'Available'
+                      : 'Not available'}
+                  </strong>
+                </p>
+
+                <p>
+                  PostgreSQL restore tool:{' '}
+                  <strong>
+                    {backupStatus?.pgRestoreAvailable
+                      ? 'Available'
+                      : 'Not available'}
+                  </strong>
+                </p>
+
+                <p>
+                  Live database restore protection:{' '}
+                  <strong>
+                    {backupStatus?.liveRestoreProtected
+                      ? 'Enabled'
+                      : 'Unknown'}
+                  </strong>
+                </p>
+
+                <p>
+                  Separate restore target:{' '}
+                  <strong>
+                    {backupStatus?.restoreTargetConfigured
+                      ? 'Configured'
+                      : 'Not configured'}
+                  </strong>
+                </p>
+              </>
+            )}
+
+            <button
+              type="button"
+              className="save-button"
+              disabled={
+                backupCreating ||
+                !backupStatus?.pgDumpAvailable
+              }
+              onClick={createDatabaseBackup}
+            >
+              {backupCreating
+                ? 'Creating Backup...'
+                : 'Create Backup'}
+            </button>
+          </section>
+
+          <section className="form-card">
+            <h3>Available Backups</h3>
+
+            {databaseBackups.length === 0 ? (
+              <p>No database backups found.</p>
+            ) : (
+              <div className="list">
+                {databaseBackups.map(
+                  (backup) => (
+                    <div
+                      className="list-item"
+                      key={backup.name}
+                    >
+                      <div>
+                        <strong>
+                          {backup.name}
+                        </strong>
+
+                        <p>
+                          {new Date(
+                            backup.createdAt,
+                          ).toLocaleString()}
+                          {' · '}
+                          {(
+                            backup.size /
+                            1024 /
+                            1024
+                          ).toFixed(2)}
+                          {' MB'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="save-button"
+                        onClick={() =>
+                          downloadDatabaseBackup(
+                            backup.name,
+                          )
+                        }
+                      >
+                        Download
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="form-card">
+            <h3>Restore Protection</h3>
+
+            <p>
+              The CMS does not restore directly into
+              the live church database.
+            </p>
+
+            <p>
+              Restoration requires a separately
+              configured restore database and the
+              protected server restore procedure.
+            </p>
+
+            <p>
+              Download important backups after they
+              are created. Server-local backup files
+              should not be treated as permanent
+              off-site storage.
+            </p>
+          </section>
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
 
   /* =========================
      USER MANAGEMENT PAGE
@@ -14884,6 +15215,16 @@ className="back-button no-print"
                     {dashboardNewContactEnquiries}
                   </span>
                 )}
+              </button>
+
+              <button
+                onClick={() => {
+                  loadBackups();
+                  setShowBackups(true);
+                }}
+              >
+                <span>↧</span>
+                Backup & Restore
               </button>
 
               <button

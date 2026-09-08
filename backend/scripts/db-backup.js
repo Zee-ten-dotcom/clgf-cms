@@ -3,14 +3,20 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 function getDatabaseUrl() {
-  const text = fs.readFileSync('.env', 'utf8');
-  const match = text.match(/^DATABASE_URL=(.*)$/m);
+  let value = process.env.DATABASE_URL || '';
 
-  if (!match) {
-    throw new Error('DATABASE_URL not found');
+  if (!value && fs.existsSync('.env')) {
+    const text = fs.readFileSync('.env', 'utf8');
+    const match = text.match(/^DATABASE_URL=(.*)$/m);
+
+    if (match) {
+      value = match[1].trim();
+    }
   }
 
-  let value = match[1].trim();
+  if (!value) {
+    throw new Error('DATABASE_URL not found');
+  }
 
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
