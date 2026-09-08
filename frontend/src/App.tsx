@@ -101,6 +101,32 @@ type ChurchSettings = {
   updated_at: string;
 };
 
+type Visitor = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  first_visit_date: string;
+  last_visit_date: string;
+  visit_count: number;
+  invited_by: string | null;
+  visit_context: string | null;
+  follow_up_status: string;
+  assigned_leader_id: string | null;
+  assigned_leader_name?: string | null;
+  follow_up_notes: string | null;
+  membership_interest: boolean;
+  status: 'ACTIVE' | 'ARCHIVED' | 'CONVERTED';
+  converted_member_id: string | null;
+  converted_member_name?: string | null;
+  converted_membership_number?: string | null;
+  converted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type WeeklyService = {
   id: string;
   name: string;
@@ -455,6 +481,57 @@ function App() {
     useState(false);
   const [churchSettingsError, setChurchSettingsError] =
     useState('');
+  const [visitors, setVisitors] =
+    useState<Visitor[]>([]);
+  const [showVisitors, setShowVisitors] =
+    useState(false);
+  const [selectedVisitorProfile, setSelectedVisitorProfile] =
+    useState<Visitor | null>(null);
+  const [editingVisitor, setEditingVisitor] =
+    useState<Visitor | null>(null);
+
+  const [visitorFirstName, setVisitorFirstName] =
+    useState('');
+  const [visitorLastName, setVisitorLastName] =
+    useState('');
+  const [visitorPhone, setVisitorPhone] =
+    useState('');
+  const [visitorEmail, setVisitorEmail] =
+    useState('');
+  const [visitorAddress, setVisitorAddress] =
+    useState('');
+  const [visitorFirstVisitDate, setVisitorFirstVisitDate] =
+    useState('');
+  const [visitorLastVisitDate, setVisitorLastVisitDate] =
+    useState('');
+  const [visitorVisitCount, setVisitorVisitCount] =
+    useState('1');
+  const [visitorInvitedBy, setVisitorInvitedBy] =
+    useState('');
+  const [visitorContext, setVisitorContext] =
+    useState('');
+  const [visitorFollowUpStatus, setVisitorFollowUpStatus] =
+    useState('NEW');
+  const [visitorAssignedLeaderId, setVisitorAssignedLeaderId] =
+    useState('');
+  const [visitorFollowUpNotes, setVisitorFollowUpNotes] =
+    useState('');
+  const [visitorMembershipInterest, setVisitorMembershipInterest] =
+    useState(false);
+
+  const [visitorSearch, setVisitorSearch] =
+    useState('');
+  const [visitorStatusFilter, setVisitorStatusFilter] =
+    useState('');
+  const [visitorFollowUpFilter, setVisitorFollowUpFilter] =
+    useState('');
+  const [visitorSaving, setVisitorSaving] =
+    useState(false);
+  const [visitorLoading, setVisitorLoading] =
+    useState(false);
+  const [visitorError, setVisitorError] =
+    useState('');
+
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
@@ -1496,6 +1573,410 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       .catch((err) => {
         console.error('Failed to load weekly services:', err);
       });
+  };
+
+
+  const loadVisitors = async () => {
+    setVisitorLoading(true);
+    setVisitorError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/visitors`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load visitors');
+      }
+
+      const data: Visitor[] =
+        await response.json();
+
+      setVisitors(data);
+    } catch (err) {
+      console.error('Failed to load visitors:', err);
+      setVisitorError(
+        'Unable to load visitor records.',
+      );
+    } finally {
+      setVisitorLoading(false);
+    }
+  };
+
+
+  const resetVisitorForm = () => {
+    setEditingVisitor(null);
+    setVisitorFirstName('');
+    setVisitorLastName('');
+    setVisitorPhone('');
+    setVisitorEmail('');
+    setVisitorAddress('');
+    setVisitorFirstVisitDate('');
+    setVisitorLastVisitDate('');
+    setVisitorVisitCount('1');
+    setVisitorInvitedBy('');
+    setVisitorContext('');
+    setVisitorFollowUpStatus('NEW');
+    setVisitorAssignedLeaderId('');
+    setVisitorFollowUpNotes('');
+    setVisitorMembershipInterest(false);
+    setVisitorError('');
+  };
+
+  const startEditingVisitor = (visitor: Visitor) => {
+    if (visitor.status === 'CONVERTED') {
+      return;
+    }
+
+    setEditingVisitor(visitor);
+    setVisitorFirstName(visitor.first_name);
+    setVisitorLastName(visitor.last_name);
+    setVisitorPhone(visitor.phone || '');
+    setVisitorEmail(visitor.email || '');
+    setVisitorAddress(visitor.address || '');
+    setVisitorFirstVisitDate(
+      visitor.first_visit_date
+        ? visitor.first_visit_date.slice(0, 10)
+        : '',
+    );
+    setVisitorLastVisitDate(
+      visitor.last_visit_date
+        ? visitor.last_visit_date.slice(0, 10)
+        : '',
+    );
+    setVisitorVisitCount(
+      String(visitor.visit_count || 1),
+    );
+    setVisitorInvitedBy(visitor.invited_by || '');
+    setVisitorContext(visitor.visit_context || '');
+    setVisitorFollowUpStatus(
+      visitor.follow_up_status || 'NEW',
+    );
+    setVisitorAssignedLeaderId(
+      visitor.assigned_leader_id || '',
+    );
+    setVisitorFollowUpNotes(
+      visitor.follow_up_notes || '',
+    );
+    setVisitorMembershipInterest(
+      visitor.membership_interest ?? false,
+    );
+    setVisitorError('');
+    window.scrollTo(0, 0);
+  };
+
+  const openVisitorProfile = (visitor: Visitor) => {
+    setSelectedVisitorProfile(visitor);
+    setVisitorFollowUpStatus(
+      visitor.follow_up_status || 'NEW',
+    );
+    setVisitorAssignedLeaderId(
+      visitor.assigned_leader_id || '',
+    );
+    setVisitorFollowUpNotes(
+      visitor.follow_up_notes || '',
+    );
+    setVisitorLastVisitDate(
+      visitor.last_visit_date
+        ? visitor.last_visit_date.slice(0, 10)
+        : '',
+    );
+    setVisitorVisitCount(
+      String(visitor.visit_count || 1),
+    );
+    setVisitorError('');
+    window.scrollTo(0, 0);
+  };
+
+  const saveVisitor = async (
+    submitEvent: React.FormEvent,
+  ) => {
+    submitEvent.preventDefault();
+
+    if (
+      !visitorFirstName.trim() ||
+      !visitorLastName.trim()
+    ) {
+      setVisitorError(
+        'First name and last name are required.',
+      );
+      return;
+    }
+
+    setVisitorSaving(true);
+    setVisitorError('');
+
+    try {
+      const isEditing = editingVisitor !== null;
+
+      const response = await authFetch(
+        isEditing
+          ? `${API_BASE_URL}/visitors/${editingVisitor.id}`
+          : `${API_BASE_URL}/visitors`,
+        {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstName: visitorFirstName.trim(),
+            lastName: visitorLastName.trim(),
+            phone: visitorPhone.trim() || undefined,
+            email: visitorEmail.trim() || undefined,
+            address: visitorAddress.trim() || undefined,
+            firstVisitDate:
+              visitorFirstVisitDate || undefined,
+            lastVisitDate:
+              visitorLastVisitDate || undefined,
+            visitCount:
+              Math.max(
+                1,
+                Number(visitorVisitCount) || 1,
+              ),
+            invitedBy:
+              visitorInvitedBy.trim() || undefined,
+            visitContext:
+              visitorContext.trim() || undefined,
+            followUpStatus:
+              visitorFollowUpStatus || 'NEW',
+            assignedLeaderId:
+              visitorAssignedLeaderId || undefined,
+            followUpNotes:
+              visitorFollowUpNotes.trim() || undefined,
+            membershipInterest:
+              visitorMembershipInterest,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response
+          .json()
+          .catch(() => null);
+
+        throw new Error(
+          body?.message || 'Failed to save visitor',
+        );
+      }
+
+      resetVisitorForm();
+      await loadVisitors();
+    } catch (err) {
+      console.error(err);
+      setVisitorError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save visitor.',
+      );
+    } finally {
+      setVisitorSaving(false);
+    }
+  };
+
+  const saveVisitorFollowUp = async (
+    submitEvent: React.FormEvent,
+  ) => {
+    submitEvent.preventDefault();
+
+    if (!selectedVisitorProfile) {
+      return;
+    }
+
+    if (selectedVisitorProfile.status === 'CONVERTED') {
+      setVisitorError(
+        'Converted visitors cannot be updated.',
+      );
+      return;
+    }
+
+    setVisitorSaving(true);
+    setVisitorError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/visitors/${selectedVisitorProfile.id}/follow-up`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            followUpStatus:
+              visitorFollowUpStatus || 'NEW',
+            assignedLeaderId:
+              visitorAssignedLeaderId || undefined,
+            followUpNotes:
+              visitorFollowUpNotes.trim() || undefined,
+            lastVisitDate:
+              visitorLastVisitDate || undefined,
+            visitCount:
+              Math.max(
+                1,
+                Number(visitorVisitCount) || 1,
+              ),
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response
+          .json()
+          .catch(() => null);
+
+        throw new Error(
+          body?.message ||
+            'Failed to update visitor follow-up',
+        );
+      }
+
+      await response.json();
+
+      const profileResponse = await authFetch(
+        `${API_BASE_URL}/visitors/${selectedVisitorProfile.id}`,
+      );
+
+      if (!profileResponse.ok) {
+        throw new Error(
+          'Follow-up saved, but visitor profile could not be refreshed.',
+        );
+      }
+
+      const refreshedVisitor: Visitor =
+        await profileResponse.json();
+
+      setSelectedVisitorProfile(refreshedVisitor);
+
+      setVisitorFollowUpStatus(
+        refreshedVisitor.follow_up_status || 'NEW',
+      );
+      setVisitorAssignedLeaderId(
+        refreshedVisitor.assigned_leader_id || '',
+      );
+      setVisitorFollowUpNotes(
+        refreshedVisitor.follow_up_notes || '',
+      );
+      setVisitorLastVisitDate(
+        refreshedVisitor.last_visit_date
+          ? refreshedVisitor.last_visit_date.slice(0, 10)
+          : '',
+      );
+      setVisitorVisitCount(
+        String(refreshedVisitor.visit_count || 1),
+      );
+
+      await loadVisitors();
+
+      window.alert(
+        'Visitor follow-up saved successfully.',
+      );
+    } catch (err) {
+      console.error(err);
+      setVisitorError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to update visitor follow-up.',
+      );
+    } finally {
+      setVisitorSaving(false);
+    }
+  };
+
+  const changeVisitorStatus = async (
+    visitor: Visitor,
+    action: 'archive' | 'reactivate',
+  ) => {
+    const confirmed = window.confirm(
+      action === 'archive'
+        ? `Archive ${visitor.first_name} ${visitor.last_name}?`
+        : `Reactivate ${visitor.first_name} ${visitor.last_name}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setVisitorError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/visitors/${visitor.id}/${action}`,
+        {
+          method: 'PATCH',
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response
+          .json()
+          .catch(() => null);
+
+        throw new Error(
+          body?.message ||
+            'Failed to update visitor status',
+        );
+      }
+
+      setSelectedVisitorProfile(null);
+      await loadVisitors();
+    } catch (err) {
+      console.error(err);
+      setVisitorError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to update visitor status.',
+      );
+    }
+  };
+
+  const convertVisitorToMember = async (
+    visitor: Visitor,
+  ) => {
+    const confirmed = window.confirm(
+      `Convert ${visitor.first_name} ${visitor.last_name} to a church member? This action cannot be repeated.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setVisitorSaving(true);
+    setVisitorError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/visitors/${visitor.id}/convert-to-member`,
+        {
+          method: 'POST',
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response
+          .json()
+          .catch(() => null);
+
+        throw new Error(
+          body?.message ||
+            'Failed to convert visitor to member',
+        );
+      }
+
+      setSelectedVisitorProfile(null);
+
+      await Promise.all([
+        loadVisitors(),
+        loadMembers(),
+      ]);
+    } catch (err) {
+      console.error(err);
+      setVisitorError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to convert visitor to member.',
+      );
+    } finally {
+      setVisitorSaving(false);
+    }
   };
 
 
@@ -2978,6 +3459,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       loadAnnouncements();
       loadSermons();
       loadChurchSettings();
+      loadVisitors();
     }
 
     if (authUser.role === 'ADMIN') {
@@ -8917,6 +9399,945 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     VISITOR MANAGEMENT
+     ========================= */
+
+  if (
+    showVisitors &&
+    (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    )
+  ) {
+    const normalizedVisitorSearch =
+      visitorSearch.trim().toLowerCase();
+
+    const filteredVisitors = visitors.filter((visitor) => {
+      const matchesSearch =
+        !normalizedVisitorSearch ||
+        visitor.first_name
+          .toLowerCase()
+          .includes(normalizedVisitorSearch) ||
+        visitor.last_name
+          .toLowerCase()
+          .includes(normalizedVisitorSearch) ||
+        (visitor.phone || '')
+          .toLowerCase()
+          .includes(normalizedVisitorSearch) ||
+        (visitor.email || '')
+          .toLowerCase()
+          .includes(normalizedVisitorSearch);
+
+      const matchesStatus =
+        !visitorStatusFilter ||
+        visitor.status === visitorStatusFilter;
+
+      const matchesFollowUp =
+        !visitorFollowUpFilter ||
+        visitor.follow_up_status === visitorFollowUpFilter;
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesFollowUp
+      );
+    });
+
+    const activeVisitors =
+      visitors.filter(
+        (visitor) => visitor.status === 'ACTIVE',
+      ).length;
+
+    const followUpVisitors =
+      visitors.filter(
+        (visitor) =>
+          visitor.status !== 'CONVERTED' &&
+          visitor.follow_up_status !== 'COMPLETED',
+      ).length;
+
+    const interestedVisitors =
+      visitors.filter(
+        (visitor) =>
+          visitor.status !== 'CONVERTED' &&
+          visitor.membership_interest,
+      ).length;
+
+    const convertedVisitors =
+      visitors.filter(
+        (visitor) => visitor.status === 'CONVERTED',
+      ).length;
+
+    if (selectedVisitorProfile) {
+      const visitor = selectedVisitorProfile;
+
+      return (
+        <div className="app">
+          <header className="header">
+            <div>
+              <h1>CLGF CMS</h1>
+              <p>
+                The City Of The Living God Fellowship
+              </p>
+            </div>
+
+            <div className="admin">
+              <span>
+                {authUser.firstName}{' '}
+                {authUser.lastName}
+              </span>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={logout}
+              >
+                Logout
+              </button>
+            </div>
+          </header>
+
+          <main className="main">
+            <div className="page-header">
+              <div>
+                <h2>Visitor Profile</h2>
+                <p className="welcome">
+                  Visitor details and follow-up
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="back-button"
+                onClick={() =>
+                  setSelectedVisitorProfile(null)
+                }
+              >
+                ← Visitors
+              </button>
+            </div>
+
+            {visitorError && (
+              <div className="form-error">
+                {visitorError}
+              </div>
+            )}
+
+            <div className="member-form">
+              <div className="member-top">
+                <div>
+                  <h3>
+                    {visitor.first_name}{' '}
+                    {visitor.last_name}
+                  </h3>
+                  <p className="membership-number">
+                    Visitor · {visitor.status}
+                  </p>
+                </div>
+              </div>
+
+              <div className="member-profile-grid">
+                <div>
+                  <span>Phone</span>
+                  <strong>
+                    {visitor.phone || 'Not provided'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Email</span>
+                  <strong>
+                    {visitor.email || 'Not provided'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>First Visit</span>
+                  <strong>
+                    {visitor.first_visit_date
+                      ? visitor.first_visit_date.slice(0, 10)
+                      : 'Not recorded'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Last Visit</span>
+                  <strong>
+                    {visitor.last_visit_date
+                      ? visitor.last_visit_date.slice(0, 10)
+                      : 'Not recorded'}
+                  </strong>
+                </div>
+                <div>
+                  <span>Visit Count</span>
+                  <strong>{visitor.visit_count}</strong>
+                </div>
+
+                <div>
+                  <span>Follow-up Status</span>
+                  <strong>
+                    {visitor.follow_up_status}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Assigned Leader</span>
+                  <strong>
+                    {visitor.assigned_leader_name ||
+                      'Not assigned'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Membership Interest</span>
+                  <strong>
+                    {visitor.membership_interest
+                      ? 'Yes'
+                      : 'No'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Invited By</span>
+                  <strong>
+                    {visitor.invited_by ||
+                      'Not recorded'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Visit Context</span>
+                  <strong>
+                    {visitor.visit_context ||
+                      'Not recorded'}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Address</span>
+                  <strong>
+                    {visitor.address ||
+                      'Not provided'}
+                  </strong>
+                </div>
+
+                {visitor.status === 'CONVERTED' && (
+                  <div>
+                    <span>Membership Number</span>
+                    <strong>
+                      {visitor.converted_membership_number ||
+                        'Member created'}
+                    </strong>
+                  </div>
+                )}
+              </div>
+
+              {visitor.follow_up_notes && (
+                <div className="settings-text-section">
+                  <h4>Follow-up Notes</h4>
+                  <p>{visitor.follow_up_notes}</p>
+                </div>
+              )}
+
+              {authUser.role === 'ADMIN' &&
+                visitor.status !== 'CONVERTED' && (
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="edit-button"
+                      onClick={() => {
+                        setSelectedVisitorProfile(null);
+                        startEditingVisitor(visitor);
+                      }}
+                    >
+                      Edit Visitor
+                    </button>
+
+                    {visitor.status === 'ACTIVE' ? (
+                      <button
+                        type="button"
+                        className="deactivate-button"
+                        onClick={() =>
+                          changeVisitorStatus(
+                            visitor,
+                            'archive',
+                          )
+                        }
+                      >
+                        Archive
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="reactivate-button"
+                        onClick={() =>
+                          changeVisitorStatus(
+                            visitor,
+                            'reactivate',
+                          )
+                        }
+                      >
+                        Reactivate
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="edit-button"
+                      disabled={visitorSaving}
+                      onClick={() =>
+                        convertVisitorToMember(visitor)
+                      }
+                    >
+                      Convert to Member
+                    </button>
+                  </div>
+                )}
+            </div>
+
+            {visitor.status !== 'CONVERTED' && (
+              <form
+                className="member-form"
+                onSubmit={saveVisitorFollowUp}
+              >
+                <h3>Visitor Follow-up</h3>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Follow-up Status</label>
+                    <select
+                      value={visitorFollowUpStatus}
+                      onChange={(e) =>
+                        setVisitorFollowUpStatus(
+                          e.target.value,
+                        )
+                      }
+                    >
+                      <option value="NEW">New</option>
+                      <option value="CONTACTED">
+                        Contacted
+                      </option>
+                      <option value="FOLLOW_UP">
+                        Follow-up
+                      </option>
+                      <option value="COMPLETED">
+                        Completed
+                      </option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Assigned Leader</label>
+                    <select
+                      value={visitorAssignedLeaderId}
+                      onChange={(e) =>
+                        setVisitorAssignedLeaderId(
+                          e.target.value,
+                        )
+                      }
+                    >
+                      <option value="">
+                        No leader assigned
+                      </option>
+
+                      {members
+                        .filter(
+                          (member) =>
+                            member.status === 'ACTIVE',
+                        )
+                        .map((member) => (
+                          <option
+                            key={member.id}
+                            value={member.id}
+                          >
+                            {member.first_name}{' '}
+                            {member.last_name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Last Visit Date</label>
+                    <input
+                      type="date"
+                      value={visitorLastVisitDate}
+                      onChange={(e) =>
+                        setVisitorLastVisitDate(
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Visit Count</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={visitorVisitCount}
+                      onChange={(e) =>
+                        setVisitorVisitCount(
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Follow-up Notes</label>
+                    <textarea
+                      value={visitorFollowUpNotes}
+                      onChange={(e) =>
+                        setVisitorFollowUpNotes(
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Record follow-up information"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    className="edit-button"
+                    disabled={visitorSaving}
+                  >
+                    {visitorSaving
+                      ? 'Saving...'
+                      : 'Save Follow-up'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </main>
+
+          <footer>
+            © 2026 The City Of The Living God Fellowship
+          </footer>
+        </div>
+      );
+    }
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>
+              The City Of The Living God Fellowship
+            </p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName}{' '}
+              {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Visitor Management</h2>
+              <p className="welcome">
+                Welcome, follow up and connect visitors
+                with the church
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                setShowVisitors(false);
+                resetVisitorForm();
+              }}
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          <div className="event-stats">
+            <div className="event-stat-card">
+              <div>♙</div>
+              <h3>Total Visitors</h3>
+              <strong>{visitors.length}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>✓</div>
+              <h3>Active</h3>
+              <strong>{activeVisitors}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>☎</div>
+              <h3>Need Follow-up</h3>
+              <strong>{followUpVisitors}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>♡</div>
+              <h3>Interested</h3>
+              <strong>{interestedVisitors}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>★</div>
+              <h3>Converted</h3>
+              <strong>{convertedVisitors}</strong>
+            </div>
+          </div>
+          {visitorError && (
+            <div className="form-error">
+              {visitorError}
+            </div>
+          )}
+
+          {authUser.role === 'ADMIN' && (
+            <form
+              className="member-form"
+              onSubmit={saveVisitor}
+            >
+              <h3>
+                {editingVisitor
+                  ? 'Edit Visitor'
+                  : 'Add New Visitor'}
+              </h3>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>First Name *</label>
+                  <input
+                    type="text"
+                    value={visitorFirstName}
+                    onChange={(e) =>
+                      setVisitorFirstName(
+                        e.target.value,
+                      )
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Last Name *</label>
+                  <input
+                    type="text"
+                    value={visitorLastName}
+                    onChange={(e) =>
+                      setVisitorLastName(
+                        e.target.value,
+                      )
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="text"
+                    value={visitorPhone}
+                    onChange={(e) =>
+                      setVisitorPhone(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={visitorEmail}
+                    onChange={(e) =>
+                      setVisitorEmail(e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>First Visit</label>
+                  <input
+                    type="date"
+                    value={visitorFirstVisitDate}
+                    onChange={(e) =>
+                      setVisitorFirstVisitDate(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Last Visit</label>
+                  <input
+                    type="date"
+                    value={visitorLastVisitDate}
+                    onChange={(e) =>
+                      setVisitorLastVisitDate(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Visit Count</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={visitorVisitCount}
+                    onChange={(e) =>
+                      setVisitorVisitCount(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Invited By</label>
+                  <input
+                    type="text"
+                    value={visitorInvitedBy}
+                    onChange={(e) =>
+                      setVisitorInvitedBy(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Visit Context</label>
+                  <input
+                    type="text"
+                    value={visitorContext}
+                    onChange={(e) =>
+                      setVisitorContext(
+                        e.target.value,
+                      )
+                    }
+                    placeholder="e.g. Sunday Service"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Follow-up Status</label>
+                  <select
+                    value={visitorFollowUpStatus}
+                    onChange={(e) =>
+                      setVisitorFollowUpStatus(
+                        e.target.value,
+                      )
+                    }
+                  >
+                    <option value="NEW">New</option>
+                    <option value="CONTACTED">
+                      Contacted
+                    </option>
+                    <option value="FOLLOW_UP">
+                      Follow-up
+                    </option>
+                    <option value="COMPLETED">
+                      Completed
+                    </option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Assigned Leader</label>
+                  <select
+                    value={visitorAssignedLeaderId}
+                    onChange={(e) =>
+                      setVisitorAssignedLeaderId(
+                        e.target.value,
+                      )
+                    }
+                  >
+                    <option value="">
+                      No leader assigned
+                    </option>
+
+                    {members
+                      .filter(
+                        (member) =>
+                          member.status === 'ACTIVE',
+                      )
+                      .map((member) => (
+                        <option
+                          key={member.id}
+                          value={member.id}
+                        >
+                          {member.first_name}{' '}
+                          {member.last_name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Address</label>
+                  <input
+                    type="text"
+                    value={visitorAddress}
+                    onChange={(e) =>
+                      setVisitorAddress(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Follow-up Notes</label>
+                  <textarea
+                    value={visitorFollowUpNotes}
+                    onChange={(e) =>
+                      setVisitorFollowUpNotes(
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={visitorMembershipInterest}
+                      onChange={(e) =>
+                        setVisitorMembershipInterest(
+                          e.target.checked,
+                        )
+                      }
+                    />{' '}
+                    Interested in Membership
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="edit-button"
+                  disabled={visitorSaving}
+                >
+                  {visitorSaving
+                    ? 'Saving...'
+                    : editingVisitor
+                      ? 'Update Visitor'
+                      : 'Add Visitor'}
+                </button>
+
+                {editingVisitor && (
+                  <button
+                    type="button"
+                    className="back-button"
+                    onClick={resetVisitorForm}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          <div className="member-form">
+            <h3>Find Visitors</h3>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Search</label>
+                <input
+                  type="text"
+                  value={visitorSearch}
+                  onChange={(e) =>
+                    setVisitorSearch(e.target.value)
+                  }
+                  placeholder="Name, phone or email"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Visitor Status</label>
+                <select
+                  value={visitorStatusFilter}
+                  onChange={(e) =>
+                    setVisitorStatusFilter(
+                      e.target.value,
+                    )
+                  }
+                >
+                  <option value="">All Statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="ARCHIVED">
+                    Archived
+                  </option>
+                  <option value="CONVERTED">
+                    Converted
+                  </option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Follow-up Status</label>
+                <select
+                  value={visitorFollowUpFilter}
+                  onChange={(e) =>
+                    setVisitorFollowUpFilter(
+                      e.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    All Follow-up Statuses
+                  </option>
+                  <option value="NEW">New</option>
+                  <option value="CONTACTED">
+                    Contacted
+                  </option>
+                  <option value="FOLLOW_UP">
+                    Follow-up
+                  </option>
+                  <option value="COMPLETED">
+                    Completed
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          {visitorLoading ? (
+            <div className="empty">
+              <p>Loading visitors...</p>
+            </div>
+          ) : filteredVisitors.length === 0 ? (
+            <div className="empty">
+              <div>♙</div>
+              <h3>No visitors found</h3>
+              <p>
+                No visitor records match the current
+                filters.
+              </p>
+            </div>
+          ) : (
+            <div className="members-list">
+              {filteredVisitors.map((visitor) => (
+                <div
+                  className="member-card"
+                  key={visitor.id}
+                >
+                  <div className="member-top">
+                    <div>
+                      <h3>
+                        {visitor.first_name}{' '}
+                        {visitor.last_name}
+                      </h3>
+
+                      <p className="membership-number">
+                        {visitor.status} ·{' '}
+                        {visitor.follow_up_status}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="member-details">
+                    <p>
+                      <strong>Phone:</strong>{' '}
+                      {visitor.phone ||
+                        'Not provided'}
+                    </p>
+
+                    <p>
+                      <strong>Last Visit:</strong>{' '}
+                      {visitor.last_visit_date
+                        ? visitor.last_visit_date.slice(
+                            0,
+                            10,
+                          )
+                        : 'Not recorded'}
+                    </p>
+
+                    <p>
+                      <strong>Visits:</strong>{' '}
+                      {visitor.visit_count}
+                    </p>
+
+                    <p>
+                      <strong>Assigned Leader:</strong>{' '}
+                      {visitor.assigned_leader_name ||
+                        'Not assigned'}
+                    </p>
+
+                    <p>
+                      <strong>
+                        Membership Interest:
+                      </strong>{' '}
+                      {visitor.membership_interest
+                        ? 'Yes'
+                        : 'No'}
+                    </p>
+
+                    {visitor.status === 'CONVERTED' && (
+                      <p>
+                        <strong>
+                          Membership Number:
+                        </strong>{' '}
+                        {visitor.converted_membership_number ||
+                          'Member created'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="member-actions">
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() =>
+                        openVisitorProfile(visitor)
+                      }
+                    >
+                      View Profile
+                    </button>
+
+                    {authUser.role === 'ADMIN' &&
+                      visitor.status !==
+                        'CONVERTED' && (
+                        <button
+                          type="button"
+                          className="edit-button"
+                          onClick={() =>
+                            startEditingVisitor(visitor)
+                          }
+                        >
+                          Edit Visitor
+                        </button>
+                      )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+
+  /* =========================
      CHURCH PROFILE & SYSTEM SETTINGS PAGE
      ========================= */
 
@@ -13144,6 +14565,21 @@ className="back-button no-print"
             <span>✓</span>
             Attendance
           </button>
+
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button
+              onClick={() => {
+                loadVisitors();
+                setShowVisitors(true);
+              }}
+            >
+              <span>♙</span>
+              Visitor Management
+            </button>
+          )}
 
           {(
             authUser.role === 'ADMIN' ||

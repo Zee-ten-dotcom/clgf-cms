@@ -23,6 +23,7 @@ import { ContactEnquiriesModule } from './contact-enquiries/contact-enquiries.mo
 import { WeeklyServicesModule } from './weekly-services/weekly-services.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { ChurchSettingsModule } from './church-settings/church-settings.module';
+import { VisitorsModule } from './visitors/visitors.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { ChurchSettingsModule } from './church-settings/church-settings.module';
     WeeklyServicesModule,
     AnnouncementsModule,
     ChurchSettingsModule,
+    VisitorsModule,
   ],
   controllers: [AppController],
   providers: [

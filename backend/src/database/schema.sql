@@ -534,3 +534,71 @@ VALUES (
   'Africa/Johannesburg'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- VISITORS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS visitors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+
+  phone VARCHAR(30),
+  email VARCHAR(255),
+  address TEXT,
+
+  first_visit_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  last_visit_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  visit_count INTEGER NOT NULL DEFAULT 1
+    CHECK (visit_count >= 1),
+
+  invited_by VARCHAR(200),
+  visit_context VARCHAR(255),
+
+  follow_up_status VARCHAR(30) NOT NULL DEFAULT 'NEW',
+  assigned_leader_id UUID
+    REFERENCES members(id)
+    ON DELETE SET NULL,
+  follow_up_notes TEXT,
+
+  membership_interest BOOLEAN NOT NULL DEFAULT FALSE,
+
+  status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+
+  converted_member_id UUID
+    REFERENCES members(id)
+    ON DELETE SET NULL,
+  converted_at TIMESTAMPTZ,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT visitors_conversion_consistency CHECK (
+    (
+      status = 'CONVERTED'
+      AND converted_member_id IS NOT NULL
+      AND converted_at IS NOT NULL
+    )
+    OR
+    (
+      status <> 'CONVERTED'
+      AND converted_member_id IS NULL
+      AND converted_at IS NULL
+    )
+  )
+);
+
+CREATE INDEX IF NOT EXISTS visitors_status_idx
+  ON visitors(status);
+
+CREATE INDEX IF NOT EXISTS visitors_follow_up_status_idx
+  ON visitors(follow_up_status);
+
+CREATE INDEX IF NOT EXISTS visitors_assigned_leader_idx
+  ON visitors(assigned_leader_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS visitors_converted_member_unique
+  ON visitors(converted_member_id)
+  WHERE converted_member_id IS NOT NULL;
