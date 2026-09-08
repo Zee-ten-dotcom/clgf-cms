@@ -483,3 +483,54 @@ CREATE INDEX IF NOT EXISTS idx_announcements_publish_date
 
 CREATE INDEX IF NOT EXISTS idx_announcements_display_order
   ON announcements(display_order);
+
+-- ============================================================
+-- CHURCH PROFILE / SYSTEM SETTINGS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS church_settings (
+  id UUID PRIMARY KEY,
+  church_name VARCHAR(200) NOT NULL,
+  short_name VARCHAR(100),
+  scripture VARCHAR(255),
+  mission TEXT,
+  vision TEXT,
+  motto VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(100),
+  address TEXT,
+  website VARCHAR(500),
+  timezone VARCHAR(100) NOT NULL DEFAULT 'Africa/Johannesburg',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO church_settings (
+  id,
+  church_name,
+  short_name,
+  scripture,
+  mission,
+  vision,
+  motto,
+  email,
+  phone,
+  address,
+  website,
+  timezone
+)
+VALUES (
+  '00000000-0000-4000-8000-000000000001',
+  'The City Of The Living God Fellowship',
+  'CLGF',
+  'Hebrews 12:22–24',
+  'To Know God, To Make Him Known And To Raise A People Of Prayer And Purpose.',
+  'A Community Transformed By The Power Of God, Extending His Kingdom On Earth.',
+  'The Lord is Our Help.',
+  'livingodfellowship@gmail.com',
+  '083 885 5064',
+  'Kanana Zone 12 Ext., Corner Enoch Sontonga & Adelaide Street',
+  NULL,
+  'Africa/Johannesburg'
+)
+ON CONFLICT (id) DO NOTHING;

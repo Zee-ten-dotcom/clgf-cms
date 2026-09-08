@@ -2916,3 +2916,38 @@ footer {
     width: 100%;
   }
 }
+
+/* Church Profile & System Settings */
+
+.settings-view-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 24px;
+  margin-top: 16px;
+}
+
+.settings-view-grid p {
+  margin: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.settings-text-section {
+  margin-top: 24px;
+}
+
+.settings-text-section h4 {
+  margin: 20px 0 6px;
+}
+
+.settings-text-section p {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.settings-updated {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}

@@ -84,6 +84,23 @@ type HomeCell = {
   display_order: number;
 };
 
+type ChurchSettings = {
+  id: string;
+  church_name: string;
+  short_name: string | null;
+  scripture: string | null;
+  mission: string | null;
+  vision: string | null;
+  motto: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  timezone: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type WeeklyService = {
   id: string;
   name: string;
@@ -425,6 +442,19 @@ function App() {
     useState<Announcement[]>([]);
   const [showAnnouncements, setShowAnnouncements] =
     useState(false);
+
+  const [churchSettings, setChurchSettings] =
+    useState<ChurchSettings | null>(null);
+  const [showChurchSettings, setShowChurchSettings] =
+    useState(false);
+  const [churchSettingsForm, setChurchSettingsForm] =
+    useState<ChurchSettings | null>(null);
+  const [churchSettingsLoading, setChurchSettingsLoading] =
+    useState(false);
+  const [churchSettingsSaving, setChurchSettingsSaving] =
+    useState(false);
+  const [churchSettingsError, setChurchSettingsError] =
+    useState('');
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
@@ -1466,6 +1496,39 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       .catch((err) => {
         console.error('Failed to load weekly services:', err);
       });
+  };
+
+
+  const loadChurchSettings = async () => {
+    setChurchSettingsLoading(true);
+    setChurchSettingsError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-settings`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load church settings');
+      }
+
+      const data: ChurchSettings =
+        await response.json();
+
+      setChurchSettings(data);
+      setChurchSettingsForm(data);
+    } catch (err) {
+      console.error(
+        'Failed to load church settings:',
+        err,
+      );
+
+      setChurchSettingsError(
+        'Unable to load church profile and system settings.',
+      );
+    } finally {
+      setChurchSettingsLoading(false);
+    }
   };
 
 
@@ -2914,6 +2977,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     ) {
       loadAnnouncements();
       loadSermons();
+      loadChurchSettings();
     }
 
     if (authUser.role === 'ADMIN') {
@@ -4328,6 +4392,91 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       alert('Unable to delete announcement.');
     }
   };
+
+  const updateChurchSettingsField = (
+    field: keyof ChurchSettings,
+    value: string,
+  ) => {
+    setChurchSettingsForm((current) =>
+      current
+        ? {
+            ...current,
+            [field]: value,
+          }
+        : current,
+    );
+  };
+
+
+  const saveChurchSettings = async (
+    event: React.FormEvent,
+  ) => {
+    event.preventDefault();
+
+    if (!churchSettingsForm) {
+      return;
+    }
+
+    setChurchSettingsSaving(true);
+    setChurchSettingsError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-settings`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            churchName:
+              churchSettingsForm.church_name.trim(),
+            shortName:
+              churchSettingsForm.short_name || '',
+            scripture:
+              churchSettingsForm.scripture || '',
+            mission:
+              churchSettingsForm.mission || '',
+            vision:
+              churchSettingsForm.vision || '',
+            motto:
+              churchSettingsForm.motto || '',
+            email:
+              churchSettingsForm.email || '',
+            phone:
+              churchSettingsForm.phone || '',
+            address:
+              churchSettingsForm.address || '',
+            website:
+              churchSettingsForm.website || '',
+            timezone:
+              churchSettingsForm.timezone.trim(),
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to update church settings',
+        );
+      }
+
+      const data: ChurchSettings =
+        await response.json();
+
+      setChurchSettings(data);
+      setChurchSettingsForm(data);
+    } catch (err) {
+      console.error(err);
+
+      setChurchSettingsError(
+        'Unable to save church profile and system settings.',
+      );
+    } finally {
+      setChurchSettingsSaving(false);
+    }
+  };
+
 
   const saveAnnouncement = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -8768,6 +8917,342 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   /* =========================
+     CHURCH PROFILE & SYSTEM SETTINGS PAGE
+     ========================= */
+
+  if (
+    showChurchSettings &&
+    (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    )
+  ) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Church Profile & System Settings</h2>
+              <p className="welcome">
+                {authUser.role === 'ADMIN'
+                  ? 'Manage the church identity and core system information'
+                  : 'View the church identity and core system information'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => setShowChurchSettings(false)}
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          {churchSettingsLoading && (
+            <div className="member-form">
+              Loading church settings...
+            </div>
+          )}
+
+          {churchSettingsError && (
+            <div className="form-error">
+              {churchSettingsError}
+            </div>
+          )}
+
+          {!churchSettingsLoading &&
+            churchSettingsForm &&
+            authUser.role === 'ADMIN' && (
+              <form
+                className="member-form"
+                onSubmit={saveChurchSettings}
+              >
+                <h3>Church Profile</h3>
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Church Name *</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.church_name}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'church_name',
+                          e.target.value,
+                        )
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Short Name</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.short_name || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'short_name',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Core Scripture</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.scripture || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'scripture',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Motto</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.motto || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'motto',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      value={churchSettingsForm.email || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'email',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.phone || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'phone',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Website</label>
+                    <input
+                      type="url"
+                      value={churchSettingsForm.website || ''}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'website',
+                          e.target.value,
+                        )
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Timezone *</label>
+                    <input
+                      type="text"
+                      value={churchSettingsForm.timezone}
+                      onChange={(e) =>
+                        updateChurchSettingsField(
+                          'timezone',
+                          e.target.value,
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Address</label>
+                  <textarea
+                    value={churchSettingsForm.address || ''}
+                    onChange={(e) =>
+                      updateChurchSettingsField(
+                        'address',
+                        e.target.value,
+                      )
+                    }
+                    rows={3}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Mission</label>
+                  <textarea
+                    value={churchSettingsForm.mission || ''}
+                    onChange={(e) =>
+                      updateChurchSettingsField(
+                        'mission',
+                        e.target.value,
+                      )
+                    }
+                    rows={4}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Vision</label>
+                  <textarea
+                    value={churchSettingsForm.vision || ''}
+                    onChange={(e) =>
+                      updateChurchSettingsField(
+                        'vision',
+                        e.target.value,
+                      )
+                    }
+                    rows={4}
+                  />
+                </div>
+
+                <div className="member-actions">
+                  <button
+                    type="submit"
+                    className="edit-button"
+                    disabled={churchSettingsSaving}
+                  >
+                    {churchSettingsSaving
+                      ? 'Saving...'
+                      : 'Save Church Settings'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="back-button"
+                    onClick={() =>
+                      setChurchSettingsForm(churchSettings)
+                    }
+                    disabled={churchSettingsSaving}
+                  >
+                    Reset Changes
+                  </button>
+                </div>
+
+                {churchSettings && (
+                  <p className="settings-updated">
+                    Last updated:{' '}
+                    {new Date(
+                      churchSettings.updated_at,
+                    ).toLocaleString()}
+                  </p>
+                )}
+              </form>
+            )}
+          {!churchSettingsLoading &&
+            churchSettings &&
+            authUser.role === 'LEADER' && (
+              <div className="member-form">
+                <h3>Church Profile</h3>
+
+                <div className="settings-view-grid">
+                  <p>
+                    <strong>Church Name:</strong>{' '}
+                    {churchSettings.church_name}
+                  </p>
+                  <p>
+                    <strong>Short Name:</strong>{' '}
+                    {churchSettings.short_name || '—'}
+                  </p>
+                  <p>
+                    <strong>Core Scripture:</strong>{' '}
+                    {churchSettings.scripture || '—'}
+                  </p>
+                  <p>
+                    <strong>Motto:</strong>{' '}
+                    {churchSettings.motto || '—'}
+                  </p>
+                  <p>
+                    <strong>Email:</strong>{' '}
+                    {churchSettings.email || '—'}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong>{' '}
+                    {churchSettings.phone || '—'}
+                  </p>
+                  <p>
+                    <strong>Website:</strong>{' '}
+                    {churchSettings.website || '—'}
+                  </p>
+                  <p>
+                    <strong>Timezone:</strong>{' '}
+                    {churchSettings.timezone}
+                  </p>
+                </div>
+
+                <div className="settings-text-section">
+                  <h4>Address</h4>
+                  <p>{churchSettings.address || '—'}</p>
+
+                  <h4>Mission</h4>
+                  <p>{churchSettings.mission || '—'}</p>
+
+                  <h4>Vision</h4>
+                  <p>{churchSettings.vision || '—'}</p>
+                </div>
+
+                <p className="settings-updated">
+                  Last updated:{' '}
+                  {new Date(
+                    churchSettings.updated_at,
+                  ).toLocaleString()}
+                </p>
+              </div>
+            )}
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+
+  /* =========================
      SERMONS & RESOURCES PAGE
      ========================= */
 
@@ -12759,6 +13244,21 @@ className="back-button no-print"
             >
               <span>!</span>
               Announcements
+            </button>
+          )}
+
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button
+              onClick={() => {
+                loadChurchSettings();
+                setShowChurchSettings(true);
+              }}
+            >
+              <span>⚙</span>
+              Church Settings
             </button>
           )}
 

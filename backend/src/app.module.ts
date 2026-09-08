@@ -22,6 +22,7 @@ import { SermonsModule } from './sermons/sermons.module';
 import { ContactEnquiriesModule } from './contact-enquiries/contact-enquiries.module';
 import { WeeklyServicesModule } from './weekly-services/weekly-services.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { ChurchSettingsModule } from './church-settings/church-settings.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     ContactEnquiriesModule,
     WeeklyServicesModule,
     AnnouncementsModule,
+    ChurchSettingsModule,
   ],
   controllers: [AppController],
   providers: [
