@@ -25,6 +25,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { ChurchSettingsModule } from './church-settings/church-settings.module';
 import { VisitorsModule } from './visitors/visitors.module';
 import { BackupsModule } from './backups/backups.module';
+import { ChurchActivitiesModule } from './church-activities/church-activities.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { BackupsModule } from './backups/backups.module';
     ChurchSettingsModule,
     VisitorsModule,
     BackupsModule,
+    ChurchActivitiesModule,
   ],
   controllers: [AppController],
   providers: [

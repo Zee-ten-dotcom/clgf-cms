@@ -322,6 +322,30 @@ type ChurchSermon = {
   updated_at: string;
 };
 
+type ChurchActivityMedia = {
+  id: string;
+  activity_id: string;
+  media_type: 'PHOTO' | 'VIDEO';
+  media_url: string;
+  cloudinary_public_id?: string;
+  caption: string | null;
+  display_order: number;
+  created_at: string;
+};
+
+type ChurchActivity = {
+  id: string;
+  title: string;
+  activity_date: string;
+  description: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  featured: boolean;
+  display_order: number;
+  media: ChurchActivityMedia[];
+  created_at: string;
+  updated_at: string;
+};
+
 type PastoralCareRecord = {
   id: string;
   member_id: string;
@@ -569,6 +593,40 @@ function App() {
     useState<GivingSummary | null>(null);
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [showEvents, setShowEvents] = useState(false);
+
+  const [churchActivities, setChurchActivities] =
+    useState<ChurchActivity[]>([]);
+  const [showChurchActivities, setShowChurchActivities] =
+    useState(false);
+  const [churchActivitiesLoading, setChurchActivitiesLoading] =
+    useState(false);
+  const [churchActivitiesError, setChurchActivitiesError] =
+    useState('');
+
+  const [editingChurchActivity, setEditingChurchActivity] =
+    useState<ChurchActivity | null>(null);
+  const [churchActivityTitle, setChurchActivityTitle] =
+    useState('');
+  const [churchActivityDate, setChurchActivityDate] =
+    useState('');
+  const [
+    churchActivityDescription,
+    setChurchActivityDescription,
+  ] = useState('');
+  const [churchActivityStatus, setChurchActivityStatus] =
+    useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
+  const [churchActivityFeatured, setChurchActivityFeatured] =
+    useState(false);
+  const [churchActivityDisplayOrder, setChurchActivityDisplayOrder] =
+    useState(0);
+  const [churchActivitySaving, setChurchActivitySaving] =
+    useState(false);
+  const [activityPhotoFiles, setActivityPhotoFiles] =
+    useState<Record<string, File | null>>({});
+  const [activityVideoFiles, setActivityVideoFiles] =
+    useState<Record<string, File | null>>({});
+  const [activityMediaUploading, setActivityMediaUploading] =
+    useState<string | null>(null);
 
   const [sermons, setSermons] = useState<ChurchSermon[]>([]);
   const [showSermons, setShowSermons] = useState(false);
@@ -2341,6 +2399,355 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   };
 
+  const loadChurchActivities = async () => {
+    setChurchActivitiesLoading(true);
+    setChurchActivitiesError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-activities`,
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to load church activities',
+        );
+      }
+
+      const data = await response.json();
+
+      setChurchActivities(
+        Array.isArray(data) ? data : [],
+      );
+    } catch (err) {
+      console.error(
+        'Failed to load church activities:',
+        err,
+      );
+      setChurchActivitiesError(
+        'Unable to load church activities.',
+      );
+    } finally {
+      setChurchActivitiesLoading(false);
+    }
+  };
+
+  const cancelEditingChurchActivity = () => {
+    setEditingChurchActivity(null);
+    setChurchActivityTitle('');
+    setChurchActivityDate('');
+    setChurchActivityDescription('');
+    setChurchActivityStatus('DRAFT');
+    setChurchActivityFeatured(false);
+    setChurchActivityDisplayOrder(0);
+    setChurchActivitiesError('');
+  };
+
+  const startEditingChurchActivity = (
+    activity: ChurchActivity,
+  ) => {
+    setEditingChurchActivity(activity);
+    setChurchActivityTitle(activity.title);
+    setChurchActivityDate(
+      activity.activity_date.slice(0, 10),
+    );
+    setChurchActivityDescription(
+      activity.description || '',
+    );
+    setChurchActivityStatus(activity.status);
+    setChurchActivityFeatured(activity.featured);
+    setChurchActivityDisplayOrder(
+      activity.display_order || 0,
+    );
+    setChurchActivitiesError('');
+  };
+
+  const saveChurchActivity = async (
+    submitEvent: React.FormEvent,
+  ) => {
+    submitEvent.preventDefault();
+
+    if (
+      !churchActivityTitle.trim() ||
+      !churchActivityDate
+    ) {
+      setChurchActivitiesError(
+        'Activity title and date are required.',
+      );
+      return;
+    }
+
+    setChurchActivitySaving(true);
+    setChurchActivitiesError('');
+
+    try {
+      const url = editingChurchActivity
+        ? `${API_BASE_URL}/church-activities/${editingChurchActivity.id}`
+        : `${API_BASE_URL}/church-activities`;
+
+      const response = await authFetch(url, {
+        method: editingChurchActivity
+          ? 'PATCH'
+          : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: churchActivityTitle.trim(),
+          activityDate: churchActivityDate,
+          description:
+            churchActivityDescription.trim() ||
+            undefined,
+          status: churchActivityStatus,
+          featured: churchActivityFeatured,
+          displayOrder:
+            churchActivityDisplayOrder,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to save church activity',
+        );
+      }
+
+      cancelEditingChurchActivity();
+      await loadChurchActivities();
+    } catch (err) {
+      console.error(
+        'Failed to save church activity:',
+        err,
+      );
+      setChurchActivitiesError(
+        'Unable to save church activity.',
+      );
+    } finally {
+      setChurchActivitySaving(false);
+    }
+  };
+
+  const deleteChurchActivity = async (
+    activity: ChurchActivity,
+  ) => {
+    if (
+      !window.confirm(
+        `Delete "${activity.title}" and all of its uploaded photos and videos?`,
+      )
+    ) {
+      return;
+    }
+
+    setChurchActivitiesError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-activities/${activity.id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to delete church activity',
+        );
+      }
+
+      if (
+        editingChurchActivity?.id === activity.id
+      ) {
+        cancelEditingChurchActivity();
+      }
+
+      await loadChurchActivities();
+    } catch (err) {
+      console.error(
+        'Failed to delete church activity:',
+        err,
+      );
+      setChurchActivitiesError(
+        'Unable to delete church activity.',
+      );
+    }
+  };
+
+  const uploadChurchActivityMedia = async (
+    activity: ChurchActivity,
+    type: 'PHOTO' | 'VIDEO',
+  ) => {
+    const file =
+      type === 'PHOTO'
+        ? activityPhotoFiles[activity.id]
+        : activityVideoFiles[activity.id];
+
+    if (!file) {
+      setChurchActivitiesError(
+        `Choose a ${type === 'PHOTO' ? 'photo' : 'video'} first.`,
+      );
+      return;
+    }
+
+    const uploadKey = `${activity.id}-${type}`;
+    setActivityMediaUploading(uploadKey);
+    setChurchActivitiesError('');
+
+    try {
+      const formData = new FormData();
+      const field =
+        type === 'PHOTO' ? 'photo' : 'video';
+
+      formData.append(field, file);
+
+      const endpoint =
+        type === 'PHOTO' ? 'photos' : 'videos';
+
+      const response = await authFetch(
+        `${API_BASE_URL}/church-activities/${activity.id}/${endpoint}`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to upload activity ${field}`,
+        );
+      }
+
+      if (type === 'PHOTO') {
+        setActivityPhotoFiles((current) => ({
+          ...current,
+          [activity.id]: null,
+        }));
+      } else {
+        setActivityVideoFiles((current) => ({
+          ...current,
+          [activity.id]: null,
+        }));
+      }
+
+      await loadChurchActivities();
+    } catch (err) {
+      console.error(
+        'Failed to upload activity media:',
+        err,
+      );
+      setChurchActivitiesError(
+        `Unable to upload activity ${type === 'PHOTO' ? 'photo' : 'video'}.`,
+      );
+    } finally {
+      setActivityMediaUploading(null);
+    }
+  };
+
+  const updateChurchActivityMedia = async (
+    media: ChurchActivityMedia,
+  ) => {
+    const caption = window.prompt(
+      'Media caption:',
+      media.caption || '',
+    );
+
+    if (caption === null) {
+      return;
+    }
+
+    const orderInput = window.prompt(
+      'Display order:',
+      String(media.display_order || 0),
+    );
+
+    if (orderInput === null) {
+      return;
+    }
+
+    const displayOrder = Number(orderInput);
+
+    if (
+      !Number.isInteger(displayOrder) ||
+      displayOrder < 0
+    ) {
+      setChurchActivitiesError(
+        'Display order must be 0 or greater.',
+      );
+      return;
+    }
+
+    setChurchActivitiesError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-activities/media/${media.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            caption: caption.trim() || null,
+            displayOrder,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to update activity media',
+        );
+      }
+
+      await loadChurchActivities();
+    } catch (err) {
+      console.error(
+        'Failed to update activity media:',
+        err,
+      );
+      setChurchActivitiesError(
+        'Unable to update activity media.',
+      );
+    }
+  };
+
+  const deleteChurchActivityMedia = async (
+    media: ChurchActivityMedia,
+  ) => {
+    if (
+      !window.confirm(
+        `Delete this ${media.media_type.toLowerCase()}?`,
+      )
+    ) {
+      return;
+    }
+
+    setChurchActivitiesError('');
+
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/church-activities/media/${media.id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to delete activity media',
+        );
+      }
+
+      await loadChurchActivities();
+    } catch (err) {
+      console.error(
+        'Failed to delete activity media:',
+        err,
+      );
+      setChurchActivitiesError(
+        'Unable to delete activity media.',
+      );
+    }
+  };
+
   const loadSermons = async () => {
     try {
       const response = await authFetch(
@@ -3588,6 +3995,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     ) {
       loadAnnouncements();
       loadSermons();
+      loadChurchActivities();
       loadChurchSettings();
       loadVisitors();
     }
@@ -11129,6 +11537,582 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
   /* =========================
+     CHURCH ACTIVITIES PAGE
+     ========================= */
+
+  if (
+    showChurchActivities &&
+    (
+      authUser.role === 'ADMIN' ||
+      authUser.role === 'LEADER'
+    )
+  ) {
+    const publishedActivities =
+      churchActivities.filter(
+        (activity) =>
+          activity.status === 'PUBLISHED',
+      ).length;
+
+    const draftActivities =
+      churchActivities.filter(
+        (activity) =>
+          activity.status === 'DRAFT',
+      ).length;
+
+    const activityMediaCount =
+      churchActivities.reduce(
+        (total, activity) =>
+          total + (activity.media?.length || 0),
+        0,
+      );
+
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>
+              The City Of The Living God Fellowship
+            </p>
+          </div>
+
+          <div className="admin">
+            <span>
+              {authUser.firstName}{' '}
+              {authUser.lastName}
+            </span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Church Activities & Gallery</h2>
+              <p className="welcome">
+                Manage church activities, photos and
+                videos
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="back-button"
+              onClick={() =>
+                setShowChurchActivities(false)
+              }
+            >
+              ← Dashboard
+            </button>
+          </div>
+
+          <div className="event-stats">
+            <div className="event-stat-card">
+              <div>▦</div>
+              <h3>Total Activities</h3>
+              <strong>
+                {churchActivities.length}
+              </strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>✓</div>
+              <h3>Published</h3>
+              <strong>{publishedActivities}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>◷</div>
+              <h3>Drafts</h3>
+              <strong>{draftActivities}</strong>
+            </div>
+
+            <div className="event-stat-card">
+              <div>▣</div>
+              <h3>Media</h3>
+              <strong>{activityMediaCount}</strong>
+            </div>
+          </div>
+
+          {authUser.role === 'ADMIN' && (
+            <form
+              className="member-form"
+              onSubmit={saveChurchActivity}
+            >
+              <h3>
+                {editingChurchActivity
+                  ? 'Edit Church Activity'
+                  : 'Add Church Activity'}
+              </h3>
+
+              <div className="form-grid">
+                <label>
+                  Activity Title *
+                  <input
+                    type="text"
+                    value={churchActivityTitle}
+                    onChange={(event) =>
+                      setChurchActivityTitle(
+                        event.target.value,
+                      )
+                    }
+                    maxLength={200}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Activity Date *
+                  <input
+                    type="date"
+                    value={churchActivityDate}
+                    onChange={(event) =>
+                      setChurchActivityDate(
+                        event.target.value,
+                      )
+                    }
+                    required
+                  />
+                </label>
+
+                <label>
+                  Status
+                  <select
+                    value={churchActivityStatus}
+                    onChange={(event) =>
+                      setChurchActivityStatus(
+                        event.target.value as
+                          | 'DRAFT'
+                          | 'PUBLISHED'
+                          | 'ARCHIVED',
+                      )
+                    }
+                  >
+                    <option value="DRAFT">
+                      Draft
+                    </option>
+                    <option value="PUBLISHED">
+                      Published
+                    </option>
+                    <option value="ARCHIVED">
+                      Archived
+                    </option>
+                  </select>
+                </label>
+
+                <label>
+                  Display Order
+                  <input
+                    type="number"
+                    min="0"
+                    value={
+                      churchActivityDisplayOrder
+                    }
+                    onChange={(event) =>
+                      setChurchActivityDisplayOrder(
+                        Math.max(
+                          0,
+                          Number(event.target.value) ||
+                            0,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <label>
+                Description
+                <textarea
+                  value={
+                    churchActivityDescription
+                  }
+                  onChange={(event) =>
+                    setChurchActivityDescription(
+                      event.target.value,
+                    )
+                  }
+                  rows={4}
+                />
+              </label>
+
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={
+                    churchActivityFeatured
+                  }
+                  onChange={(event) =>
+                    setChurchActivityFeatured(
+                      event.target.checked,
+                    )
+                  }
+                />
+                Featured activity
+              </label>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  disabled={churchActivitySaving}
+                >
+                  {churchActivitySaving
+                    ? 'Saving...'
+                    : editingChurchActivity
+                      ? 'Save Changes'
+                      : 'Add Activity'}
+                </button>
+
+                {editingChurchActivity && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={
+                      cancelEditingChurchActivity
+                    }
+                    disabled={
+                      churchActivitySaving
+                    }
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          {churchActivitiesLoading && (
+            <div className="form-card">
+              <p>Loading church activities...</p>
+            </div>
+          )}
+
+          {!churchActivitiesLoading &&
+            churchActivitiesError && (
+              <div className="form-card">
+                <p className="error">
+                  {churchActivitiesError}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={loadChurchActivities}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+          {!churchActivitiesLoading &&
+            !churchActivitiesError &&
+            churchActivities.length === 0 && (
+              <div className="form-card">
+                <h3>No Church Activities Yet</h3>
+                <p>
+                  Church activities, photos and videos
+                  will appear here after they are added.
+                </p>
+
+                {authUser.role === 'ADMIN' && (
+                  <p>
+                    Administrator management controls
+                    will be added next.
+                  </p>
+                )}
+              </div>
+            )}
+
+          {!churchActivitiesLoading &&
+            !churchActivitiesError &&
+            churchActivities.length > 0 && (
+              <div className="event-grid">
+                {churchActivities.map(
+                  (activity) => {
+                    const photoCount =
+                      activity.media?.filter(
+                        (media) =>
+                          media.media_type ===
+                          'PHOTO',
+                      ).length || 0;
+
+                    const videoCount =
+                      activity.media?.filter(
+                        (media) =>
+                          media.media_type ===
+                          'VIDEO',
+                      ).length || 0;
+
+                    return (
+                      <div
+                        className="event-card"
+                        key={activity.id}
+                      >
+                        <div className="event-card-header">
+                          <div>
+                            <h3>{activity.title}</h3>
+                            <p>
+                              {activity.activity_date}
+                            </p>
+                          </div>
+
+                          <span>
+                            {activity.status}
+                          </span>
+                        </div>
+
+                        {activity.featured && (
+                          <p>
+                            <strong>★ Featured</strong>
+                          </p>
+                        )}
+
+                        <p>
+                          {activity.description ||
+                            'No description provided.'}
+                        </p>
+
+                        <p>
+                          <strong>Photos:</strong>{' '}
+                          {photoCount}
+                          {' · '}
+                          <strong>Videos:</strong>{' '}
+                          {videoCount}
+                        </p>
+
+                        {authUser.role ===
+                          'ADMIN' && (
+                          <div className="form-card">
+                            <h4>
+                              Photos & Videos
+                            </h4>
+
+                            <label>
+                              Add Photo
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={(event) =>
+                                  setActivityPhotoFiles(
+                                    (current) => ({
+                                      ...current,
+                                      [activity.id]:
+                                        event.target
+                                          .files?.[0] ||
+                                        null,
+                                    }),
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              disabled={
+                                !activityPhotoFiles[
+                                  activity.id
+                                ] ||
+                                activityMediaUploading ===
+                                  `${activity.id}-PHOTO`
+                              }
+                              onClick={() =>
+                                uploadChurchActivityMedia(
+                                  activity,
+                                  'PHOTO',
+                                )
+                              }
+                            >
+                              {activityMediaUploading ===
+                              `${activity.id}-PHOTO`
+                                ? 'Uploading Photo...'
+                                : 'Upload Photo'}
+                            </button>
+
+                            <label>
+                              Add Video
+                              <input
+                                type="file"
+                                accept="video/mp4,video/webm,video/quicktime"
+                                onChange={(event) =>
+                                  setActivityVideoFiles(
+                                    (current) => ({
+                                      ...current,
+                                      [activity.id]:
+                                        event.target
+                                          .files?.[0] ||
+                                        null,
+                                    }),
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              disabled={
+                                !activityVideoFiles[
+                                  activity.id
+                                ] ||
+                                activityMediaUploading ===
+                                  `${activity.id}-VIDEO`
+                              }
+                              onClick={() =>
+                                uploadChurchActivityMedia(
+                                  activity,
+                                  'VIDEO',
+                                )
+                              }
+                            >
+                              {activityMediaUploading ===
+                              `${activity.id}-VIDEO`
+                                ? 'Uploading Video...'
+                                : 'Upload Video'}
+                            </button>
+                          </div>
+                        )}
+
+                        {activity.media?.length >
+                          0 && (
+                          <div className="activity-media-grid">
+                            {activity.media.map(
+                              (media) => (
+                                <div
+                                  className="activity-media-item"
+                                  key={media.id}
+                                >
+                                  {media.media_type ===
+                                  'PHOTO' ? (
+                                    <img
+                                      src={media.media_url}
+                                      alt={
+                                        media.caption ||
+                                        activity.title
+                                      }
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <video
+                                      src={media.media_url}
+                                      controls
+                                      preload="metadata"
+                                    >
+                                      Your browser does not
+                                      support video playback.
+                                    </video>
+                                  )}
+
+                                  <div className="activity-media-details">
+                                    <strong>
+                                      {media.media_type ===
+                                      'PHOTO'
+                                        ? 'Photo'
+                                        : 'Video'}
+                                    </strong>
+
+                                    {media.caption && (
+                                      <p>
+                                        {media.caption}
+                                      </p>
+                                    )}
+
+                                    <small>
+                                      Display order:{' '}
+                                      {media.display_order}
+                                    </small>
+                                  </div>
+
+                                  {authUser.role ===
+                                    'ADMIN' && (
+                                    <div className="form-actions">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          updateChurchActivityMedia(
+                                            media,
+                                          )
+                                        }
+                                      >
+                                        Edit Caption / Order
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        className="danger-button"
+                                        onClick={() =>
+                                          deleteChurchActivityMedia(
+                                            media,
+                                          )
+                                        }
+                                      >
+                                        Delete Media
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
+
+                        {authUser.role ===
+                          'ADMIN' && (
+                          <div className="form-actions">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                startEditingChurchActivity(
+                                  activity,
+                                )
+                              }
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              className="danger-button"
+                              onClick={() =>
+                                deleteChurchActivity(
+                                  activity,
+                                )
+                              }
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+
+                        {authUser.role ===
+                          'LEADER' && (
+                          <p>
+                            <small>
+                              Read-only access
+                            </small>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+            )}
+        </main>
+
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
+
+  /* =========================
      SERMONS & RESOURCES PAGE
      ========================= */
 
@@ -15056,6 +16040,21 @@ className="back-button no-print"
             >
               <span>▤</span>
               Sermons & Resources
+            </button>
+          )}
+
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button
+              onClick={() => {
+                loadChurchActivities();
+                setShowChurchActivities(true);
+              }}
+            >
+              <span>▦</span>
+              Church Activities
             </button>
           )}
 

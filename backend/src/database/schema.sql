@@ -602,3 +602,65 @@ CREATE INDEX IF NOT EXISTS visitors_assigned_leader_idx
 CREATE UNIQUE INDEX IF NOT EXISTS visitors_converted_member_unique
   ON visitors(converted_member_id)
   WHERE converted_member_id IS NOT NULL;
+
+-- ============================================================
+-- CHURCH ACTIVITIES & GALLERY
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS church_activities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  title VARCHAR(200) NOT NULL,
+  activity_date DATE NOT NULL,
+  description TEXT,
+
+  status VARCHAR(30) NOT NULL DEFAULT 'DRAFT'
+    CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')),
+
+  featured BOOLEAN NOT NULL DEFAULT FALSE,
+
+  display_order INTEGER NOT NULL DEFAULT 0
+    CHECK (display_order >= 0),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS church_activities_date_idx
+  ON church_activities(activity_date);
+
+CREATE INDEX IF NOT EXISTS church_activities_status_idx
+  ON church_activities(status);
+
+CREATE INDEX IF NOT EXISTS church_activities_featured_idx
+  ON church_activities(featured);
+
+CREATE TABLE IF NOT EXISTS church_activity_media (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  activity_id UUID NOT NULL
+    REFERENCES church_activities(id)
+    ON DELETE CASCADE,
+
+  media_type VARCHAR(20) NOT NULL
+    CHECK (media_type IN ('PHOTO', 'VIDEO')),
+
+  media_url TEXT NOT NULL,
+  cloudinary_public_id TEXT NOT NULL,
+
+  caption VARCHAR(255),
+
+  display_order INTEGER NOT NULL DEFAULT 0
+    CHECK (display_order >= 0),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS church_activity_media_activity_idx
+  ON church_activity_media(activity_id);
+
+CREATE INDEX IF NOT EXISTS church_activity_media_type_idx
+  ON church_activity_media(media_type);
+
+CREATE UNIQUE INDEX IF NOT EXISTS church_activity_media_cloudinary_unique
+  ON church_activity_media(cloudinary_public_id);
