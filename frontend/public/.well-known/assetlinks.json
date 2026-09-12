@@ -11,5 +11,17 @@
         "57:EC:60:DB:B6:42:C2:91:4E:47:77:91:6F:43:20:CA:C7:24:8C:13:00:25:85:0F:70:D3:2A:C4:CC:1E:36:3E"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.clgf.cms.test",
+      "sha256_cert_fingerprints": [
+        "B5:F3:52:60:7D:96:47:1B:51:0F:32:BE:4A:88:8C:1F:4B:0D:10:60:F8:A1:95:99:A6:43:01:C5:60:2F:BB:45"
+      ]
+    }
   }
 ]
