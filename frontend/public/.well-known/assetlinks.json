@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.clgf.cms.app",
+      "sha256_cert_fingerprints": [
+        "77:47:18:E0:F2:EF:88:E1:FD:C4:05:FE:CB:B8:34:27:60:A2:98:10:3D:C5:9B:35:AB:8D:91:5F:B4:77:94:50",
+        "D8:5D:3D:6F:98:89:9F:DC:B1:EE:B7:63:68:38:C2:88:B6:8D:9E:CB:3A:A8:88:75:80:6B:3C:79:B8:37:A8:98"
+      ]
+    }
+  }
+]
