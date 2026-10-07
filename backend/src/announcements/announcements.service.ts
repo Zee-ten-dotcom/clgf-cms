@@ -4,12 +4,18 @@ import {
 } from '@nestjs/common';
 
 import { getDatabasePool } from '../database/database-pool';
+import { PushNotificationsService } from '../push-notifications/push-notifications.service';
 
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 
 @Injectable()
 export class AnnouncementsService {
+  constructor(
+    private readonly pushNotificationsService:
+      PushNotificationsService,
+  ) {}
+
   private async db() {
     return getDatabasePool().connect();
   }
@@ -156,7 +162,26 @@ export class AnnouncementsService {
         ],
       );
 
-      return result.rows[0];
+      const announcement = result.rows[0];
+
+      // push-announcement-create
+      if (announcement.status === 'PUBLISHED') {
+        this.pushNotificationsService
+          .sendToAllUsers({
+            title: announcement.title,
+            body: announcement.message,
+            url: '/',
+            tag: `announcement-${announcement.id}`,
+          })
+          .catch((error) => {
+            console.error(
+              'Announcement push delivery failed:',
+              error,
+            );
+          });
+      }
+
+      return announcement;
     } finally {
       client.release();
     }
@@ -230,7 +255,29 @@ export class AnnouncementsService {
         ],
       );
 
-      return result.rows[0];
+      const announcement = result.rows[0];
+
+      // push-announcement-update
+      if (
+        current.status !== 'PUBLISHED' &&
+        announcement.status === 'PUBLISHED'
+      ) {
+        this.pushNotificationsService
+          .sendToAllUsers({
+            title: announcement.title,
+            body: announcement.message,
+            url: '/',
+            tag: `announcement-${announcement.id}`,
+          })
+          .catch((error) => {
+            console.error(
+              'Announcement push delivery failed:',
+              error,
+            );
+          });
+      }
+
+      return announcement;
     } finally {
       client.release();
     }

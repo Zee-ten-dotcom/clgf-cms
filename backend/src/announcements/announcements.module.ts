@@ -6,11 +6,13 @@ import { AnnouncementsService } from './announcements.service';
 
 import { AuthModule } from '../auth/auth.module';
 import { AuditModule } from '../audit/audit.module';
+import { PushNotificationsModule } from '../push-notifications/push-notifications.module';
 
 @Module({
   imports: [
     AuthModule,
     AuditModule,
+    PushNotificationsModule,
   ],
   controllers: [
     AnnouncementsController,

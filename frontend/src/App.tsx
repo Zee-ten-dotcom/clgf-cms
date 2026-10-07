@@ -478,6 +478,129 @@ function App() {
     });
   };
 
+  const urlBase64ToUint8Array = (
+    base64String: string,
+  ) => {
+    const padding =
+      '='.repeat((4 - (base64String.length % 4)) % 4);
+
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+
+    return Uint8Array.from(
+      [...rawData].map((character) =>
+        character.charCodeAt(0),
+      ),
+    );
+  };
+
+  const enablePhoneNotifications = async () => {
+    setPhoneNotificationsLoading(true);
+    setPhoneNotificationsMessage('');
+
+    try {
+      if (
+        !('serviceWorker' in navigator) ||
+        !('PushManager' in window) ||
+        !('Notification' in window)
+      ) {
+        throw new Error(
+          'Push notifications are not supported on this device.',
+        );
+      }
+
+      const permission =
+        await Notification.requestPermission();
+
+      if (permission !== 'granted') {
+        throw new Error(
+          'Notification permission was not granted.',
+        );
+      }
+
+      const registration =
+        await navigator.serviceWorker.ready;
+
+      const keyResponse = await authFetch(
+        `${API_BASE_URL}/push-notifications/public-key`,
+      );
+
+      if (!keyResponse.ok) {
+        throw new Error(
+          'Unable to load push notification configuration.',
+        );
+      }
+
+      const { publicKey } = await keyResponse.json();
+
+      let subscription =
+        await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        subscription =
+          await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey:
+              urlBase64ToUint8Array(publicKey),
+          });
+      }
+
+      const json = subscription.toJSON();
+
+      if (
+        !json.endpoint ||
+        !json.keys?.p256dh ||
+        !json.keys?.auth
+      ) {
+        throw new Error(
+          'The phone returned an incomplete push subscription.',
+        );
+      }
+
+      const response = await authFetch(
+        `${API_BASE_URL}/push-notifications/subscribe`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            endpoint: json.endpoint,
+            keys: {
+              p256dh: json.keys.p256dh,
+              auth: json.keys.auth,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Unable to register this phone for notifications.',
+        );
+      }
+
+      setPhoneNotificationsEnabled(true);
+      setPhoneNotificationsMessage(
+        'Phone notifications are enabled.',
+      );
+    } catch (error) {
+      console.error(error);
+
+      setPhoneNotificationsEnabled(false);
+      setPhoneNotificationsMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to enable phone notifications.',
+      );
+    } finally {
+      setPhoneNotificationsLoading(false);
+    }
+  };
+
   const [editingEvent, setEditingEvent] =
     useState<ChurchEvent | null>(null);
   const [selectedEventProfile, setSelectedEventProfile] =
@@ -708,6 +831,13 @@ function App() {
     useState<LeadershipAssignment | null>(null);
   const [showLeadership, setShowLeadership] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const [phoneNotificationsEnabled, setPhoneNotificationsEnabled] =
+    useState(false);
+  const [phoneNotificationsLoading, setPhoneNotificationsLoading] =
+    useState(false);
+  const [phoneNotificationsMessage, setPhoneNotificationsMessage] =
+    useState('');
   const [showReports, setShowReports] = useState(false);
 
   const [systemUsers, setSystemUsers] =
@@ -16491,6 +16621,34 @@ className="back-button no-print"
               </div>
 
               <div className="dashboard-attention-grid">
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={enablePhoneNotifications}
+                  disabled={
+                    phoneNotificationsLoading ||
+                    phoneNotificationsEnabled
+                  }
+                >
+                  <span className="attention-icon">🔔</span>
+                  <div>
+                    <strong>
+                      {phoneNotificationsEnabled ? 'ON' : 'OFF'}
+                    </strong>
+                    <h3>
+                      {phoneNotificationsEnabled
+                        ? 'Phone Notifications Enabled'
+                        : 'Enable Phone Notifications'}
+                    </h3>
+                    <small>
+                      {phoneNotificationsLoading
+                        ? 'Enabling notifications...'
+                        : phoneNotificationsMessage ||
+                          'Receive CLGF announcements on this phone →'}
+                    </small>
+                  </div>
+                </button>
+
                 {authUser.role === 'ADMIN' && (
                   <button
                     type="button"
