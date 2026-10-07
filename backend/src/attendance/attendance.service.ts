@@ -849,9 +849,9 @@ export class AttendanceService {
        */
       const sessionScope = `
         (
-          ($1::uuid IS NULL AND home_cell_id IS NULL)
+          ($3::uuid IS NULL AND home_cell_id IS NULL)
           OR
-          ($1::uuid IS NOT NULL AND home_cell_id = $1::uuid)
+          ($3::uuid IS NOT NULL AND home_cell_id = $3::uuid)
         )
       `;
 
@@ -867,7 +867,7 @@ export class AttendanceService {
           AND
           ${sessionScope}
         `,
-        [homeCellId],
+        params,
       );
 
       const membersResult = await client.query(
