@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
+import { getDatabasePool } from '../database/database-pool';
+
 @Injectable()
 export class MembersService {
   private async db() {
@@ -10,9 +15,13 @@ export class MembersService {
 
     try {
       const result = await client.query(`
-        SELECT *
-        FROM members
-        ORDER BY created_at DESC
+        SELECT
+          m.*,
+          hc.name AS home_cell_name
+        FROM members m
+        LEFT JOIN home_cells hc
+          ON hc.id = m.home_cell_id
+        ORDER BY m.created_at DESC
       `);
 
       return result.rows;
@@ -26,17 +35,51 @@ export class MembersService {
 
     try {
       const result = await client.query(
-        `SELECT * FROM members WHERE id = $1`,
+        `
+        SELECT
+          m.*,
+          hc.name AS home_cell_name
+        FROM members m
+        LEFT JOIN home_cells hc
+          ON hc.id = m.home_cell_id
+        WHERE m.id = $1
+        `,
         [id],
       );
 
       if (result.rows.length === 0) {
-        throw new BadRequestException('Member not found');
+        throw new BadRequestException(
+          'Member not found',
+        );
       }
 
       return result.rows[0];
     } finally {
       client.release();
+    }
+  }
+
+  private async validateHomeCell(
+    client: any,
+    homeCellId?: string | null,
+  ) {
+    if (!homeCellId) {
+      return;
+    }
+
+    const result = await client.query(
+      `
+      SELECT id
+      FROM home_cells
+      WHERE id = $1
+      `,
+      [homeCellId],
+    );
+
+    if (result.rows.length === 0) {
+      throw new BadRequestException(
+        'Home Cell not found',
+      );
     }
   }
 
@@ -49,11 +92,18 @@ export class MembersService {
     maritalStatus?: string;
     dateOfBirth?: string;
     address?: string;
+    homeCellId?: string;
   }) {
     const client = await this.db();
 
     try {
-      const membershipNumber = `CLGF-${Date.now()}`;
+      await this.validateHomeCell(
+        client,
+        data.homeCellId,
+      );
+
+      const membershipNumber =
+        `CLGF-${Date.now()}`;
 
       const result = await client.query(
         `
@@ -67,9 +117,13 @@ export class MembersService {
           marital_status,
           date_of_birth,
           address,
-          joined_at
+          joined_at,
+          home_cell_id
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_DATE)
+        VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,
+          CURRENT_DATE,$10
+        )
         RETURNING *
         `,
         [
@@ -82,6 +136,7 @@ export class MembersService {
           data.maritalStatus ?? null,
           data.dateOfBirth ?? null,
           data.address ?? null,
+          data.homeCellId ?? null,
         ],
       );
 
@@ -102,25 +157,50 @@ export class MembersService {
       maritalStatus?: string;
       dateOfBirth?: string;
       address?: string;
+      homeCellId?: string | null;
     },
   ) {
     const client = await this.db();
 
     try {
+      if (data.homeCellId !== undefined) {
+        await this.validateHomeCell(
+          client,
+          data.homeCellId,
+        );
+      }
+
+      const updateHomeCell =
+        data.homeCellId !== undefined;
+
       const result = await client.query(
         `
         UPDATE members
         SET
-          first_name = COALESCE($1, first_name),
-          last_name = COALESCE($2, last_name),
-          phone = COALESCE($3, phone),
-          email = COALESCE($4, email),
-          address = COALESCE($5, address),
-          gender = COALESCE($6, gender),
-          marital_status = COALESCE($7, marital_status),
-          date_of_birth = COALESCE($8, date_of_birth),
+          first_name =
+            COALESCE($1, first_name),
+          last_name =
+            COALESCE($2, last_name),
+          phone =
+            COALESCE($3, phone),
+          email =
+            COALESCE($4, email),
+          address =
+            COALESCE($5, address),
+          gender =
+            COALESCE($6, gender),
+          marital_status =
+            COALESCE($7, marital_status),
+          date_of_birth =
+            COALESCE($8, date_of_birth),
+          home_cell_id =
+            CASE
+              WHEN $9::boolean
+                THEN $10::uuid
+              ELSE home_cell_id
+            END,
           updated_at = NOW()
-        WHERE id = $9
+        WHERE id = $11
         RETURNING *
         `,
         [
@@ -132,12 +212,16 @@ export class MembersService {
           data.gender ?? null,
           data.maritalStatus ?? null,
           data.dateOfBirth ?? null,
+          updateHomeCell,
+          data.homeCellId ?? null,
           id,
         ],
       );
 
       if (result.rows.length === 0) {
-        throw new BadRequestException('Member not found');
+        throw new BadRequestException(
+          'Member not found',
+        );
       }
 
       return result.rows[0];
@@ -163,7 +247,9 @@ export class MembersService {
       );
 
       if (result.rows.length === 0) {
-        throw new BadRequestException('Member not found');
+        throw new BadRequestException(
+          'Member not found',
+        );
       }
 
       return result.rows[0];
@@ -189,7 +275,9 @@ export class MembersService {
       );
 
       if (result.rows.length === 0) {
-        throw new BadRequestException('Member not found');
+        throw new BadRequestException(
+          'Member not found',
+        );
       }
 
       return result.rows[0];
@@ -198,5 +286,3 @@ export class MembersService {
     }
   }
 }
-
-import { getDatabasePool } from '../database/database-pool';

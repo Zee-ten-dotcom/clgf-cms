@@ -2995,3 +2995,93 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== CHURCH ACTIVITIES GALLERY ===== */
+
+.activity-gallery-section {
+  margin-top: 24px;
+}
+
+.activity-gallery-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.activity-gallery-heading h4 {
+  margin: 0;
+}
+
+.activity-gallery-heading span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.06);
+  font-weight: 700;
+}
+
+.activity-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.activity-photo-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+}
+
+.activity-video-section {
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(0,0,0,.12);
+}
+
+.activity-video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.activity-video-grid video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: #000;
+}
+
+.activity-load-more {
+  margin-top: 18px;
+}
+
+.activity-load-more summary {
+  cursor: pointer;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 10px 20px;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 10px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.activity-load-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.activity-extra-photos {
+  margin-top: 18px;
+}
+
+@media (max-width: 800px) {
+  .activity-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-video-grid {
+    grid-template-columns: 1fr;
+  }
+}

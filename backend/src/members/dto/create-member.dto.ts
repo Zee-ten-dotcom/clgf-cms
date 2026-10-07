@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -38,4 +39,8 @@ export class CreateMemberDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsUUID()
+  homeCellId?: string;
 }

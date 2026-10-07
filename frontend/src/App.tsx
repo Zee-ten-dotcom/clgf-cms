@@ -59,6 +59,8 @@ address: string;
 gender: string;
   marital_status: string;
   status: string;
+  home_cell_id: string | null;
+  home_cell_name?: string | null;
 };
 type Ministry = {
   id: string;
@@ -157,6 +159,8 @@ type AttendanceSession = {
   service_type: string;
   notes: string | null;
   attendance_count: number;
+  home_cell_id?: string | null;
+  home_cell_name?: string | null;
   event_id?: string | null;
   event_title?: string | null;
   event_type?: string | null;
@@ -177,6 +181,12 @@ type AttendanceSessionDetail = AttendanceSession & {
   records: AttendanceRecord[];
 };
 
+type AttendanceContext = {
+  mode: 'ADMIN' | 'LEADER';
+  homeCells: HomeCell[];
+  members: Member[];
+};
+
 type MemberForm = {
   firstName: string;
   lastName: string;
@@ -186,6 +196,7 @@ type MemberForm = {
   maritalStatus: string;
   dateOfBirth: string;
   address: string;
+  homeCellId: string;
 };
 type AttendanceHistoryItem = {
   session_id: string;
@@ -430,6 +441,7 @@ const emptyForm: MemberForm = {
   maritalStatus: '',
   dateOfBirth: '',
   address: '',
+  homeCellId: '',
 };
 
 function App() {
@@ -557,6 +569,10 @@ function App() {
     useState('');
 
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
+  const [attendanceContext, setAttendanceContext] =
+    useState<AttendanceContext | null>(null);
+  const [attendanceHomeCellId, setAttendanceHomeCellId] =
+    useState('');
   const [showAttendance, setShowAttendance] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceSessionDetail | null>(null);
@@ -1077,7 +1093,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadPublicPrayerRequests = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') {
+    if (!authUser || authUser?.role !== 'ADMIN') {
       return;
     }
 
@@ -1196,7 +1212,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
   const loadContactEnquiries = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') {
+    if (!authUser || authUser?.role !== 'ADMIN') {
       return;
     }
 
@@ -1622,17 +1638,96 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   };
 
+  const loadAttendanceContext = async () => {
+    try {
+      const response = await authFetch(
+        `${API_BASE_URL}/attendance/context`,
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Failed to load attendance context',
+        );
+      }
+
+      const data: AttendanceContext =
+        await response.json();
+
+      setAttendanceContext(data);
+
+      if (
+        data.mode === 'LEADER' &&
+        data.homeCells.length === 1
+      ) {
+        setAttendanceHomeCellId(
+          data.homeCells[0].id,
+        );
+      } else if (
+        data.mode === 'LEADER' &&
+        data.homeCells.length > 1
+      ) {
+        setAttendanceHomeCellId((current) =>
+          data.homeCells.some(
+            (cell) => cell.id === current,
+          )
+            ? current
+            : '',
+        );
+      } else {
+        setAttendanceHomeCellId('');
+      }
+    } catch (err) {
+      console.error(
+        'Failed to load attendance context:',
+        err,
+      );
+      setAttendanceContext(null);
+    }
+  };
+
   const loadAttendance = () => {
-    authFetch(`${API_BASE_URL}/attendance`)
-      .then((response) => response.json())
+    if (
+      authUser?.role !== 'ADMIN' &&
+      authUser?.role !== 'LEADER'
+    ) {
+      setAttendanceSessions([]);
+      return Promise.resolve();
+    }
+
+    return authFetch(`${API_BASE_URL}/attendance`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to load attendance');
+        }
+        return response.json();
+      })
       .then((data) => {
         setAttendanceSessions(data);
       })
       .catch((err) => {
-        console.error("Failed to load attendance:", err);
+        console.error('Failed to load attendance:', err);
       });
   };
 
+
+  const openAttendancePage = async () => {
+    if (
+      authUser?.role !== 'ADMIN' &&
+      authUser?.role !== 'LEADER'
+    ) {
+      return;
+    }
+
+    setAttendanceReport(null);
+    setSelectedAttendance(null);
+    setAttendanceMemberSearch('');
+    setAttendanceStatusFilter('ALL');
+
+    await loadAttendanceContext();
+    loadAttendance();
+
+    setShowAttendance(true);
+  };
 
   const loadWeeklyServices = () => {
     authFetch(`${API_BASE_URL}/weekly-services`)
@@ -3565,7 +3660,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadRecentAuditLogs = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') return;
+    if (!authUser || authUser?.role !== 'ADMIN') return;
 
     setRecentAuditLoading(true);
     setRecentAuditError('');
@@ -3598,7 +3693,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadAuditSummary = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') return;
+    if (!authUser || authUser?.role !== 'ADMIN') return;
 
     try {
       const response = await authFetch(
@@ -3617,7 +3712,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadAuditLogs = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') return;
+    if (!authUser || authUser?.role !== 'ADMIN') return;
 
     setAuditLoading(true);
     setAuditError('');
@@ -3669,7 +3764,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const loadSystemUsers = async () => {
-    if (!authUser || authUser.role !== 'ADMIN') {
+    if (!authUser || authUser?.role !== 'ADMIN') {
       return;
     }
 
@@ -4304,6 +4399,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             maritalStatus: form.maritalStatus || undefined,
             dateOfBirth: form.dateOfBirth || undefined,
             address: form.address.trim() || undefined,
+            homeCellId: form.homeCellId || undefined,
           }),
         },
       );
@@ -4405,6 +4501,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         ? member.date_of_birth.substring(0, 10)
         : '',
       address: member.address || '',
+      homeCellId: member.home_cell_id || '',
     });
 
     setFormError('');
@@ -4446,6 +4543,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             maritalStatus: form.maritalStatus || undefined,
             dateOfBirth: form.dateOfBirth || undefined,
             address: form.address.trim() || undefined,
+            homeCellId: form.homeCellId || null,
           }),
         },
       );
@@ -4634,6 +4732,35 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   <option value="Married">Married</option>
                   <option value="Widowed">Widowed</option>
                   <option value="Divorced">Divorced</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Home Cell</label>
+
+                <select
+                  value={form.homeCellId}
+                  onChange={(e) =>
+                    updateForm('homeCellId', e.target.value)
+                  }
+                >
+                  <option value="">
+                    No Home Cell
+                  </option>
+
+                  {homeCells
+                    .filter(
+                      (homeCell) =>
+                        homeCell.status === 'ACTIVE',
+                    )
+                    .map((homeCell) => (
+                      <option
+                        key={homeCell.id}
+                        value={homeCell.id}
+                      >
+                        {homeCell.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -5825,6 +5952,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         params.set('to', reportTo);
       }
 
+      if (authUser?.role === 'LEADER') {
+        if (!attendanceHomeCellId) {
+          alert('Please select a Home Cell first.');
+          return;
+        }
+
+        params.set('homeCellId', attendanceHomeCellId);
+      }
+
       const query = params.toString();
 
       const response = await authFetch(
@@ -6020,6 +6156,16 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       return;
     }
 
+    if (
+      authUser?.role === 'LEADER' &&
+      !attendanceHomeCellId
+    ) {
+      setAttendanceError(
+        'Please select the Home Cell for this attendance session.',
+      );
+      return;
+    }
+
     setAttendanceSaving(true);
     setAttendanceError('');
 
@@ -6035,6 +6181,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             serviceDate: attendanceDate,
             serviceType: attendanceType.trim(),
             notes: attendanceNotes.trim() || undefined,
+            homeCellId:
+              authUser?.role === 'LEADER'
+                ? attendanceHomeCellId
+                : undefined,
           }),
         },
       );
@@ -12507,7 +12657,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </form>
           )}
 
-          {sermonError && authUser.role !== 'ADMIN' && (
+          {sermonError && authUser?.role !== 'ADMIN' && (
             <div className="form-error">
               {sermonError}
             </div>
@@ -13415,9 +13565,31 @@ className="back-button no-print"
      ========================= */
 
   if (showAttendance) {
-    const activeAttendanceMembers = members.filter(
-      (member) => member.status === 'ACTIVE',
-    );
+    const activeAttendanceMembers =
+      (attendanceContext?.members || []).filter(
+        (member) =>
+          member.status === 'ACTIVE' &&
+          (
+            attendanceContext?.mode !== 'LEADER' ||
+            !attendanceHomeCellId ||
+            member.home_cell_id === attendanceHomeCellId
+          ),
+      );
+
+    const selectedAttendanceHomeCell =
+      attendanceContext?.homeCells.find(
+        (cell) => cell.id === attendanceHomeCellId,
+      );
+
+    const visibleAttendanceSessions =
+      authUser.role === 'LEADER'
+        ? attendanceHomeCellId
+          ? attendanceSessions.filter(
+              (session) =>
+                session.home_cell_id === attendanceHomeCellId,
+            )
+          : []
+        : attendanceSessions;
 
     const filteredAttendanceMembers = activeAttendanceMembers.filter(
       (member) => {
@@ -13484,9 +13656,17 @@ className="back-button no-print"
         <main className="main">
           <div className="page-header">
             <div>
-              <h2>Attendance</h2>
+              <h2>
+                {authUser.role === 'LEADER'
+                  ? `Home Cell Attendance${selectedAttendanceHomeCell
+                      ? ` — ${selectedAttendanceHomeCell.name}`
+                      : ''}`
+                  : 'Attendance'}
+              </h2>
               <p className="welcome">
-                Manage church service attendance
+                {authUser.role === 'LEADER'
+                  ? 'Manage attendance for your assigned Home Cell'
+                  : 'Manage church service attendance'}
               </p>
             </div>
 
@@ -13495,7 +13675,9 @@ className="back-button no-print"
                 className="edit-button"
                 onClick={loadAttendanceReport}
               >
-                View Church Report
+                {authUser.role === 'LEADER'
+                  ? 'View Home Cell Report'
+                  : 'View Church Report'}
               </button>
 
               <button
@@ -13561,26 +13743,11 @@ className="back-button no-print"
 
                 <button
                   className="back-button"
-                  onClick={async () => {
-  setReportFrom('');
-  setReportTo('');
-
-  try {
-    const response = await authFetch(
-      `${API_BASE_URL}/attendance/report`,
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to load attendance report');
-    }
-
-    const data = await response.json();
-    setAttendanceReport(data);
-  } catch (err) {
-    console.error(err);
-    alert('Unable to reload attendance report.');
-  }
-}}
+                  onClick={() => {
+                    setReportFrom('');
+                    setReportTo('');
+                    setAttendanceReport(null);
+                  }}
                 >
                   Close Report
                 </button>
@@ -13662,12 +13829,47 @@ className="back-button no-print"
               </div>
             </div>
           )}
-          {authUser.role === 'ADMIN' && (
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
           <form
             className="member-form"
             onSubmit={saveAttendanceSession}
           >
-            <h3>Create Attendance Session</h3>
+            <h3>
+              {authUser.role === 'LEADER'
+                ? 'Create Home Cell Attendance Session'
+                : 'Create Attendance Session'}
+            </h3>
+
+            {authUser.role === 'LEADER' && (
+              <div className="form-group">
+                <label>Home Cell *</label>
+                <select
+                  value={attendanceHomeCellId}
+                  onChange={(e) => {
+                    setAttendanceHomeCellId(e.target.value);
+                    setSelectedAttendance(null);
+                    setAttendanceReport(null);
+                    setAttendanceError('');
+                  }}
+                  required
+                >
+                  {attendanceContext?.homeCells.length !== 1 && (
+                    <option value="">Select Home Cell</option>
+                  )}
+
+                  {(attendanceContext?.homeCells || []).map(
+                    (cell) => (
+                      <option key={cell.id} value={cell.id}>
+                        {cell.name}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+            )}
 
             {attendanceError && (
               <div className="form-error">
@@ -13806,41 +14008,39 @@ className="back-button no-print"
 
                 <p>
                   <strong>👥 Total Members:</strong>{' '}
-                  {
-                    members.filter(
-                      (member) => member.status === 'ACTIVE',
-                    ).length
-                  }
+                  {activeAttendanceMembers.length}
                 </p>
                 <p>
                   <strong>➖ Not Marked:</strong>{' '}
-                  {
-                    members.filter(
-                      (member) => member.status === 'ACTIVE',
-                    ).length -
-                    selectedAttendance.records.length
-                  }
+                  {Math.max(
+                    0,
+                    activeAttendanceMembers.length -
+                      selectedAttendance.records.filter(
+                        (record) =>
+                          activeAttendanceMembers.some(
+                            (member) =>
+                              member.id === record.member_id,
+                          ),
+                      ).length,
+                  )}
                 </p>
 
                 <p>
                   <strong>📊 Attendance Rate:</strong>{' '}
-                  {
-                    members.filter(
-                      (member) => member.status === 'ACTIVE',
-                    ).length > 0
-                      ? (
-                          (selectedAttendance.records.filter(
-                            (record) =>
-                              record.status === 'PRESENT',
-                          ).length /
-                            members.filter(
+                  {activeAttendanceMembers.length > 0
+                    ? (
+                        (selectedAttendance.records.filter(
+                          (record) =>
+                            record.status === 'PRESENT' &&
+                            activeAttendanceMembers.some(
                               (member) =>
-                                member.status === 'ACTIVE',
-                            ).length) *
-                          100
-                        ).toFixed(1)
-                      : '0.0'
-                  }
+                                member.id === record.member_id,
+                            ),
+                        ).length /
+                          activeAttendanceMembers.length) *
+                        100
+                      ).toFixed(1)
+                    : '0.0'}
                   %
                 </p>
               </div>
@@ -14121,14 +14321,14 @@ className="back-button no-print"
             </div>
           )}
           <div className="members-list">
-            {attendanceSessions.length === 0 ? (
+            {visibleAttendanceSessions.length === 0 ? (
               <div className="empty">
                 <div>📋</div>
                 <h3>No attendance sessions found</h3>
                 <p>Create your first attendance session.</p>
               </div>
             ) : (
-              attendanceSessions.map((session) => (
+              visibleAttendanceSessions.map((session) => (
                              <div
                   className="member-card"
                   key={session.id}
@@ -16008,10 +16208,15 @@ className="back-button no-print"
             Home Cells
           </button>
 
-          <button onClick={() => setShowAttendance(true)}>
-            <span>✓</span>
-            Attendance
-          </button>
+          {(
+            authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER'
+          ) && (
+            <button onClick={openAttendancePage}>
+              <span>✓</span>
+              Attendance
+            </button>
+          )}
 
           {(
             authUser.role === 'ADMIN' ||
@@ -16434,7 +16639,7 @@ className="back-button no-print"
 
             <button
               className="dashboard-stat stat-attendance"
-              onClick={() => setShowAttendance(true)}
+              onClick={openAttendancePage}
             >
               <span className="stat-icon">▣</span>
               <div>
@@ -16776,7 +16981,7 @@ className="back-button no-print"
                     setAttendanceType('');
                     setAttendanceNotes('');
                     setAttendanceError('');
-                    setShowAttendance(true);
+                    openAttendancePage();
                   }}
                 >
                   <span>✓</span>

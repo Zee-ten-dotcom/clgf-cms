@@ -2,6 +2,7 @@ import {
   IsDateString,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -16,4 +17,8 @@ export class CreateAttendanceSessionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsUUID()
+  homeCellId?: string;
 }

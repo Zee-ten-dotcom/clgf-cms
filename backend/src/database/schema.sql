@@ -89,6 +89,26 @@ CREATE TABLE IF NOT EXISTS home_cells (
 );
 
 -- ============================================================
+ALTER TABLE members
+  ADD COLUMN IF NOT EXISTS home_cell_id UUID;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'members_home_cell_id_fkey'
+  ) THEN
+    ALTER TABLE members
+      ADD CONSTRAINT members_home_cell_id_fkey
+      FOREIGN KEY (home_cell_id)
+      REFERENCES home_cells(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_members_home_cell_id
+  ON members(home_cell_id);
+
 -- WEEKLY SERVICES
 -- ============================================================
 
@@ -127,11 +147,15 @@ CREATE TABLE IF NOT EXISTS attendance_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   service_date DATE NOT NULL,
   service_type VARCHAR(100) NOT NULL,
+  home_cell_id UUID REFERENCES home_cells(id) ON DELETE CASCADE,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
+CREATE INDEX IF NOT EXISTS idx_attendance_sessions_home_cell_id
+  ON attendance_sessions(home_cell_id);
+
 -- ATTENDANCE RECORDS
 -- ============================================================
 

@@ -19,8 +19,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
 import { CreateAttendanceSessionDto } from './dto/create-attendance-session.dto';
+import { AttendanceReportQueryDto } from './dto/attendance-report-query.dto';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
-import { DateRangeQueryDto } from '../common/dto/date-range-query.dto';
 
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,46 +31,75 @@ export class AttendanceController {
     private readonly auditService: AuditService,
   ) {}
 
+  @Roles('ADMIN', 'LEADER')
   @Get()
-  findAllSessions() {
-    return this.attendanceService.findAllSessions();
+  findAllSessions(
+    @Req() request: any,
+  ) {
+    return this.attendanceService.findAllSessions(
+      request.user,
+    );
   }
 
+  @Roles('ADMIN', 'LEADER')
   @Get('member/:memberId/history')
   getMemberHistory(
     @Param('memberId', new ParseUUIDPipe()) memberId: string,
+    @Req() request: any,
   ) {
     return this.attendanceService.getMemberHistory(
       memberId,
+      request.user,
     );
   }
 
   @Roles('ADMIN', 'LEADER')
   @Get('report')
   getAttendanceReport(
-    @Query() query: DateRangeQueryDto,
+    @Query() query: AttendanceReportQueryDto,
+    @Req() request: any,
   ) {
     return this.attendanceService.getAttendanceReport(
       query.from,
       query.to,
+      request.user,
+      query.homeCellId,
     );
   }
 
+  @Roles('ADMIN', 'LEADER')
+  @Get('context')
+  getAttendanceContext(
+    @Req() request: any,
+  ) {
+    return this.attendanceService.getAttendanceContext(
+      request.user,
+    );
+  }
+
+  @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findSession(
     @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: any,
   ) {
-    return this.attendanceService.findSession(id);
+    return this.attendanceService.findSession(
+      id,
+      request.user,
+    );
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'LEADER')
   @Post()
   async createSession(
     @Body() body: CreateAttendanceSessionDto,
     @Req() request: any,
   ) {
     const session =
-      await this.attendanceService.createSession(body);
+      await this.attendanceService.createSession(
+        body,
+        request.user,
+      );
 
     await this.auditService.log({
       actor: request.user,
@@ -102,6 +131,7 @@ export class AttendanceController {
       await this.attendanceService.markAttendance(
         sessionId,
         body,
+        request.user,
       );
 
     await this.auditService.log({
@@ -136,6 +166,7 @@ export class AttendanceController {
       await this.attendanceService.removeAttendance(
         sessionId,
         memberId,
+        request.user,
       );
 
     await this.auditService.log({
@@ -159,14 +190,17 @@ export class AttendanceController {
     return record;
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'LEADER')
   @Delete(':id')
   async removeSession(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Req() request: any,
   ) {
     const session =
-      await this.attendanceService.removeSession(id);
+      await this.attendanceService.removeSession(
+        id,
+        request.user,
+      );
 
     await this.auditService.log({
       actor: request.user,
