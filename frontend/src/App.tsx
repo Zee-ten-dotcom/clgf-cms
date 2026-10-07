@@ -14346,6 +14346,13 @@ className="back-button no-print"
 
                   <div className="member-details">
                     <p>
+                      <strong>🏠 Session:</strong>{' '}
+                      {session.home_cell_id
+                        ? `Home Cell — ${session.home_cell_name || 'Home Cell'}`
+                        : 'Church Service'}
+                    </p>
+
+                    <p>
                       <strong>👥 Attendance:</strong>{' '}
                       {session.attendance_count}
                     </p>

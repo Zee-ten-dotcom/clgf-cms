@@ -849,9 +849,9 @@ export class AttendanceService {
        */
       const sessionScope = `
         (
-          ($3::uuid IS NULL AND home_cell_id IS NULL)
+          ($1::uuid IS NULL AND home_cell_id IS NULL)
           OR
-          ($3::uuid IS NOT NULL AND home_cell_id = $3::uuid)
+          ($1::uuid IS NOT NULL AND home_cell_id = $1::uuid)
         )
       `;
 
@@ -867,7 +867,7 @@ export class AttendanceService {
           AND
           ${sessionScope}
         `,
-        params,
+        [homeCellId],
       );
 
       const membersResult = await client.query(
@@ -877,11 +877,11 @@ export class AttendanceService {
         FROM members
         WHERE status = 'ACTIVE'
           AND (
-            $3::uuid IS NULL
-            OR home_cell_id = $3::uuid
+            $1::uuid IS NULL
+            OR home_cell_id = $1::uuid
           )
         `,
-        params,
+        [homeCellId],
       );
 
       const recordsResult = await client.query(
