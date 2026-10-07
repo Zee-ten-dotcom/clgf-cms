@@ -35,6 +35,9 @@ export class AnnouncementsService {
           status,
           public_visible,
           display_order,
+          notification_target,
+          target_home_cell_id,
+          target_member_ids,
           created_at,
           updated_at
         FROM announcements
@@ -93,6 +96,9 @@ export class AnnouncementsService {
           status,
           public_visible,
           display_order,
+          notification_target,
+          target_home_cell_id,
+          target_member_ids,
           created_at,
           updated_at
         FROM announcements
@@ -134,9 +140,15 @@ export class AnnouncementsService {
           expiry_date,
           status,
           public_visible,
-          display_order
+          display_order,
+          notification_target,
+          target_home_cell_id,
+          target_member_ids
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8,
+          $9, $10, $11
+        )
         RETURNING
           id,
           title,
@@ -147,6 +159,9 @@ export class AnnouncementsService {
           status,
           public_visible,
           display_order,
+          notification_target,
+          target_home_cell_id,
+          target_member_ids,
           created_at,
           updated_at
         `,
@@ -159,6 +174,13 @@ export class AnnouncementsService {
           body.status || 'DRAFT',
           body.publicVisible ?? false,
           body.displayOrder ?? 0,
+          body.notificationTarget || 'EVERYONE',
+          body.notificationTarget === 'HOME_CELL'
+            ? body.targetHomeCellId || null
+            : null,
+          body.notificationTarget === 'SELECTED_MEMBERS'
+            ? body.targetMemberIds || []
+            : [],
         ],
       );
 
@@ -167,12 +189,19 @@ export class AnnouncementsService {
       // push-announcement-create
       if (announcement.status === 'PUBLISHED') {
         this.pushNotificationsService
-          .sendToAllUsers({
-            title: announcement.title,
-            body: announcement.message,
-            url: '/',
-            tag: `announcement-${announcement.id}`,
-          })
+          .sendToTarget(
+            {
+              title: announcement.title,
+              body: announcement.message,
+              url: '/',
+              tag: `announcement-${announcement.id}`,
+            },
+            announcement.notification_target || 'EVERYONE',
+            {
+              homeCellId: announcement.target_home_cell_id,
+              memberIds: announcement.target_member_ids || [],
+            },
+          )
           .catch((error) => {
             console.error(
               'Announcement push delivery failed:',
@@ -225,6 +254,9 @@ export class AnnouncementsService {
           status = $7,
           public_visible = $8,
           display_order = $9,
+          notification_target = $10,
+          target_home_cell_id = $11,
+          target_member_ids = $12,
           updated_at = NOW()
         WHERE id = $1
         RETURNING
@@ -237,6 +269,9 @@ export class AnnouncementsService {
           status,
           public_visible,
           display_order,
+          notification_target,
+          target_home_cell_id,
+          target_member_ids,
           created_at,
           updated_at
         `,
@@ -252,6 +287,26 @@ export class AnnouncementsService {
           body.status ?? current.status,
           body.publicVisible ?? current.public_visible,
           body.displayOrder ?? current.display_order,
+          body.notificationTarget ??
+            current.notification_target ??
+            'EVERYONE',
+          (body.notificationTarget ??
+            current.notification_target) === 'HOME_CELL'
+            ? (
+                body.targetHomeCellId !== undefined
+                  ? body.targetHomeCellId || null
+                  : current.target_home_cell_id
+              )
+            : null,
+          (body.notificationTarget ??
+            current.notification_target) ===
+          'SELECTED_MEMBERS'
+            ? (
+                body.targetMemberIds !== undefined
+                  ? body.targetMemberIds
+                  : current.target_member_ids || []
+              )
+            : [],
         ],
       );
 
@@ -263,12 +318,19 @@ export class AnnouncementsService {
         announcement.status === 'PUBLISHED'
       ) {
         this.pushNotificationsService
-          .sendToAllUsers({
-            title: announcement.title,
-            body: announcement.message,
-            url: '/',
-            tag: `announcement-${announcement.id}`,
-          })
+          .sendToTarget(
+            {
+              title: announcement.title,
+              body: announcement.message,
+              url: '/',
+              tag: `announcement-${announcement.id}`,
+            },
+            announcement.notification_target || 'EVERYONE',
+            {
+              homeCellId: announcement.target_home_cell_id,
+              memberIds: announcement.target_member_ids || [],
+            },
+          )
           .catch((error) => {
             console.error(
               'Announcement push delivery failed:',

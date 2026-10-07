@@ -6,6 +6,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
+  IsArray,
   MaxLength,
   Min,
   ValidateIf,
@@ -51,4 +53,22 @@ export class UpdateAnnouncementDto {
   @IsInt()
   @Min(0)
   displayOrder?: number;
+
+  @IsOptional()
+  @IsIn([
+    'EVERYONE',
+    'LEADERS',
+    'HOME_CELL',
+    'SELECTED_MEMBERS',
+  ])
+  notificationTarget?: string;
+
+  @IsOptional()
+  @IsUUID()
+  targetHomeCellId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  targetMemberIds?: string[];
 }

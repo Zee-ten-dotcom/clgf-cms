@@ -115,6 +115,140 @@ export class PushNotificationsService {
     }
   }
 
+  async sendToTarget(
+    payload: {
+      title: string;
+      body: string;
+      url?: string;
+      tag?: string;
+    },
+    target: 'EVERYONE' | 'LEADERS' | 'HOME_CELL' | 'SELECTED_MEMBERS',
+    options?: {
+      homeCellId?: string | null;
+      memberIds?: string[];
+    },
+  ) {
+    this.configureWebPush();
+
+    const client = await getDatabasePool().connect();
+
+    try {
+      let whereClause = '';
+      const params: any[] = [];
+
+      if (target === 'LEADERS') {
+        whereClause = `
+          WHERE EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ps.user_id
+              AND u.role IN ('ADMIN', 'LEADER')
+          )
+        `;
+      } else if (target === 'HOME_CELL') {
+        if (!options?.homeCellId) {
+          throw new Error(
+            'A Home Cell must be selected for HOME_CELL notifications',
+          );
+        }
+
+        params.push(options.homeCellId);
+
+        whereClause = `
+          WHERE EXISTS (
+            SELECT 1
+            FROM users u
+            JOIN members m
+              ON m.id = u.member_id
+            WHERE u.id = ps.user_id
+              AND m.home_cell_id = $1
+          )
+        `;
+      } else if (target === 'SELECTED_MEMBERS') {
+        const memberIds = options?.memberIds || [];
+
+        if (memberIds.length === 0) {
+          throw new Error(
+            'At least one member must be selected',
+          );
+        }
+
+        params.push(memberIds);
+
+        whereClause = `
+          WHERE EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.id = ps.user_id
+              AND u.member_id = ANY($1::uuid[])
+          )
+        `;
+      }
+
+      const result = await client.query(
+        `
+        SELECT DISTINCT
+          ps.id,
+          ps.endpoint,
+          ps.p256dh,
+          ps.auth
+        FROM push_subscriptions ps
+        ${whereClause}
+        `,
+        params,
+      );
+
+      let sent = 0;
+      let failed = 0;
+
+      for (const row of result.rows) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: row.endpoint,
+              keys: {
+                p256dh: row.p256dh,
+                auth: row.auth,
+              },
+            },
+            JSON.stringify(payload),
+          );
+
+          sent += 1;
+        } catch (error: any) {
+          failed += 1;
+
+          if (
+            error?.statusCode === 404 ||
+            error?.statusCode === 410
+          ) {
+            await client.query(
+              `
+              DELETE FROM push_subscriptions
+              WHERE id = $1
+              `,
+              [row.id],
+            );
+          } else {
+            console.error(
+              'Targeted push notification delivery failed:',
+              error?.message || error,
+            );
+          }
+        }
+      }
+
+      return {
+        target,
+        sent,
+        failed,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+
   async sendToAllUsers(payload: {
     title: string;
     body: string;

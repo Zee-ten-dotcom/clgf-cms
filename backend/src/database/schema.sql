@@ -705,3 +705,19 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id
   ON push_subscriptions(user_id);
+
+-- ANNOUNCEMENT PUSH TARGETING
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS notification_target VARCHAR(30)
+    NOT NULL DEFAULT 'EVERYONE';
+
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS target_home_cell_id UUID
+    REFERENCES home_cells(id) ON DELETE SET NULL;
+
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS target_member_ids UUID[]
+    NOT NULL DEFAULT '{}';
+
+CREATE INDEX IF NOT EXISTS idx_announcements_target_home_cell
+  ON announcements(target_home_cell_id);

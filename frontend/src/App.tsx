@@ -151,6 +151,13 @@ type Announcement = {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   public_visible: boolean;
   display_order: number;
+  notification_target?:
+    | 'EVERYONE'
+    | 'LEADERS'
+    | 'HOME_CELL'
+    | 'SELECTED_MEMBERS';
+  target_home_cell_id?: string | null;
+  target_member_ids?: string[];
 };
 
 type AttendanceSession = {
@@ -1028,6 +1035,14 @@ function App() {
     useState(false);
   const [announcementDisplayOrder, setAnnouncementDisplayOrder] =
     useState('0');
+  const [announcementNotificationTarget, setAnnouncementNotificationTarget] =
+    useState<
+      'EVERYONE' | 'LEADERS' | 'HOME_CELL' | 'SELECTED_MEMBERS'
+    >('EVERYONE');
+  const [announcementTargetHomeCellId, setAnnouncementTargetHomeCellId] =
+    useState('');
+  const [announcementTargetMemberIds, setAnnouncementTargetMemberIds] =
+    useState<string[]>([]);
   const [announcementSaving, setAnnouncementSaving] = useState(false);
   const [announcementError, setAnnouncementError] = useState('');
   const [editingAnnouncement, setEditingAnnouncement] =
@@ -5749,6 +5764,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setAnnouncementDisplayOrder(
       String(announcement.display_order ?? 0),
     );
+    setAnnouncementNotificationTarget(
+      announcement.notification_target || 'EVERYONE'
+    );
+    setAnnouncementTargetHomeCellId(
+      announcement.target_home_cell_id || ''
+    );
+    setAnnouncementTargetMemberIds(
+      announcement.target_member_ids || []
+    );
     setAnnouncementError('');
   };
 
@@ -5762,6 +5786,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setAnnouncementStatus('DRAFT');
     setAnnouncementPublicVisible(false);
     setAnnouncementDisplayOrder('0');
+    setAnnouncementNotificationTarget('EVERYONE');
+    setAnnouncementTargetHomeCellId('');
+    setAnnouncementTargetMemberIds([]);
     setAnnouncementError('');
   };
 
@@ -5906,6 +5933,22 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       return;
     }
 
+    if (
+      announcementNotificationTarget === 'HOME_CELL' &&
+      !announcementTargetHomeCellId
+    ) {
+      setAnnouncementError('Please select a Home Cell.');
+      return;
+    }
+
+    if (
+      announcementNotificationTarget === 'SELECTED_MEMBERS' &&
+      announcementTargetMemberIds.length === 0
+    ) {
+      setAnnouncementError('Please select at least one member.');
+      return;
+    }
+
     setAnnouncementSaving(true);
     setAnnouncementError('');
 
@@ -5934,6 +5977,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           publicVisible: announcementPublicVisible,
           displayOrder:
             Number(announcementDisplayOrder) || 0,
+          notificationTarget: announcementNotificationTarget,
+          targetHomeCellId:
+            announcementNotificationTarget === 'HOME_CELL'
+              ? announcementTargetHomeCellId
+              : undefined,
+          targetMemberIds:
+            announcementNotificationTarget === 'SELECTED_MEMBERS'
+              ? announcementTargetMemberIds
+              : [],
         }),
       });
 
@@ -14966,6 +15018,82 @@ className="back-button no-print"
                     Show on Public Website
                   </label>
                 </div>
+
+                <div className="form-group">
+                  <label>Send Notification To</label>
+                  <select
+                    value={announcementNotificationTarget}
+                    onChange={(e) =>
+                      setAnnouncementNotificationTarget(
+                        e.target.value as
+                          | 'EVERYONE'
+                          | 'LEADERS'
+                          | 'HOME_CELL'
+                          | 'SELECTED_MEMBERS'
+                      )
+                    }
+                  >
+                    <option value="EVERYONE">Everyone</option>
+                    <option value="LEADERS">Leaders Only</option>
+                    <option value="HOME_CELL">Specific Home Cell</option>
+                    <option value="SELECTED_MEMBERS">Selected Members</option>
+                  </select>
+                </div>
+
+                {announcementNotificationTarget === 'HOME_CELL' && (
+                  <div className="form-group">
+                    <label>Select Home Cell *</label>
+                    <select
+                      value={announcementTargetHomeCellId}
+                      onChange={(e) =>
+                        setAnnouncementTargetHomeCellId(e.target.value)
+                      }
+                    >
+                      <option value="">Select Home Cell</option>
+                      {homeCells
+                        .filter((cell) => cell.status === 'ACTIVE')
+                        .map((cell) => (
+                          <option key={cell.id} value={cell.id}>
+                            {cell.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+
+                {announcementNotificationTarget === 'SELECTED_MEMBERS' && (
+                  <div className="form-group">
+                    <label>
+                      Select Members * ({announcementTargetMemberIds.length} selected)
+                    </label>
+
+                    <div className="member-selection-list">
+                      {members
+                        .filter((member) => member.status === 'ACTIVE')
+                        .map((member) => (
+                          <label key={member.id}>
+                            <input
+                              type="checkbox"
+                              checked={announcementTargetMemberIds.includes(
+                                member.id
+                              )}
+                              onChange={(e) =>
+                                setAnnouncementTargetMemberIds((current) =>
+                                  e.target.checked
+                                    ? [...current, member.id]
+                                    : current.filter(
+                                        (id) => id !== member.id
+                                      )
+                                )
+                              }
+                            />
+                            {' '}
+                            {member.first_name} {member.last_name}
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label>Message *</label>
