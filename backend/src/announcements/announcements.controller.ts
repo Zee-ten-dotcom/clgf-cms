@@ -35,6 +35,18 @@ export class AnnouncementsController {
     return this.announcementsService.findAll();
   }
 
+
+  @Get('recipient/:id')
+  findForRecipient(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: any,
+  ) {
+    return this.announcementsService.findForRecipient(
+      id,
+      request.user.sub,
+    );
+  }
+
   @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(

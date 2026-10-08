@@ -87,29 +87,39 @@ self.addEventListener('push', (event) => {
   );
 });
 
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl =
-    event.notification.data?.url || '/';
+  const targetUrl = new URL(
+    event.notification.data?.url || '/',
+    self.location.origin
+  ).href;
 
-  event.waitUntil(
-    self.clients
-      .matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      })
-      .then((clients) => {
-        for (const client of clients) {
-          if ('focus' in client) {
-            client.navigate(targetUrl);
-            return client.focus();
-          }
-        }
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
 
-        if (self.clients.openWindow) {
-          return self.clients.openWindow(targetUrl);
+    for (const client of clients) {
+      if (new URL(client.url).origin !== self.location.origin) {
+        continue;
+      }
+
+      try {
+        const navigated = await client.navigate(targetUrl);
+        if (navigated) {
+          await navigated.focus();
+          return;
         }
-      })
-  );
+      } catch (error) {
+        console.error('Notification navigation failed:', error);
+      }
+    }
+
+    if (self.clients.openWindow) {
+      await self.clients.openWindow(targetUrl);
+    }
+  })());
 });

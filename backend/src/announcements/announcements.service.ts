@@ -117,6 +117,51 @@ export class AnnouncementsService {
     }
   }
 
+
+  async findForRecipient(id: string, userId: string) {
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        SELECT a.id, a.title, a.message,
+               a.announcement_type,
+               a.publish_date::text,
+               a.expiry_date::text, a.status
+        FROM announcements a
+        JOIN users u ON u.id = $2
+        LEFT JOIN members m ON m.id = u.member_id
+        WHERE a.id = $1
+          AND a.status = 'PUBLISHED'
+          AND a.publish_date <= CURRENT_DATE
+          AND (a.expiry_date IS NULL
+               OR a.expiry_date >= CURRENT_DATE)
+          AND u.is_active = TRUE
+          AND (
+            a.notification_target = 'EVERYONE'
+            OR (a.notification_target = 'LEADERS'
+                AND u.role IN ('ADMIN', 'LEADER'))
+            OR (a.notification_target = 'HOME_CELL'
+                AND m.home_cell_id = a.target_home_cell_id)
+            OR (a.notification_target = 'SELECTED_MEMBERS'
+                AND u.member_id = ANY(a.target_member_ids))
+          )
+        `,
+        [id, userId],
+      );
+
+      if (!result.rows.length) {
+        throw new BadRequestException(
+          'Announcement unavailable or access denied',
+        );
+      }
+
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
   async create(body: CreateAnnouncementDto) {
     const client = await this.db();
 
@@ -193,7 +238,7 @@ export class AnnouncementsService {
             {
               title: announcement.title,
               body: announcement.message,
-              url: '/',
+              url: `/?announcement=${announcement.id}`,
               tag: `announcement-${announcement.id}`,
             },
             announcement.notification_target || 'EVERYONE',
@@ -322,7 +367,7 @@ export class AnnouncementsService {
             {
               title: announcement.title,
               body: announcement.message,
-              url: '/',
+              url: `/?announcement=${announcement.id}`,
               tag: `announcement-${announcement.id}`,
             },
             announcement.notification_target || 'EVERYONE',

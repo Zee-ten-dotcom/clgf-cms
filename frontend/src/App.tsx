@@ -701,6 +701,19 @@ function App() {
     useState(false);
   const [announcements, setAnnouncements] =
     useState<Announcement[]>([]);
+
+  const [notificationAnnouncementId, setNotificationAnnouncementId] =
+    useState(() => new URLSearchParams(window.location.search).get('announcement'));
+
+  const [notificationAnnouncement, setNotificationAnnouncement] =
+    useState<{ title: string; message: string; publish_date: string } | null>(null);
+
+  const [notificationAnnouncementError, setNotificationAnnouncementError] =
+    useState('');
+
+  const [notificationAnnouncementLoading, setNotificationAnnouncementLoading] =
+    useState(false);
+
   const [showAnnouncements, setShowAnnouncements] =
     useState(false);
 
@@ -4317,6 +4330,61 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     }
   }, [authUser, accessToken]);
 
+
+  useEffect(() => {
+    const syncAnnouncement = () => {
+      setNotificationAnnouncementId(
+        new URLSearchParams(window.location.search).get('announcement')
+      );
+    };
+
+    window.addEventListener('popstate', syncAnnouncement);
+    window.addEventListener('pageshow', syncAnnouncement);
+    window.addEventListener('focus', syncAnnouncement);
+
+    return () => {
+      window.removeEventListener('popstate', syncAnnouncement);
+      window.removeEventListener('pageshow', syncAnnouncement);
+      window.removeEventListener('focus', syncAnnouncement);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authUser || !accessToken || !notificationAnnouncementId) {
+      setNotificationAnnouncement(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    setNotificationAnnouncement(null);
+    setNotificationAnnouncementError('');
+    setNotificationAnnouncementLoading(true);
+
+    authFetch(
+      `${API_BASE_URL}/announcements/recipient/${encodeURIComponent(notificationAnnouncementId)}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('This announcement is unavailable or you do not have access.');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!cancelled) setNotificationAnnouncement(data);
+      })
+      .catch((error) => {
+        if (!cancelled) setNotificationAnnouncementError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setNotificationAnnouncementLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser, accessToken, notificationAnnouncementId]);
+
   if (!authUser || !accessToken) {
     return (
       <div className="login-page">
@@ -4377,6 +4445,53 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             Authorized access only
           </p>
         </div>
+      </div>
+    );
+  }
+
+
+  if (notificationAnnouncementId) {
+    const closeAnnouncement = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('announcement');
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+      setNotificationAnnouncementId(null);
+      setNotificationAnnouncement(null);
+    };
+
+    return (
+      <div style={{
+        maxWidth: 720,
+        margin: '40px auto',
+        padding: 24,
+        background: '#fff',
+        color: '#222',
+        borderRadius: 12,
+        borderTop: '5px solid #b89235'
+      }}>
+        <h2>CLGF Announcement</h2>
+
+        {notificationAnnouncementLoading && <p>Loading announcement...</p>}
+
+        {notificationAnnouncementError && (
+          <p role="alert">{notificationAnnouncementError}</p>
+        )}
+
+        {notificationAnnouncement && (
+          <article>
+            <h3>{notificationAnnouncement.title}</h3>
+            <p style={{ whiteSpace: 'pre-wrap' }}>
+              {notificationAnnouncement.message}
+            </p>
+            <p>
+              <small>{notificationAnnouncement.publish_date}</small>
+            </p>
+          </article>
+        )}
+
+        <button type="button" onClick={closeAnnouncement}>
+          Back to Dashboard
+        </button>
       </div>
     );
   }
