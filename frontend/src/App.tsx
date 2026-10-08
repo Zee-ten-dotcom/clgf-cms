@@ -607,7 +607,76 @@ function App() {
       setPhoneNotificationsLoading(false);
     }
   };
+  const refreshPhoneNotifications = async () => {
+    setPhoneNotificationsLoading(true);
+    setPhoneNotificationsMessage('Refreshing notifications...');
 
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const oldSubscription =
+        await registration.pushManager.getSubscription();
+
+      const keyResponse = await authFetch(
+        `${API_BASE_URL}/push-notifications/public-key`
+      );
+      if (!keyResponse.ok) throw new Error('Unable to load push key');
+      const { publicKey } = await keyResponse.json();
+      if (oldSubscription) {
+
+        const removed = await oldSubscription.unsubscribe();
+        if (!removed) {
+          throw new Error('Unable to release the old subscription.');
+        }
+
+
+      }
+
+      setPhoneNotificationsEnabled(false);
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const json = subscription.toJSON();
+      const saved = await authFetch(
+        `${API_BASE_URL}/push-notifications/subscribe`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: json.endpoint,
+            keys: json.keys,
+          }),
+        }
+      );
+      if (!saved.ok) throw new Error('Unable to save subscription');
+
+      if (oldSubscription && oldSubscription.endpoint !== json.endpoint) {
+        const cleanup = await authFetch(
+          `${API_BASE_URL}/push-notifications/unsubscribe`,
+          {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: oldSubscription.endpoint }),
+          },
+        );
+        if (!cleanup.ok) {
+          console.warn('Old push subscription cleanup failed');
+        }
+      }
+      setPhoneNotificationsEnabled(true);
+      setPhoneNotificationsMessage('Notifications refreshed successfully.');
+    } catch (error) {
+      console.error(error);
+      setPhoneNotificationsEnabled(false);
+      setPhoneNotificationsMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to refresh notifications.',
+      );
+    } finally {
+      setPhoneNotificationsLoading(false);
+    }
+  };
   const [editingEvent, setEditingEvent] =
     useState<ChurchEvent | null>(null);
   const [selectedEventProfile, setSelectedEventProfile] =
@@ -16773,6 +16842,21 @@ className="back-button no-print"
                         ? 'Enabling notifications...'
                         : phoneNotificationsMessage ||
                           'Receive CLGF announcements on this phone →'}
+                    </small>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={refreshPhoneNotifications}
+                  disabled={phoneNotificationsLoading}
+                >
+                  <span className="attention-icon">🔄</span>
+                  <div>
+                    <strong>REFRESH</strong>
+                    <h3>Refresh Phone Notifications</h3>
+                    <small>
+                      Reconnect this device to CLGF notifications →
                     </small>
                   </div>
                 </button>
