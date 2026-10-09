@@ -1,0 +1,117 @@
+/* CLGF CMS — Unified Interface Theme */
+
+:root {
+  --clgf-gold: #d9b432;
+  --clgf-gold-dark: #b9921f;
+  --clgf-black: #111111;
+  --clgf-white: #ffffff;
+  --clgf-background: #f7f7fb;
+  --clgf-border: #e8e3d8;
+  --clgf-radius: 14px;
+}
+
+body {
+  background: var(--clgf-background);
+}
+
+.member-form,
+.event-stat-card {
+  background: var(--clgf-white);
+  border-radius: var(--clgf-radius);
+}
+
+.member-form {
+  border: 1px solid var(--clgf-border);
+}
+
+.member-form h3 {
+  color: var(--clgf-black);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.member-form .form-group {
+  margin-bottom: 14px;
+}
+
+.member-form .form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--clgf-black);
+  margin-bottom: 8px;
+}
+
+.member-form input,
+.member-form select,
+.member-form textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d7d7d7;
+  border-radius: 9px;
+  padding: 12px 14px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+
+.member-form input:focus,
+.member-form select:focus,
+.member-form textarea:focus {
+  outline: 2px solid var(--clgf-gold);
+  outline-offset: 1px;
+  border-color: var(--clgf-gold-dark);
+}
+
+.member-form button[type="submit"] {
+  background: var(--clgf-gold);
+  color: var(--clgf-black);
+  border: 1px solid var(--clgf-gold-dark);
+  border-radius: 9px;
+  padding: 12px 22px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.member-form button[type="submit"]:hover {
+  background: var(--clgf-gold-dark);
+}
+
+.member-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.event-stat-card {
+  border: 1px solid var(--clgf-border);
+}
+
+.event-stat-card strong {
+  color: var(--clgf-black);
+}
+
+.member-form p[role="status"] {
+  color: #237342;
+  font-weight: 600;
+}
+
+.member-form p[role="alert"] {
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .member-form {
+    padding: 18px;
+  }
+
+  .member-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-form button[type="submit"] {
+    width: 100%;
+  }
+}

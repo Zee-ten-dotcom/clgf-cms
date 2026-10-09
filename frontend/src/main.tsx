@@ -11,3 +11,5 @@ createRoot(document.getElementById('root')!).render(
     {path === '/privacy' ? <PrivacyPolicy /> : <App />}
   </StrictMode>,
 )
+
+import './clgf-theme.css';
