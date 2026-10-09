@@ -1,3 +1,4 @@
+import { VisitorIntegrationModule } from './visitors/visitor-integration.module';
 import { ChurchAssetsModule } from './church-assets/church-assets.module';
 import { MinistryPlanningModule } from './ministry-planning/ministry-planning.module';
 import { MinistryMonthlyReportsModule } from './ministry-monthly-reports/ministry-monthly-reports.module';
@@ -36,6 +37,7 @@ import { PushNotificationsModule } from './push-notifications/push-notifications
   imports: [
     MinistryMonthlyReportsModule,
     MinistryPlanningModule,
+    VisitorIntegrationModule,
     ChurchAssetsModule,
     LeadershipTasksModule,
     ConfigModule.forRoot({

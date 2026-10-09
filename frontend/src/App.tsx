@@ -1,3 +1,4 @@
+import VisitorIntegration from './VisitorIntegration';
 import ChurchAssets from './ChurchAssets';
 import MinistryStrategicPlanning from './MinistryStrategicPlanning';
 import LeadershipTasks from './LeadershipTasks';
@@ -11527,6 +11528,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </button>
           </div>
 
+          <VisitorIntegration apiBaseUrl={API_BASE_URL} authFetch={authFetch} />
           <div className="event-stats">
             <div className="event-stat-card">
               <div>♙</div>
