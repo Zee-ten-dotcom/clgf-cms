@@ -1,3 +1,4 @@
+import PastoralMonthlyReport from './PastoralMonthlyReport';
 import PastoralReminders from './PastoralReminders';
 import PastoralClosureHistory from './PastoralClosureHistory';
 import PastoralCaseClosure from './PastoralCaseClosure';
@@ -9833,6 +9834,15 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               }
             }}
           />
+
+
+          {authUser.role === 'ADMIN' && (
+            <PastoralMonthlyReport
+              cases={pastoralCareRecords}
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+            />
+          )}
 
           {authUser.role === 'ADMIN' && (
             <PastoralLeaderProgress
