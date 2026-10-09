@@ -8254,7 +8254,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </button>
           </div>
         </header>
-        <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+        
 
 
         <main className="main">
@@ -8303,6 +8303,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               </button>
             </div>
           </div>
+
+        <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+
 
           <div className="member-form">
             <h3>👥 Membership</h3>
