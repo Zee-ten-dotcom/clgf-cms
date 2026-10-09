@@ -39,7 +39,7 @@ class IntegrationService {
         FROM visitors v LEFT JOIN visitor_integration i ON i.visitor_id=v.id
         LEFT JOIN home_cells h ON h.id=i.home_cell_id
         WHERE v.status<>'ARCHIVED' ORDER BY v.created_at DESC`);
-      const cells = await client.query("SELECT id,name FROM home_cells WHERE status='ACTIVE' ORDER BY name");
+      const cells = await client.query("SELECT id,name FROM home_cells ORDER BY name");
       return {visitors:visitors.rows,homeCells:cells.rows};
     } finally {client.release();}
   }
