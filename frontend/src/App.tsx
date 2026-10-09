@@ -1,3 +1,4 @@
+import PastoralClosureHistory from './PastoralClosureHistory';
 import PastoralCaseClosure from './PastoralCaseClosure';
 
 function CaseClosureSuccessMessage() {
@@ -9571,6 +9572,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </p>
           </div>
           
+
+          {authUser.role === 'ADMIN' && (
+            <PastoralClosureHistory
+              caseId={selectedPastoralCareProfile.id}
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+            />
+          )}
           <PastoralFollowUps
             caseId={selectedPastoralCareProfile.id}
             apiBaseUrl={API_BASE_URL}
