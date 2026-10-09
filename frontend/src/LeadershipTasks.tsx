@@ -12,6 +12,12 @@ type Task = {
   status: string;
   progress_note: string;
   overdue: boolean;
+  history?: {
+    status: string;
+    progress_note: string;
+    updated_by: string;
+    created_at: string;
+  }[];
 };
 
 type Leader = {
@@ -118,6 +124,13 @@ export default function LeadershipTasks({
     }
   };
 
+  const dueSoon = tasks.filter(t => {
+    if (t.status === 'COMPLETED' || t.overdue) return false;
+    const due = new Date(String(t.due_date).slice(0, 10) + 'T23:59:59');
+    const remaining = due.getTime() - Date.now();
+    return remaining >= 0 && remaining <= 7 * 86400000;
+  });
+
   const activeLeaders = Array.from(
     new Map(
       leaders
@@ -154,6 +167,17 @@ export default function LeadershipTasks({
           </div>
         ))}
       </div>
+
+      {(tasks.some(t => t.overdue) || dueSoon.length > 0) && (
+        <div className="clgf-task-alert">
+          <strong>Deadline Alerts</strong>
+          <p>
+            {tasks.filter(t => t.overdue).length} overdue task(s)
+            {' | '}
+            {dueSoon.length} task(s) due within 7 days
+          </p>
+        </div>
+      )}
 
       {open && role === 'ADMIN' && (
         <div className="clgf-tasks-panel">
@@ -244,6 +268,20 @@ function TaskCard({
         onClick={() => void update(task, status, note)}>
         Update Progress
       </button>
+
+      <details className="clgf-task-history">
+        <summary>Progress History ({task.history?.length ?? 0})</summary>
+        {!task.history?.length && <p>No updates recorded yet.</p>}
+        {task.history?.map((h, index) => (
+          <div key={index} className="clgf-task-history-entry">
+            <strong>{h.status.replaceAll('_', ' ')}</strong>
+            <p>{h.progress_note || 'Status updated'}</p>
+            <small>
+              {h.updated_by} · {new Date(h.created_at).toLocaleString()}
+            </small>
+          </div>
+        ))}
+      </details>
     </article>
   );
 }

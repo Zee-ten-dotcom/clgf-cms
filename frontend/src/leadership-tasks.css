@@ -39,3 +39,34 @@
 @media(max-width:750px) {
   .clgf-tasks-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+.clgf-task-alert {
+  padding: 15px;
+  border: 1px solid #b89232;
+  border-radius: 10px;
+  background: #fff8e5;
+  margin: 15px 0;
+}
+.clgf-task-history {
+  margin-top: 18px;
+  text-align: left;
+  border-top: 1px solid #e5dfd2;
+  padding-top: 12px;
+}
+.clgf-task-history summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #947020;
+}
+.clgf-task-history-entry {
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid #e5dfd2;
+  border-radius: 8px;
+  background: #fff;
+}
+.clgf-task-history-entry p {
+  white-space: pre-wrap;
+  margin: 7px 0;
+}
+.clgf-task-history-entry small { color: #666; }

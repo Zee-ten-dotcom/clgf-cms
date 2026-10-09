@@ -54,6 +54,20 @@ class LeadershipTasksService {
     `);
   }
 
+  private async setupHistory(client: any) {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS leadership_task_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        task_id UUID NOT NULL
+          REFERENCES leadership_tasks(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL,
+        progress_note TEXT NOT NULL DEFAULT '',
+        updated_by VARCHAR(120) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+  }
+
   private memberId(user: any) {
     return user?.member_id ?? user?.memberId ?? null;
   }
@@ -69,12 +83,25 @@ class LeadershipTasksService {
     const client = await getDatabasePool().connect();
     try {
       await this.setup(client);
+      await this.setupHistory(client);
       const admin = user.role === 'ADMIN';
       const memberId = this.memberId(user);
       if (!admin && !memberId) return [];
 
       const result = await client.query(`
         SELECT t.*, m.first_name, m.last_name,
+          COALESCE((
+            SELECT json_agg(
+              json_build_object(
+                'status', h.status,
+                'progress_note', h.progress_note,
+                'updated_by', h.updated_by,
+                'created_at', h.created_at
+              ) ORDER BY h.created_at DESC
+            )
+            FROM leadership_task_history h
+            WHERE h.task_id = t.id
+          ), '[]'::json) AS history,
           CASE
             WHEN t.status <> 'COMPLETED'
              AND t.due_date < CURRENT_DATE THEN TRUE
@@ -133,6 +160,8 @@ class LeadershipTasksService {
     const client = await getDatabasePool().connect();
     try {
       await this.setup(client);
+      await this.setupHistory(client);
+      await client.query('BEGIN');
       const result = await client.query(`
         UPDATE leadership_tasks
         SET status = $1,
@@ -149,7 +178,28 @@ class LeadershipTasksService {
       if (!result.rows.length) {
         throw new ForbiddenException('Task not found or access denied');
       }
-      return result.rows[0];
+      const task = result.rows[0];
+      await client.query(`
+        INSERT INTO leadership_task_history
+          (task_id, status, progress_note, updated_by)
+        VALUES ($1, $2, $3, $4)
+      `, [
+        task.id,
+        task.status,
+        body.progressNote ?? '',
+        String(
+          user?.first_name ??
+          user?.firstName ??
+          user?.email ??
+          user?.role ??
+          'Leader'
+        ).slice(0, 120),
+      ]);
+      await client.query('COMMIT');
+      return task;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
     } finally {
       client.release();
     }
