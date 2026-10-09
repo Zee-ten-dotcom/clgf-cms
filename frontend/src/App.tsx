@@ -8304,7 +8304,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
-        <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+          <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+
+
 
 
           <div className="member-form">
