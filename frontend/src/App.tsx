@@ -1,3 +1,4 @@
+import ChurchAssets from './ChurchAssets';
 import MinistryStrategicPlanning from './MinistryStrategicPlanning';
 import LeadershipTasks from './LeadershipTasks';
 import MinistryMonthlyReports from './MinistryMonthlyReports';
@@ -1132,6 +1133,7 @@ const [systemUsers, setSystemUsers] =
   const [error, setError] = useState('');
   const [showMembers, setShowMembers] = useState(false);
   const [showMinistries, setShowMinistries] = useState(false);
+  const [showChurchAssets, setShowChurchAssets] = useState(false);
   const [weeklyServiceName, setWeeklyServiceName] = useState('');
   const [weeklyServiceDay, setWeeklyServiceDay] = useState('Sunday');
   const [weeklyServiceStartTime, setWeeklyServiceStartTime] = useState('');
@@ -16480,6 +16482,51 @@ className="back-button no-print"
      MINISTRIES PAGE
      ========================= */
 
+
+  if (showChurchAssets &&
+      (authUser.role === 'ADMIN' ||
+       authUser.role === 'LEADER')) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+          <div className="admin">
+            <span>
+              {authUser.firstName} {authUser.lastName}
+            </span>
+            <button type="button" className="logout-button"
+              onClick={logout}>Logout</button>
+          </div>
+        </header>
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Assets & Equipment</h2>
+              <p className="welcome">
+                Church property and maintenance management
+              </p>
+            </div>
+            <button className="back-button"
+              onClick={() => setShowChurchAssets(false)}>
+              ← Dashboard
+            </button>
+          </div>
+          <ChurchAssets
+            apiBaseUrl={API_BASE_URL}
+            authFetch={authFetch}
+            role={authUser.role}
+          />
+        </main>
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
   if (showMinistries) {
     return (
       <div className="app">
@@ -16946,6 +16993,14 @@ className="back-button no-print"
             <span>⌂</span>
             Home Cells
           </button>
+
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button onClick={() => setShowChurchAssets(true)}>
+              <span>▣</span>
+              Assets & Equipment
+            </button>
+          )}
 
           {(
             authUser.role === 'ADMIN' ||
