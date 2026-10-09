@@ -3489,18 +3489,21 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       );
 
       if (!response.ok) {
-        throw new Error(
-          'Failed to save pastoral care record',
-        );
-      }
+  const errorText = await response.text();
+  throw new Error(
+    `Save failed (${response.status}): ${errorText}`,
+  );
+}
 
       cancelEditingPastoralCare();
       loadPastoralCare();
     } catch (err) {
       console.error(err);
       setPastoralError(
-        'Unable to save pastoral care record.',
-      );
+  err instanceof Error
+    ? err.message
+    : 'Unable to save pastoral care record.',
+);
     } finally {
       setPastoralSaving(false);
     }
