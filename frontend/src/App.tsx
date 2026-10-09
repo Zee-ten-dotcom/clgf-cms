@@ -9498,6 +9498,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 </strong>
               </div>
 
+              {currentUser?.role === "ADMIN" && (
               <div className="form-group">
                 <label>Assigned Leader</label>
                 <strong>
@@ -9825,6 +9826,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     ))}
                 </select>
               </div>
+
+              )}
 
               <div className="form-group">
                 <label>Follow-up</label>
