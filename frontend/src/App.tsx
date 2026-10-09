@@ -1,4 +1,39 @@
 import PastoralCaseClosure from './PastoralCaseClosure';
+
+function CaseClosureSuccessMessage() {
+  const [message, setMessage] = useState(() =>
+    sessionStorage.getItem('clgfCaseClosureSuccess') || ''
+  );
+
+  useEffect(() => {
+    if (message) {
+      sessionStorage.removeItem('clgfCaseClosureSuccess');
+    }
+  }, [message]);
+
+  if (!message) return null;
+
+  return (
+    <div role="status" style={{
+      background: '#fff9e6',
+      border: '1px solid #d9b432',
+      borderRadius: 10,
+      padding: 16,
+      marginBottom: 20,
+      color: '#222'
+    }}>
+      <strong>{message}</strong>
+      <button
+        type="button"
+        onClick={() => setMessage('')}
+        style={{ marginLeft: 16 }}
+      >
+        Dismiss
+      </button>
+    </div>
+  );
+}
+
 import PastoralLeaderProgress from './PastoralLeaderProgress';
 import PastoralFollowUps from './PastoralFollowUps';
 import { useEffect, useState } from 'react';
@@ -9535,6 +9570,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 'No notes recorded'}
             </p>
           </div>
+          <CaseClosureSuccessMessage />
           <PastoralFollowUps
             caseId={selectedPastoralCareProfile.id}
             apiBaseUrl={API_BASE_URL}
@@ -9550,6 +9586,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               onClosed={() => {
                 setSelectedPastoralCareProfile(null);
                 setShowPastoralCare(true);
+                sessionStorage.setItem(
+                  'clgfCaseClosureSuccess',
+                  'Pastoral Care case successfully completed or closed.'
+                );
                 window.location.reload();
               }}
             />
