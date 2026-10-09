@@ -9731,7 +9731,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   {
                     pastoralCareRecords.filter(
                       (record) =>
-                        !!record.follow_up_date &&
+                        !!record.follow_up_date && (record.status !== 'COMPLETED' && record.status !== 'CLOSED') &&
                         record.follow_up_date.slice(0, 10) <
                           pastoralTodayKey &&
                         record.status !== 'COMPLETED' &&
@@ -9755,7 +9755,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   {
                     pastoralCareRecords.filter(
                       (record) =>
-                        !!record.follow_up_date &&
+                        !!record.follow_up_date && (record.status !== 'COMPLETED' && record.status !== 'CLOSED') &&
                         record.follow_up_date.slice(0, 10) ===
                           pastoralTodayKey &&
                         record.status !== 'COMPLETED' &&
@@ -9779,7 +9779,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   {
                     pastoralCareRecords.filter(
                       (record) =>
-                        !!record.follow_up_date &&
+                        !!record.follow_up_date && (record.status !== 'COMPLETED' && record.status !== 'CLOSED') &&
                         record.follow_up_date.slice(0, 10) >
                           pastoralTodayKey &&
                         record.status !== 'COMPLETED' &&
