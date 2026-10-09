@@ -33,23 +33,29 @@ export class PastoralCareController {
   ) {}
 
   @Roles('ADMIN', 'LEADER')
-  @Get()
-  findAll(
-    @Query() query: PastoralCareQueryDto,
-  ) {
-    return this.pastoralCareService.findAll(
-      query.status,
-      query.memberId,
-    );
-  }
+@Get()
+findAll(
+  @Query() query: PastoralCareQueryDto,
+  @Req() request: any,
+) {
+  return this.pastoralCareService.findAll(
+    query.status,
+    query.memberId,
+    request.user,
+  );
+}
 
   @Roles('ADMIN', 'LEADER')
-  @Get(':id')
-  findOne(
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
-    return this.pastoralCareService.findOne(id);
-  }
+@Get(':id')
+findOne(
+  @Param('id', new ParseUUIDPipe()) id: string,
+  @Req() request: any,
+) {
+  return this.pastoralCareService.findOne(
+    id,
+    request.user,
+  );
+}
 
   @Roles('ADMIN')
   @Post()
