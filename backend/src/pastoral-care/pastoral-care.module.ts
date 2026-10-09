@@ -1,3 +1,4 @@
+import { PastoralCaseClosureController } from './pastoral-case-closure.controller';
 import { Module } from '@nestjs/common';
 import { PastoralFollowUpsController } from './pastoral-follow-ups.controller';
 import { PastoralFollowUpsService } from './pastoral-follow-ups.service';
@@ -13,7 +14,7 @@ import { AuditModule } from '../audit/audit.module';
     AuthModule,
     AuditModule,
   ],
-  controllers: [
+  controllers: [PastoralCaseClosureController, 
     PastoralCareController,
     PastoralFollowUpsController,
   ],
