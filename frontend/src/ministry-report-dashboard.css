@@ -188,3 +188,14 @@
     display: none !important;
   }
 }
+
+/* Show only Ministry Monthly Reports when selected */
+.reports-page.report-mode-ministry main.main > .member-form {
+  display: none !important;
+}
+
+/* Keep the Ministry Monthly Reports panel visible */
+.reports-page.report-mode-ministry main.main > .clgf-ministry-reports-panel {
+  display: block !important;
+}
+
