@@ -1,3 +1,4 @@
+import PastoralFollowUps from './PastoralFollowUps';
 import { useEffect, useState } from 'react';
 import './App.css';
 
@@ -9532,6 +9533,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 'No notes recorded'}
             </p>
           </div>
+          <PastoralFollowUps
+            caseId={selectedPastoralCareProfile.id}
+            apiBaseUrl={API_BASE_URL}
+            authFetch={authFetch}
+            closed={pastoralCaseClosed}
+          />
         </main>
 
         <footer>
