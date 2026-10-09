@@ -86,7 +86,17 @@ export default function MinistryStrategicPlanning({
       ]);
 
       setPlans(Array.isArray(planData) ? planData : []);
-      setMinistries(Array.isArray(ministryData) ? ministryData : []);
+      const ministryList = Array.isArray(ministryData)
+        ? ministryData
+        : Array.isArray(ministryData?.data)
+          ? ministryData.data
+          : Array.isArray(ministryData?.ministries)
+            ? ministryData.ministries
+            : Array.isArray(ministryData?.items)
+              ? ministryData.items
+              : [];
+
+      setMinistries(ministryList);
     } catch (e) {
       setMessage(
         e instanceof Error ? e.message : 'Unable to load plans'
