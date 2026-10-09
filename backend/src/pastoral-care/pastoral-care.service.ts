@@ -5,10 +5,35 @@ export class PastoralCareService {
     return getDatabasePool().connect();
   }
 
-  async findAll(status?: string, memberId?: string) {
+
+  private async resolveLeaderMemberId(
+    user: { sub: string; role: string },
+    client: any,
+  ): Promise<string | null> {
+    if (user.role === 'ADMIN') return null;
+
+    const result = await client.query(
+      'SELECT member_id FROM users WHERE id = $1 AND is_active = TRUE',
+      [user.sub],
+    );
+
+    return result.rows[0]?.member_id || null;
+  }
+
+  async findAll(
+    status?: string,
+    memberId?: string,
+    user?: { sub: string; role: string },
+  ) {
     const client = await this.db();
 
     try {
+      if (!user || !['ADMIN', 'LEADER'].includes(user.role)) {
+        throw new BadRequestException('Access denied');
+      }
+      const leaderId = await this.resolveLeaderMemberId(user, client);
+      if (user.role === 'LEADER' && !leaderId) return [];
+
       const result = await client.query(
         `
         SELECT
@@ -27,6 +52,8 @@ export class PastoralCareService {
           ($1::text IS NULL OR p.status = $1)
           AND
           ($2::uuid IS NULL OR p.member_id = $2)
+          AND
+          ($3::uuid IS NULL OR p.assigned_leader_id = $3)
         ORDER BY
           p.follow_up_date ASC NULLS LAST,
           p.care_date DESC,
@@ -35,6 +62,7 @@ export class PastoralCareService {
         [
           status?.trim().toUpperCase() || null,
           memberId?.trim() || null,
+          user.role === 'LEADER' ? leaderId : null,
         ],
       );
 
@@ -44,10 +72,21 @@ export class PastoralCareService {
     }
   }
 
-  async findOne(id: string) {
+  async findOne(
+    id: string,
+    user?: { sub: string; role: string },
+  ) {
     const client = await this.db();
 
     try {
+      if (!user || !['ADMIN', 'LEADER'].includes(user.role)) {
+        throw new BadRequestException('Access denied');
+      }
+      const leaderId = await this.resolveLeaderMemberId(user, client);
+      if (user.role === 'LEADER' && !leaderId) {
+        throw new BadRequestException('Pastoral care record not found');
+      }
+
       const result = await client.query(
         `
         SELECT
@@ -63,8 +102,9 @@ export class PastoralCareService {
         LEFT JOIN members leader
           ON leader.id = p.assigned_leader_id
         WHERE p.id = $1
+          AND ($2::uuid IS NULL OR p.assigned_leader_id = $2)
         `,
-        [id],
+        [id, user.role === 'LEADER' ? leaderId : null],
       );
 
       if (result.rows.length === 0) {
