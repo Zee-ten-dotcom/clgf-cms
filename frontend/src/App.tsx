@@ -8232,7 +8232,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             reportPrintMode.toLowerCase()
           }
         >
-<MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+
 
         <header className="header">
           <div>
@@ -8254,6 +8254,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </button>
           </div>
         </header>
+        <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+
 
         <main className="main">
           <div className="page-header">
