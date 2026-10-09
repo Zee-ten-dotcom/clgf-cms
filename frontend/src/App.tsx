@@ -1,3 +1,4 @@
+import PastoralCaseClosure from './PastoralCaseClosure';
 import PastoralLeaderProgress from './PastoralLeaderProgress';
 import PastoralFollowUps from './PastoralFollowUps';
 import { useEffect, useState } from 'react';
@@ -9540,6 +9541,19 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             authFetch={authFetch}
             closed={pastoralCaseClosed}
           />
+
+          {authUser.role === 'ADMIN' && !pastoralCaseClosed && (
+            <PastoralCaseClosure
+              caseId={selectedPastoralCareProfile.id}
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+              onClosed={() => {
+                setSelectedPastoralCareProfile(null);
+                setShowPastoralCare(true);
+                window.location.reload();
+              }}
+            />
+          )}
         </main>
 
         <footer>
