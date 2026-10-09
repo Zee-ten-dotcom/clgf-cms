@@ -1,3 +1,4 @@
+import MinistryStrategicPlanning from './MinistryStrategicPlanning';
 import LeadershipTasks from './LeadershipTasks';
 import MinistryMonthlyReports from './MinistryMonthlyReports';
 import PastoralMonthlyReport from './PastoralMonthlyReport';
@@ -16522,6 +16523,16 @@ className="back-button no-print"
               ← Dashboard
             </button>
           </div>
+
+
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <MinistryStrategicPlanning
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+              role={authUser.role}
+            />
+          )}
 
           {authUser.role === 'ADMIN' && (
           <form

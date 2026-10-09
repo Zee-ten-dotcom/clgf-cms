@@ -1,3 +1,4 @@
+import { MinistryPlanningModule } from './ministry-planning/ministry-planning.module';
 import { MinistryMonthlyReportsModule } from './ministry-monthly-reports/ministry-monthly-reports.module';
 import { LeadershipTasksModule } from './leadership-tasks/leadership-tasks.module';
 import { Module } from '@nestjs/common';
@@ -33,6 +34,7 @@ import { PushNotificationsModule } from './push-notifications/push-notifications
 @Module({
   imports: [
     MinistryMonthlyReportsModule,
+    MinistryPlanningModule,
     LeadershipTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,
