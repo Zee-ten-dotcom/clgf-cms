@@ -1,3 +1,4 @@
+import './pastoral-report-print.css';
 import { useEffect, useState } from 'react';
 
 type CaseRecord = {
