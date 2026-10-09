@@ -140,7 +140,7 @@ class MinistryMonthlyReportsService {
           status, submitted_at
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,
-          CASE WHEN $8 = 'SUBMITTED' THEN NOW() ELSE NULL END)
+          CASE WHEN $8::varchar = 'SUBMITTED' THEN NOW() ELSE NULL END)
         ON CONFLICT (ministry_id, report_month)
         DO UPDATE SET
           activities = EXCLUDED.activities,
