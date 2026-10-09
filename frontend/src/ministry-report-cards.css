@@ -101,3 +101,22 @@
     display: block !important;
   }
 }
+
+@media print {
+  body:has(.clgf-print-selected) .clgf-report-card:not(.clgf-print-selected) {
+    display: none !important;
+  }
+
+  .clgf-print-selected details,
+  .clgf-print-selected .clgf-report-details {
+    display: block !important;
+  }
+
+  .clgf-print-selected details > summary {
+    display: none !important;
+  }
+
+  .clgf-print-selected details > .clgf-report-details {
+    display: block !important;
+  }
+}

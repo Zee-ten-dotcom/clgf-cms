@@ -1,3 +1,4 @@
+import './ministry-report-cards.css';
 import { useCallback, useEffect, useState } from 'react';
 
 type Report = {id:string;ministry_id:string;ministry_name:string;report_month:string;activities:string;achievements:string;challenges:string;assistance_required:string;next_plans:string;status:string};
@@ -42,7 +43,72 @@ export default function MinistryMonthlyReports({apiBaseUrl,authFetch,role}:{apiB
   {Object.entries(labels).map(([key,label])=><label key={key} style={{display:'block',marginTop:12}}><strong>{label}</strong><textarea rows={3} style={{display:'block',width:'100%'}} value={fields[key as keyof Fields]} onChange={e=>setFields(p=>({...p,[key]:e.target.value}))}/></label>)}
   <div style={{display:'flex',gap:12,marginTop:12}}><button disabled={busy} type="button" onClick={()=>void save('DRAFT')}>Save Draft</button><button disabled={busy} type="button" onClick={()=>void save('SUBMITTED')}>Submit Report</button></div>
   {message&&<p role="status">{message}</p>}
-  <div id="clgf-ministry-monthly-print"><h3>{role==='ADMIN'?'Ministry Leadership Review':'My Ministry Reports'}</h3><div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr>{['Month','Ministry','Status','Activities','Achievements','Challenges','Assistance','Next Plans'].map(h=><th key={h} style={{textAlign:'left',padding:8,borderBottom:'2px solid #d4af37'}}>{h}</th>)}</tr></thead><tbody>{reports.map(r=><tr key={r.id}>{[r.report_month,r.ministry_name,r.status,r.activities,r.achievements,r.challenges,r.assistance_required,r.next_plans].map((v,i)=><td key={i} style={{padding:8,borderBottom:'1px solid #ddd',verticalAlign:'top'}}>{v}</td>)}</tr>)}</tbody></table></div></div>
-  <button type="button" onClick={()=>window.print()} style={{marginTop:16}}>Print Reports</button>
+  
+  <div id="clgf-ministry-monthly-print">
+    <h3>
+      {role === 'ADMIN'
+        ? 'Ministry Leadership Review'
+        : 'My Ministry Reports'}
+    </h3>
+
+    {role === 'ADMIN' && (
+      <p>
+        <strong>Total: {reports.length}</strong>
+        {' | '}Submitted: {reports.filter(r => r.status === 'SUBMITTED').length}
+        {' | '}Drafts: {reports.filter(r => r.status === 'DRAFT').length}
+      </p>
+    )}
+
+    {reports.length === 0 && <p>No reports available.</p>}
+
+    <div className="clgf-report-list">
+      {reports.map(r => (
+        <article
+          key={r.id}
+          className="clgf-report-card"
+          data-report-id={r.id}
+        >
+          <h4>{r.ministry_name}</h4>
+          <p><strong>Month:</strong> {r.report_month}</p>
+          <p><strong>Status:</strong> {r.status}</p>
+
+          <details>
+            <summary style={{cursor:'pointer',padding:'10px 0'}}>
+              View Report
+            </summary>
+            <div className="clgf-report-details">
+              <h4>Activities Completed</h4>
+              <p>{r.activities || 'None recorded'}</p>
+              <h4>Achievements</h4>
+              <p>{r.achievements || 'None recorded'}</p>
+              <h4>Challenges</h4>
+              <p>{r.challenges || 'None recorded'}</p>
+              <h4>Assistance Required</h4>
+              <p>{r.assistance_required || 'None recorded'}</p>
+              <h4>Plans for Next Month</h4>
+              <p>{r.next_plans || 'None recorded'}</p>
+            </div>
+          </details>
+
+          <button
+            type="button"
+            onClick={() => {
+              const root = document.getElementById('clgf-ministry-monthly-print');
+              root?.querySelectorAll('.clgf-report-card').forEach(card => {
+                card.classList.toggle(
+                  'clgf-print-selected',
+                  card.getAttribute('data-report-id') === r.id
+                );
+              });
+              window.print();
+            }}
+          >
+            Print Report
+          </button>
+        </article>
+      ))}
+    </div>
+  </div>
+
  </section>
 }
