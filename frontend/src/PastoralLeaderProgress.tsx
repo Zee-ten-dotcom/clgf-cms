@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 type CaseRecord = {
   id: string;
+  first_name?: string | null;
+  last_name?: string | null;
   subject?: string | null;
   status: string;
   follow_up_date?: string | null;
@@ -91,6 +93,25 @@ export default function PastoralLeaderProgress({
         item.assigned_leader_id === selectedLeader),
   );
 
+  const attended = visibleCases.filter(
+    (item) => (activities[item.id] || []).length > 0,
+  ).length;
+
+  const pending = visibleCases.filter(
+    (item) =>
+      (activities[item.id] || []).length === 0 &&
+      item.status !== 'COMPLETED' &&
+      item.status !== 'CLOSED',
+  ).length;
+
+  const overdueCount = visibleCases.filter(
+    (item) =>
+      !!item.follow_up_date &&
+      item.follow_up_date.slice(0, 10) < today &&
+      item.status !== 'COMPLETED' &&
+      item.status !== 'CLOSED',
+  ).length;
+
   return (
     <div className="member-form">
       <h3>Leader Progress Monitoring</h3>
@@ -110,6 +131,22 @@ export default function PastoralLeaderProgress({
           ))}
         </select>
       </div>
+
+      {!loading && !error && (
+        <div className="event-stats">
+          {[
+            ['Assigned Cases', visibleCases.length],
+            ['Attended To', attended],
+            ['Pending', pending],
+            ['Overdue', overdueCount],
+          ].map(([label, value]) => (
+            <div className="event-stat-card" key={label}>
+              <h3>{label}</h3>
+              <strong>{value}</strong>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading && <p>Loading leader progress...</p>}
       {error && <p role="alert">{error}</p>}
@@ -147,6 +184,14 @@ export default function PastoralLeaderProgress({
             }}
           >
             <strong>{leaderName || 'Unnamed Leader'}</strong>
+            <p>
+              <strong>
+                Member: {
+                  [item.first_name, item.last_name]
+                    .filter(Boolean).join(' ') || 'Unknown'
+                }
+              </strong>
+            </p>
             <p>{item.subject || 'Pastoral Care Case'}</p>
             <p>Status: {item.status.replaceAll('_', ' ')}</p>
             <p>Activities Recorded: {history.length}</p>
