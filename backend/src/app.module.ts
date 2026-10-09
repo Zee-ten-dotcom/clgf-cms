@@ -1,4 +1,5 @@
 import { MinistryMonthlyReportsModule } from './ministry-monthly-reports/ministry-monthly-reports.module';
+import { LeadershipTasksModule } from './leadership-tasks/leadership-tasks.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -32,6 +33,7 @@ import { PushNotificationsModule } from './push-notifications/push-notifications
 @Module({
   imports: [
     MinistryMonthlyReportsModule,
+    LeadershipTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnv,

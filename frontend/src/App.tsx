@@ -1,3 +1,4 @@
+import LeadershipTasks from './LeadershipTasks';
 import MinistryMonthlyReports from './MinistryMonthlyReports';
 import PastoralMonthlyReport from './PastoralMonthlyReport';
 import PastoralReminders from './PastoralReminders';
@@ -9039,6 +9040,17 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               ← Dashboard
             </button>
           </div>
+
+
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <LeadershipTasks
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+              role={authUser.role}
+              leaders={leadershipAssignments}
+            />
+          )}
 
           <div className="event-stats">
             <div className="event-stat-card">
