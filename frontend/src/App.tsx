@@ -971,7 +971,7 @@ function App() {
     useState('');
   const [showReports, setShowReports] = useState(false);
 
-  const [systemUsers, setSystemUsers] =
+const [systemUsers, setSystemUsers] =
     useState<SystemUser[]>([]);
   const [showUsers, setShowUsers] = useState(false);
   const [showBackups, setShowBackups] = useState(false);
@@ -1022,7 +1022,7 @@ function App() {
   const [userSaving, setUserSaving] = useState(false);
   const [userError, setUserError] = useState('');
   const [reportPrintMode, setReportPrintMode] =
-    useState<'FULL' | 'ATTENDANCE' | 'FINANCIAL'>('FULL');
+    useState<'FULL' | 'ATTENDANCE' | 'FINANCIAL' | 'MINISTRY'>('FULL');
 
   const [financialReportFrom, setFinancialReportFrom] =
     useState('');
@@ -8274,11 +8274,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     e.target.value as
                       | 'FULL'
                       | 'ATTENDANCE'
-                      | 'FINANCIAL',
+                      | 'FINANCIAL' | 'MINISTRY',
                   )
                 }
               >
                 <option value="FULL">Full Church Report</option>
+                 <option value="MINISTRY">Ministry Monthly Reports</option>
                 <option value="ATTENDANCE">
                   Attendance Report Only
                 </option>
@@ -8304,12 +8305,24 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
-          <MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
 
 
 
 
-          <div className="member-form">
+
+          
+{reportPrintMode === 'MINISTRY' && (
+  <section className="member-form clgf-ministry-reports-panel">
+    <MinistryMonthlyReports
+      apiBaseUrl={API_BASE_URL}
+      authFetch={authFetch}
+      role={authUser.role}
+    />
+  </section>
+)}
+
+
+<div className="member-form">
             <h3>👥 Membership</h3>
 
             <div className="event-stats">
@@ -8764,7 +8777,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             )}
           </div>
 
-        </main>
+        
+</main>
 
         <footer>
           © 2026 The City Of The Living God Fellowship
@@ -17036,11 +17050,12 @@ className="back-button no-print"
 
           {(authUser.role === 'ADMIN' ||
             authUser.role === 'LEADER') && (
-            <button onClick={() => setShowReports(true)}>
-              <span>▤</span>
-              Reports
-            </button>
-          )}
+            
+<button onClick={() => setShowReports(true)}>
+  <span>▤</span>
+  Reports
+</button>
+)}
 
           {(authUser.role === 'ADMIN' ||
             authUser.role === 'LEADER') && (
