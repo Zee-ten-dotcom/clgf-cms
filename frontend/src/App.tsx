@@ -6889,13 +6889,19 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         const matchesFollowUp =
           !pastoralFilterFollowUp ||
           (pastoralFilterFollowUp === 'OVERDUE' &&
+            record.status !== 'COMPLETED' &&
+            record.status !== 'CLOSED' &&
             !!followUpDate &&
             followUpDate < pastoralTodayKey &&
             !isClosed) ||
           (pastoralFilterFollowUp === 'TODAY' &&
+            record.status !== 'COMPLETED' &&
+            record.status !== 'CLOSED' &&
             followUpDate === pastoralTodayKey &&
             !isClosed) ||
           (pastoralFilterFollowUp === 'UPCOMING' &&
+            record.status !== 'COMPLETED' &&
+            record.status !== 'CLOSED' &&
             !!followUpDate &&
             followUpDate > pastoralTodayKey &&
             !isClosed);
