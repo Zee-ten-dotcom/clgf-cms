@@ -231,31 +231,7 @@ export class AnnouncementsService {
 
       const announcement = result.rows[0];
 
-      // push-announcement-create
-      if (announcement.status === 'PUBLISHED') {
-        this.pushNotificationsService
-          .sendToTarget(
-            {
-              title: announcement.title,
-              body: announcement.message,
-              url: `/?announcement=${announcement.id}`,
-              tag: `announcement-${announcement.id}`,
-            },
-            announcement.notification_target || 'EVERYONE',
-            {
-              homeCellId: announcement.target_home_cell_id,
-              memberIds: announcement.target_member_ids || [],
-            },
-          )
-          .catch((error) => {
-            console.error(
-              'Announcement push delivery failed:',
-              error,
-            );
-          });
-      }
-
-      return announcement;
+            return announcement;
     } finally {
       client.release();
     }
@@ -357,34 +333,7 @@ export class AnnouncementsService {
 
       const announcement = result.rows[0];
 
-      // push-announcement-update
-      if (
-        current.status !== 'PUBLISHED' &&
-        announcement.status === 'PUBLISHED'
-      ) {
-        this.pushNotificationsService
-          .sendToTarget(
-            {
-              title: announcement.title,
-              body: announcement.message,
-              url: `/?announcement=${announcement.id}`,
-              tag: `announcement-${announcement.id}`,
-            },
-            announcement.notification_target || 'EVERYONE',
-            {
-              homeCellId: announcement.target_home_cell_id,
-              memberIds: announcement.target_member_ids || [],
-            },
-          )
-          .catch((error) => {
-            console.error(
-              'Announcement push delivery failed:',
-              error,
-            );
-          });
-      }
-
-      return announcement;
+            return announcement;
     } finally {
       client.release();
     }

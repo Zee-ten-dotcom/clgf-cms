@@ -721,3 +721,16 @@ ALTER TABLE announcements
 
 CREATE INDEX IF NOT EXISTS idx_announcements_target_home_cell
   ON announcements(target_home_cell_id);
+
+-- Scheduled announcement notification tracking
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS notification_sent_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_announcements_pending_push
+  ON announcements (publish_date)
+  WHERE status = 'PUBLISHED'
+    AND notification_sent_at IS NULL;
+
+-- Scheduled notification claim tracking
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS notification_claimed_at TIMESTAMPTZ;

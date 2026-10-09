@@ -15,11 +15,14 @@ import { PushNotificationsModule } from '../push-notifications/push-notification
     PushNotificationsModule,
   ],
   controllers: [
-    AnnouncementsController,
-    PublicAnnouncementsController,
-  ],
-  providers: [
-    AnnouncementsService,
-  ],
+  AnnouncementsController,
+  PublicAnnouncementsController,
+  AnnouncementSchedulerController,
+],providers: [
+  AnnouncementsService,
+  AnnouncementSchedulerService,
+],
 })
 export class AnnouncementsModule {}
+import { AnnouncementSchedulerService } from './announcement-scheduler.service';
+import { AnnouncementSchedulerController } from './announcement-scheduler.controller';
