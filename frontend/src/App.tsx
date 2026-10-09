@@ -9570,7 +9570,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 'No notes recorded'}
             </p>
           </div>
-          <CaseClosureSuccessMessage />
+          
           <PastoralFollowUps
             caseId={selectedPastoralCareProfile.id}
             apiBaseUrl={API_BASE_URL}
@@ -9638,6 +9638,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           <div className="page-header">
             <div>
               <h2>Pastoral Care</h2>
+          <CaseClosureSuccessMessage />
               <p className="welcome">
                 Member follow-up, prayer, care and support
               </p>
