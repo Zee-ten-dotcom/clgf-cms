@@ -1,3 +1,4 @@
+import PastoralReminders from './PastoralReminders';
 import PastoralClosureHistory from './PastoralClosureHistory';
 import PastoralCaseClosure from './PastoralCaseClosure';
 
@@ -9818,6 +9819,20 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
+
+
+          <PastoralReminders
+            cases={pastoralCareRecords}
+            onOpenCase={(record) => {
+              const selected = pastoralCareRecords.find(
+                (item) => item.id === record.id
+              );
+              if (selected) {
+                setSelectedPastoralCareProfile(selected);
+                window.scrollTo(0, 0);
+              }
+            }}
+          />
 
           {authUser.role === 'ADMIN' && (
             <PastoralLeaderProgress
