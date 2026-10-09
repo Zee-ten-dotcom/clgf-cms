@@ -4450,49 +4450,168 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
 
+
   if (notificationAnnouncementId) {
     const closeAnnouncement = () => {
       const url = new URL(window.location.href);
       url.searchParams.delete('announcement');
-      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+      window.history.replaceState(
+        {},
+        '',
+        url.pathname + url.search + url.hash
+      );
       setNotificationAnnouncementId(null);
       setNotificationAnnouncement(null);
     };
 
     return (
-      <div style={{
-        maxWidth: 720,
-        margin: '40px auto',
-        padding: 24,
-        background: '#fff',
-        color: '#222',
-        borderRadius: 12,
-        borderTop: '5px solid #b89235'
+      <main style={{
+        minHeight: '100vh',
+        background: '#faf8f3',
+        padding: '32px 16px',
+        fontFamily: 'inherit'
       }}>
-        <h2>CLGF Announcement</h2>
-
-        {notificationAnnouncementLoading && <p>Loading announcement...</p>}
-
-        {notificationAnnouncementError && (
-          <p role="alert">{notificationAnnouncementError}</p>
-        )}
-
-        {notificationAnnouncement && (
-          <article>
-            <h3>{notificationAnnouncement.title}</h3>
-            <p style={{ whiteSpace: 'pre-wrap' }}>
-              {notificationAnnouncement.message}
+        <section style={{
+          maxWidth: 700,
+          margin: '0 auto',
+          background: '#ffffff',
+          borderRadius: 18,
+          overflow: 'hidden',
+          boxShadow: '0 12px 35px rgba(0,0,0,0.08)',
+          border: '1px solid #eadfc8'
+        }}>
+          <header style={{
+            textAlign: 'center',
+            padding: '30px 20px 24px',
+            background: '#fffdf8',
+            borderBottom: '3px solid #c7a052'
+          }}>
+            <img
+              src="/branding/clgf-logo.png"
+              alt="The City Of The Living God Fellowship"
+              style={{
+                width: 115,
+                height: 115,
+                objectFit: 'contain',
+                marginBottom: 14
+              }}
+            />
+            <div style={{
+              color: '#9a742a',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: 1.5
+            }}>
+              THE CITY OF THE LIVING GOD FELLOWSHIP
+            </div>
+            <h1 style={{
+              color: '#252525',
+              fontSize: 27,
+              margin: '15px 0 5px'
+            }}>
+              Church Announcement
+            </h1>
+            <p style={{
+              color: '#777',
+              fontSize: 13,
+              margin: 0
+            }}>
+              Official Church Communication
             </p>
-            <p>
-              <small>{notificationAnnouncement.publish_date}</small>
-            </p>
-          </article>
-        )}
+          </header>
 
-        <button type="button" onClick={closeAnnouncement}>
-          Back to Dashboard
-        </button>
-      </div>
+          <div style={{ padding: '30px 25px' }}>
+            {notificationAnnouncementLoading && (
+              <p style={{ textAlign: 'center' }}>
+                Loading announcement...
+              </p>
+            )}
+
+            {notificationAnnouncementError && (
+              <p role="alert" style={{
+                color: '#a32626',
+                textAlign: 'center'
+              }}>
+                {notificationAnnouncementError}
+              </p>
+            )}
+
+            {notificationAnnouncement && (
+              <article>
+                <div style={{
+                  color: '#9a742a',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: 1.2,
+                  marginBottom: 10
+                }}>
+                  ANNOUNCEMENT
+                </div>
+
+                <h2 style={{
+                  fontSize: 24,
+                  color: '#252525',
+                  margin: '0 0 18px'
+                }}>
+                  {notificationAnnouncement.title}
+                </h2>
+
+                <p style={{
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'anywhere',
+                  lineHeight: 1.8,
+                  color: '#444',
+                  fontSize: 16
+                }}>
+                  {notificationAnnouncement.message}
+                </p>
+
+                <p style={{
+                  color: '#888',
+                  fontSize: 13,
+                  marginTop: 25,
+                  borderTop: '1px solid #eee',
+                  paddingTop: 15
+                }}>
+                  Published: {notificationAnnouncement.publish_date}
+                </p>
+              </article>
+            )}
+
+            <button
+              type="button"
+              onClick={closeAnnouncement}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '14px 20px',
+                marginTop: 25,
+                border: 'none',
+                borderRadius: 9,
+                background: '#b58a35',
+                color: '#ffffff',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+
+          <footer style={{
+            textAlign: 'center',
+            padding: '18px',
+            background: '#fffdf8',
+            color: '#9a742a',
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: 1
+          }}>
+            THE LORD IS OUR HELP
+          </footer>
+        </section>
+      </main>
     );
   }
 
