@@ -734,3 +734,51 @@ CREATE INDEX IF NOT EXISTS idx_announcements_pending_push
 -- Scheduled notification claim tracking
 ALTER TABLE announcements
   ADD COLUMN IF NOT EXISTS notification_claimed_at TIMESTAMPTZ;
+
+-- ============================================================
+-- PASTORAL CARE FOLLOW-UP HISTORY
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS pastoral_care_follow_ups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  pastoral_care_id UUID NOT NULL
+    REFERENCES pastoral_care_records(id) ON DELETE CASCADE,
+
+  recorded_by_user_id UUID NOT NULL
+    REFERENCES users(id),
+
+  follow_up_date DATE NOT NULL,
+
+  contact_method VARCHAR(30) NOT NULL
+    CHECK (
+      contact_method IN (
+        'PHONE',
+        'HOME_VISIT',
+        'CHURCH_MEETING',
+        'PRAYER',
+        'MESSAGE',
+        'OTHER'
+      )
+    ),
+
+  outcome VARCHAR(30) NOT NULL
+    CHECK (
+      outcome IN (
+        'SUCCESSFUL',
+        'NO_ANSWER',
+        'RESCHEDULED',
+        'NEEDS_SUPPORT'
+      )
+    ),
+
+  notes TEXT,
+
+  next_follow_up_date DATE,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pastoral_follow_ups_case
+  ON pastoral_care_follow_ups(pastoral_care_id);
+
