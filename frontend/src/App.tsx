@@ -1,3 +1,4 @@
+import MinistryMonthlyReports from './MinistryMonthlyReports';
 import PastoralMonthlyReport from './PastoralMonthlyReport';
 import PastoralReminders from './PastoralReminders';
 import PastoralClosureHistory from './PastoralClosureHistory';
@@ -8231,6 +8232,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             reportPrintMode.toLowerCase()
           }
         >
+<MinistryMonthlyReports apiBaseUrl={API_BASE_URL} authFetch={authFetch} role={authUser.role} />
+
         <header className="header">
           <div>
             <h1>CLGF CMS</h1>

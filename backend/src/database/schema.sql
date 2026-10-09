@@ -782,3 +782,21 @@ CREATE TABLE IF NOT EXISTS pastoral_care_follow_ups (
 CREATE INDEX IF NOT EXISTS idx_pastoral_follow_ups_case
   ON pastoral_care_follow_ups(pastoral_care_id);
 
+
+
+-- Ministry monthly leadership reports
+CREATE TABLE IF NOT EXISTS ministry_monthly_reports (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ ministry_id UUID NOT NULL REFERENCES ministries(id) ON DELETE CASCADE,
+ report_month VARCHAR(7) NOT NULL,
+ activities TEXT NOT NULL DEFAULT '',
+ achievements TEXT NOT NULL DEFAULT '',
+ challenges TEXT NOT NULL DEFAULT '',
+ assistance_required TEXT NOT NULL DEFAULT '',
+ next_plans TEXT NOT NULL DEFAULT '',
+ status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SUBMITTED')),
+ submitted_at TIMESTAMPTZ,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ UNIQUE(ministry_id, report_month)
+);
