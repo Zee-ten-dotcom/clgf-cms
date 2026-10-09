@@ -8311,7 +8311,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
           
-{reportPrintMode === 'MINISTRY' && (
+{(reportPrintMode === 'MINISTRY' || reportPrintMode === 'FULL') && (
   <section className="member-form clgf-ministry-reports-panel">
     <MinistryMonthlyReports
       apiBaseUrl={API_BASE_URL}
@@ -8322,7 +8322,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 )}
 
 
-<div className="member-form">
+<div className="member-form report-overview">
             <h3>👥 Membership</h3>
 
             <div className="event-stats">
@@ -8346,7 +8346,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
-          <div className="member-form">
+          <div className="member-form report-overview">
             <h3>⛪ Ministry & Leadership</h3>
 
             <div className="event-stats">
@@ -8376,7 +8376,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
-          <div className="member-form">
+          <div className="member-form report-overview">
             <h3>📅 Attendance, Events & Pastoral Care</h3>
 
             <div className="event-stats">
@@ -8406,7 +8406,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           </div>
 
-          <div className="member-form">
+          <div className="member-form report-finance-overview">
               <h3>💰 Financial Overview</h3>
 
             <div className="event-stats">

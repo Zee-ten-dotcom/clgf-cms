@@ -199,3 +199,38 @@
   display: block !important;
 }
 
+
+/* CLGF Reports & Administration — category visibility */
+
+/* Ministry-only selection */
+.reports-page.report-mode-ministry .report-overview,
+.reports-page.report-mode-ministry .report-finance-overview,
+.reports-page.report-mode-ministry .report-attendance,
+.reports-page.report-mode-ministry .report-financial {
+  display: none !important;
+}
+
+/* Attendance selection */
+.reports-page.report-mode-attendance .report-overview,
+.reports-page.report-mode-attendance .report-finance-overview,
+.reports-page.report-mode-attendance .report-financial,
+.reports-page.report-mode-attendance .clgf-ministry-reports-panel {
+  display: none !important;
+}
+
+/* Financial selection */
+.reports-page.report-mode-financial .report-overview,
+.reports-page.report-mode-financial .report-attendance,
+.reports-page.report-mode-financial .clgf-ministry-reports-panel {
+  display: none !important;
+}
+
+/* Full church selection */
+.reports-page.report-mode-full .clgf-ministry-reports-panel,
+.reports-page.report-mode-full .report-overview,
+.reports-page.report-mode-full .report-finance-overview,
+.reports-page.report-mode-full .report-attendance,
+.reports-page.report-mode-full .report-financial {
+  display: block !important;
+}
+
