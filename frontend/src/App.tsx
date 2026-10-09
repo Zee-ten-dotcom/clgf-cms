@@ -1,3 +1,4 @@
+import PastoralLeaderProgress from './PastoralLeaderProgress';
 import PastoralFollowUps from './PastoralFollowUps';
 import { useEffect, useState } from 'react';
 import './App.css';
@@ -9746,6 +9747,24 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               </button>
             </div>
           </div>
+
+
+          {authUser.role === 'ADMIN' && (
+            <PastoralLeaderProgress
+              cases={pastoralCareRecords}
+              apiBaseUrl={API_BASE_URL}
+              authFetch={authFetch}
+              onOpenCase={(id) => {
+                const record = pastoralCareRecords.find(
+                  (item) => item.id === id,
+                );
+                if (record) {
+                  setSelectedPastoralCareProfile(record);
+                  window.scrollTo(0, 0);
+                }
+              }}
+            />
+          )}
 
           <div className="member-form">
             <h3>Pastoral Care Filters</h3>
