@@ -9798,7 +9798,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                 </select>
               </div>
 
-              <div className="form-group">
+              {authUser.role === 'ADMIN' && (
+<div className="form-group">
                 <label>Assigned Leader</label>
                 <select
                   value={pastoralFilterLeader}
@@ -9825,7 +9826,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     ))}
                 </select>
               </div>
-
+)}
               <div className="form-group">
                 <label>Follow-up</label>
                 <select
@@ -9969,7 +9970,6 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     ))}
                 </select>
               </div>
-
               <div className="form-group">
                 <label>Care Date</label>
                 <input
