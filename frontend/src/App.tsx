@@ -4727,7 +4727,16 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   const reportTotalGiving =
     givingSummary?.totalGiving ?? 0;
 
+  const [memberStatusFilter, setMemberStatusFilter] =
+    useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+
   const filteredMembers = members.filter((member) => {
+    if (
+      memberStatusFilter !== 'ALL' &&
+      member.status !== memberStatusFilter
+    ) {
+      return false;
+    }
     const text = search.trim().toLowerCase();
 
     return (
@@ -5715,6 +5724,19 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           </div>
 
           <div className="member-tools">
+            <select
+              aria-label="Filter members by status"
+              value={memberStatusFilter}
+              onChange={(e) =>
+                setMemberStatusFilter(
+                  e.target.value as 'ALL' | 'ACTIVE' | 'INACTIVE'
+                )
+              }
+            >
+              <option value="ALL">All Members</option>
+              <option value="ACTIVE">Active Members</option>
+              <option value="INACTIVE">Inactive Members</option>
+            </select>
             <input
               type="text"
               placeholder="Search by name, membership number, phone..."
