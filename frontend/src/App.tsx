@@ -5540,7 +5540,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                   </div>
                 </div>
 
-                {memberProfileAttendance ? (
+                {memberProfileAttendance?.summary && Array.isArray(memberProfileAttendance.history) ? (
                   <>
                     <div className="member-profile-stats">
                       <div>
@@ -5595,7 +5595,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                               <div>
                                 <strong>{item.service_type}</strong>
                                 <span>
-                                  {item.service_date.slice(0, 10)}
+                                  {item.service_date ? String(item.service_date).slice(0, 10) : "Date unavailable"}
                                 </span>
                               </div>
 
