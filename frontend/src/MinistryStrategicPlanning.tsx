@@ -132,6 +132,10 @@ export default function MinistryStrategicPlanning({
   };
 
   const save = async () => {
+    if (role !== 'ADMIN') {
+      setMessage('Only administrators can save strategic plans.');
+      return;
+    }
     if (!ministryId || !fields.goals.trim()) {
       setMessage('Select a ministry and enter its annual goals.');
       return;
@@ -225,16 +229,16 @@ export default function MinistryStrategicPlanning({
                     </div>
                   ))}
                 </details>
-                <button type="button" onClick={() => edit(plan)}>
+                {role === 'ADMIN' && (<button type="button" onClick={() => edit(plan)}>
                   Edit / Quarterly Review
-                </button>
+                </button>)}
               </article>
             ))}
           </div>
         </>
       )}
 
-      {view === 'editor' && (
+      {role === 'ADMIN' && view === 'editor' && (
         <div className="clgf-strategic-panel">
           <h3>Annual Ministry Strategic Plan</h3>
 
@@ -304,11 +308,7 @@ export default function MinistryStrategicPlanning({
       )}
 
       {message && <p role="status">{message}</p>}
-      {role === 'LEADER' && (
-        <p className="clgf-strategic-note">
-          Only plans for ministries you lead can be saved.
-        </p>
-      )}
+      
     </section>
   );
 }

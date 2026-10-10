@@ -103,6 +103,11 @@ class MinistryPlanningService {
 
   async save(user: any, body: SavePlanDto) {
     this.authorize(user);
+    if (user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Only administrators can create or edit strategic plans',
+      );
+    }
     const client = await getDatabasePool().connect();
 
     try {
