@@ -1,3 +1,4 @@
+import MemberRetention from './MemberRetention';
 import MemberCelebrations from './MemberCelebrations';
 import Households from './Households';
 import MemberTransfers from './MemberTransfers';
@@ -5740,6 +5741,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           </div>
 
 
+
+
+          <MemberRetention
+            members={members}
+            role={authUser.role}
+            apiUrl={API_BASE_URL}
+            authFetch={authFetch}
+          />
 
           <MemberCelebrations
             members={members}
