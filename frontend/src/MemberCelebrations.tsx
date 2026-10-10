@@ -15,12 +15,13 @@ type Household = {
 };
 
 type Props = {
+  role: string;
   members: Member[];
   apiUrl: string;
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 };
 
-export default function MemberCelebrations({
+export default function MemberCelebrations({ role,
   members,
   apiUrl,
   authFetch,
@@ -130,7 +131,8 @@ export default function MemberCelebrations({
               {c.days === 0 ? 'Today!' : `In ${c.days} days`}
             </p>
 
-            <button
+            {role === 'ADMIN' && (
+<button
               type="button"
               className="edit-button"
               onClick={() => {
@@ -142,6 +144,7 @@ export default function MemberCelebrations({
             >
               Send WhatsApp Greeting
             </button>
+            )}
           </div>
         ))
       )}

@@ -5882,6 +5882,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           />
 
           <MemberCelebrations
+            role={authUser.role}
             members={members}
             apiUrl={API_BASE_URL}
             authFetch={authFetch}

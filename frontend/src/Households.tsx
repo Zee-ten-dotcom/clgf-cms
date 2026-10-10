@@ -225,7 +225,7 @@ export default function Households({
                 </div>
               )}
 
-              {h.wedding_anniversary && (
+              {role === 'ADMIN' && h.wedding_anniversary && (
                 <button
                   type="button"
                   onClick={() => {
