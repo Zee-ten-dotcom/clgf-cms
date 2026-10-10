@@ -37,6 +37,11 @@ class FollowupDecisionDto {
   decision!: 'APPROVED' | 'REJECTED';
 }
 
+class LinkCaseDto {
+  @IsUUID()
+  caseId!: string;
+}
+
 @Controller('member-followup-requests')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MemberFollowupRequestsController {
@@ -70,6 +75,29 @@ export class MemberFollowupRequestsController {
       entityType: 'MEMBER_FOLLOWUP_REQUEST',
       entityId: result.id,
       description: 'Requested member attendance follow-up',
+    });
+
+    return result;
+  }
+
+  @Patch(':id/link-case')
+  @Roles('ADMIN')
+  async linkCase(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: LinkCaseDto,
+    @Req() req: any,
+  ) {
+    const result = await this.requests.linkCase(
+      id, body.caseId, req.user,
+    );
+
+    await this.audit.log({
+      actor: req.user,
+      action: 'LINK_FOLLOWUP_CASE',
+      module: 'MEMBERS',
+      entityType: 'MEMBER_FOLLOWUP_REQUEST',
+      entityId: result.id,
+      description: 'Linked approved request to Pastoral Care case',
     });
 
     return result;

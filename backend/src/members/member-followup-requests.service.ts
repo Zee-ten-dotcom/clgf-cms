@@ -84,6 +84,61 @@ export class MemberFollowupRequestsService {
     }
   }
 
+  async linkCase(
+    requestId: string,
+    caseId: string,
+    actor: any,
+  ) {
+    const client = await this.db();
+    try {
+      await client.query('BEGIN');
+
+      const request = await client.query(
+        `SELECT * FROM member_followup_requests
+         WHERE id = $1 FOR UPDATE`,
+        [requestId],
+      );
+
+      if (
+        !request.rowCount ||
+        request.rows[0].status !== 'APPROVED' ||
+        request.rows[0].pastoral_care_id
+      ) {
+        throw new BadRequestException(
+          'Request is not approved or case already linked',
+        );
+      }
+
+      const record = await client.query(
+        `SELECT id FROM pastoral_care_records
+         WHERE id = $1 AND member_id = $2`,
+        [caseId, request.rows[0].member_id],
+      );
+
+      if (!record.rowCount) {
+        throw new BadRequestException(
+          'Pastoral Care case does not match the member',
+        );
+      }
+
+      const result = await client.query(
+        `UPDATE member_followup_requests
+         SET pastoral_care_id = $2
+         WHERE id = $1
+         RETURNING *`,
+        [requestId, caseId],
+      );
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async review(
     id: string,
     decision: 'APPROVED' | 'REJECTED',

@@ -3508,6 +3508,9 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setPastoralError('');
   };
 
+  const [pendingFollowupRequestId, setPendingFollowupRequestId] =
+    useState<string | null>(null);
+
   const savePastoralCare = async (
     submitEvent: React.FormEvent,
   ) => {
@@ -3569,6 +3572,27 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     `Save failed (${response.status}): ${errorText}`,
   );
 }
+
+      if (pendingFollowupRequestId && !editingPastoralCare) {
+        const createdCase = await response.json();
+
+        const linkResponse = await authFetch(
+          `${API_BASE_URL}/member-followup-requests/${pendingFollowupRequestId}/link-case`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caseId: createdCase.id }),
+          },
+        );
+
+        if (!linkResponse.ok) {
+          throw new Error(
+            'Case saved, but request linking failed. Contact ADMIN before retrying.',
+          );
+        }
+
+        setPendingFollowupRequestId(null);
+      }
 
       cancelEditingPastoralCare();
       loadPastoralCare();
@@ -5756,7 +5780,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             role={authUser.role}
             apiUrl={API_BASE_URL}
             authFetch={authFetch}
-            onCreateCase={(memberId) => {
+            onCreateCase={(memberId, requestId) => {
+              setPendingFollowupRequestId(requestId);
               setEditingPastoralCare(null);
               setSelectedMemberProfile(null);
               setPastoralMemberId(memberId);

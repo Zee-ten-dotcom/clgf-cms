@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 type Request = {
   id: string;
   member_id: string;
+  pastoral_care_id?: string | null;
   first_name: string;
   last_name: string;
   home_cell_name?: string;
@@ -15,7 +16,7 @@ type Props = {
   role: string;
   apiUrl: string;
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
-  onCreateCase: (memberId: string) => void;
+  onCreateCase: (memberId: string, requestId: string) => void;
 };
 
 export default function FollowupRequests({
@@ -91,8 +92,11 @@ export default function FollowupRequests({
               </button>
             </div>
           )}
-          {role === 'ADMIN' && r.status === 'APPROVED' && (
-            <button type="button" onClick={() => onCreateCase(r.member_id)}>
+          {r.pastoral_care_id && (
+            <p><strong>Case Created</strong></p>
+          )}
+          {role === 'ADMIN' && r.status === 'APPROVED' && !r.pastoral_care_id && (
+            <button type="button" onClick={() => onCreateCase(r.member_id, r.id)}>
               Create Pastoral Care Case
             </button>
           )}
