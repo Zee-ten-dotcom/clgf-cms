@@ -5748,6 +5748,26 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             role={authUser.role}
             apiUrl={API_BASE_URL}
             authFetch={authFetch}
+          
+            onCreateFollowUp={(memberId) => {
+              setEditingPastoralCare(null);
+              setSelectedMemberProfile(null);
+              setPastoralMemberId(memberId);
+              setPastoralCareType('Follow-up');
+              setPastoralSubject('Attendance follow-up');
+              setPastoralNotes('');
+              setPastoralPriority('NORMAL');
+              setPastoralStatus('OPEN');
+              setPastoralLeaderId('');
+              setPastoralCareDate(
+                new Date().toLocaleDateString('en-CA')
+              );
+              setPastoralFollowUpDate('');
+              setPastoralError('');
+              setShowMembers(false);
+              setShowPastoralCare(true);
+              window.scrollTo(0, 0);
+            }}
           />
 
           <MemberCelebrations

@@ -10,6 +10,7 @@ type Member = {
 
 type Props = {
   members: Member[];
+  onCreateFollowUp: (memberId: string) => void;
   role: string;
   apiUrl: string;
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
@@ -22,7 +23,7 @@ type Result = {
 };
 
 export default function MemberRetention({
-  members, role, apiUrl, authFetch,
+  members, role, apiUrl, authFetch, onCreateFollowUp,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
@@ -166,6 +167,16 @@ export default function MemberRetention({
                     <p>
                       {r.member.home_cell_name || 'No Home Cell'}
                     </p>
+                    
+                    {group === 'Needs Attention' && (
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={() => onCreateFollowUp(r.member.id)}
+                      >
+                        Create Follow-Up
+                      </button>
+                    )}
                     <p>
                       Recent recorded attendance:{' '}
                       {r.recent.length
