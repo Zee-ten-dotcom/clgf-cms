@@ -4362,7 +4362,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     loadPastoralCare();
     authFetch(`${API_BASE_URL}/finance/permissions`)
       .then(response => response.ok ? response.json() : null)
-      .then(data => setFinanceTreasurerAllowed(data?.canManageFinance === true))
+      .then(data => {
+        const allowed = data?.canManageFinance === true;
+        setFinanceTreasurerAllowed(allowed);
+        if (allowed) {
+          loadGivingRecords();
+          loadGivingSummary();
+        }
+      })
       .catch(() => setFinanceTreasurerAllowed(false));
 
     loadLeadership();
@@ -13530,13 +13537,16 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   }
 
+  const isAssignedTreasurer =
+    authUser.role === 'LEADER' && financeTreasurerAllowed;
+
   /* =========================
      GIVING PAGE
      ========================= */
 
   if (
     showGiving &&
-    authUser.role === 'ADMIN'
+    (authUser.role === 'ADMIN' || isAssignedTreasurer)
   ) {
     return (
       <div className="app">
@@ -13681,7 +13691,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </div>
           )}
 
-          {authUser.role === 'ADMIN' && (
+          {(authUser.role === 'ADMIN' || isAssignedTreasurer) && (
           <form
             className="member-form"
             onSubmit={saveGivingRecord}
@@ -13910,6 +13920,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                       Edit
                     </button>
 
+{authUser.role === 'ADMIN' && (
                     <button
                       className="deactivate-button"
                       onClick={() =>
@@ -13918,6 +13929,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     >
                       Delete
                     </button>
+                    )}
                   </div>
                   )}
                 </div>
@@ -13933,8 +13945,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   }
 
-  const isAssignedTreasurer =
-    authUser.role === 'LEADER' && financeTreasurerAllowed;
+
 
   const decideFinanceApproval = async (
     transaction: FinanceTransaction,
@@ -17276,7 +17287,7 @@ className="back-button no-print"
             )}
           </button>
 
-          {authUser.role === 'ADMIN' && (
+          {(authUser.role === 'ADMIN' || isAssignedTreasurer) && (
             <button onClick={() => setShowGiving(true)}>
               <span>♥</span>
               Giving

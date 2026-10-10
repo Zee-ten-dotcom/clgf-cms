@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { GivingService } from './giving.service';
+import { FinanceTreasurerGuard } from '../finance/finance-treasurer.guard';
 import { AuditService } from '../audit/audit.service';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,7 +23,7 @@ import { CreateGivingDto } from './dto/create-giving.dto';
 import { UpdateGivingDto } from './dto/update-giving.dto';
 import { DateRangeQueryDto } from '../common/dto/date-range-query.dto';
 
-@Roles('ADMIN')
+@Roles('ADMIN', 'LEADER')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('giving')
 export class GivingController {
@@ -56,7 +57,7 @@ export class GivingController {
     return this.givingService.findOne(id);
   }
 
-  @Roles('ADMIN')
+  @UseGuards(FinanceTreasurerGuard)
   @Post()
   async create(
     @Body() body: CreateGivingDto,
@@ -94,7 +95,7 @@ export class GivingController {
     return giving;
   }
 
-  @Roles('ADMIN')
+  @UseGuards(FinanceTreasurerGuard)
   @Patch(':id')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
