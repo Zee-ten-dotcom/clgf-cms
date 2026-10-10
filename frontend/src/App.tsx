@@ -1,3 +1,4 @@
+import MemberTransfers from './MemberTransfers';
 import WhatsAppShare from './WhatsAppShare';
 import VisitorIntegration from './VisitorIntegration';
 import ChurchAssets from './ChurchAssets';
@@ -5735,6 +5736,16 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               ← Dashboard
             </button>
           </div>
+
+
+          <MemberTransfers
+            members={members}
+            homeCells={homeCells}
+            role={authUser.role}
+            apiUrl={API_BASE_URL}
+            authFetch={authFetch}
+            onApproved={() => window.location.reload()}
+          />
 
           <div className="member-tools">
             <select

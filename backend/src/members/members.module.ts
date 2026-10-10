@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { MemberTransfersService } from './member-transfers.service';
+import { MemberTransfersController } from './member-transfers.controller';
 
 import { AuthModule } from '../auth/auth.module';
 import { AuditModule } from '../audit/audit.module';
@@ -13,9 +15,11 @@ import { MemberRegistrationGuard } from './member-registration.guard';
   ],
   controllers: [
     MembersController,
+    MemberTransfersController,
   ],
   providers: [
     MembersService,
+    MemberTransfersService,
     MemberRegistrationGuard,
   ],
 })
