@@ -13927,6 +13927,12 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   }
 
+  useEffect(() => {
+    if (authUser?.role === 'LEADER') {
+      loadLeadership();
+    }
+  }, [authUser?.memberId, authUser?.role]);
+
   const isAssignedTreasurer =
     !!authUser.memberId &&
     leadershipAssignments.some((assignment) =>
