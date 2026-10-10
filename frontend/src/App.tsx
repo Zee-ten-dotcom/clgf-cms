@@ -11345,7 +11345,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             >
               Announcements
             </button>
-            <button
+            {authUser.role === 'ADMIN' && (
+<button
               type="button"
               className="edit-button"
               onClick={() => {
@@ -11355,10 +11356,13 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             >
               WhatsApp Notifications
             </button>
+)}
           </div>
-          <div id="clgf-whatsapp-panel">
+          {authUser.role === 'ADMIN' && (
+<div id="clgf-whatsapp-panel">
             <WhatsAppShare />
           </div>
+)}
         </main>
         <footer>
           © 2026 The City Of The Living God Fellowship
