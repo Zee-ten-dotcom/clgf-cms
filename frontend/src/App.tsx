@@ -13954,7 +13954,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     try {
       const response = await authFetch(
-        `/finance/${transaction.id}/approval`,
+        `${API_BASE_URL}/finance/${transaction.id}/approval`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
