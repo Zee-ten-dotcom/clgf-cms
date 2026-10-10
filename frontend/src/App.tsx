@@ -14293,7 +14293,7 @@ className="back-button no-print"
                   </div>
 
                   <div className="member-details">
-                  {authUser.role === 'ADMIN' && (
+                  {(authUser.role === 'ADMIN' || isAssignedTreasurer) && (
                   <div className="member-actions">
                     <button
                       className="edit-button"
@@ -14314,6 +14314,7 @@ className="back-button no-print"
                       Delete
                     </button>
                     )}
+                    
                   </div>
                   )}
                     <p>
