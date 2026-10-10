@@ -16,14 +16,20 @@ export class MemberRegistrationGuard implements CanActivate {
     try {
       const result = await client.query(`
         SELECT 1 FROM users u
-        JOIN leadership_assignments l ON l.member_id = u.member_id
+        LEFT JOIN leadership_assignments l ON l.member_id = u.member_id
         WHERE u.id = $1 AND u.is_active = true
-          AND l.status = 'ACTIVE'
           AND (
+            (l.status = 'ACTIVE' AND (
             LOWER(TRIM(l.role_title)) IN
               ('home cell leader', 'homecell leader', 'home-cell leader')
             OR LOWER(l.role_title) ~
               '(^|[,;/]) *home *cell leader'
+            ))
+            OR EXISTS (
+              SELECT 1 FROM home_cells h
+              WHERE h.leader_id = u.member_id
+                AND h.status = 'ACTIVE'
+            )
           )
         LIMIT 1
       `, [user.sub]);
