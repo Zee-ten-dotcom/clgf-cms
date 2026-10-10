@@ -108,7 +108,7 @@ export class FinanceService {
         )
         VALUES (
           $1, $2, $3, $4, $5,
-          CASE WHEN $2::text = 'EXPENSE'
+          CASE WHEN $2::varchar = 'EXPENSE'
             THEN 'PENDING'
             ELSE 'APPROVED'
           END
