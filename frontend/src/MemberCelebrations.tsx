@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 type Member = {
   id: string;
   first_name: string;
@@ -6,64 +8,139 @@ type Member = {
   status: string;
 };
 
-type Props = {
-  members: Member[];
+type Household = {
+  id: string;
+  name: string;
+  wedding_anniversary: string | null;
 };
 
-export default function MemberCelebrations({ members }: Props) {
+type Props = {
+  members: Member[];
+  apiUrl: string;
+  authFetch: (url: string, options?: RequestInit) => Promise<Response>;
+};
+
+export default function MemberCelebrations({
+  members,
+  apiUrl,
+  authFetch,
+}: Props) {
+  const [households, setHouseholds] = useState<Household[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    authFetch(`${apiUrl}/households`)
+      .then(async response => {
+        if (!response.ok) throw new Error('Unable to load anniversaries');
+        return response.json();
+      })
+      .then(data => {
+        if (!cancelled) {
+          setHouseholds(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Anniversary reminders unavailable.');
+      });
+
+    return () => { cancelled = true; };
+  }, [apiUrl, authFetch]);
+
   const today = new Date();
-  const year = today.getFullYear();
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
 
-  const upcoming = members
-    .filter(m => m.status === 'ACTIVE' && m.date_of_birth)
-    .map(m => {
-      const birth = new Date(m.date_of_birth!.slice(0, 10) + 'T12:00:00');
-      let next = new Date(year, birth.getMonth(), birth.getDate());
+  function nextOccurrence(date: string) {
+    const parts = date.slice(0, 10).split('-').map(Number);
+    const month = parts[1] - 1;
+    const day = parts[2];
 
-      if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-        next = new Date(year + 1, birth.getMonth(), birth.getDate());
-      }
+    let next = new Date(start.getFullYear(), month, day);
 
-      const days = Math.round(
-        (next.getTime() -
-          new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-        ) / 86400000
-      );
+    if (next < start) {
+      next = new Date(start.getFullYear() + 1, month, day);
+    }
 
-      return { ...m, next, days };
-    })
-    .filter(m => m.days >= 0 && m.days <= 30)
+    const days = Math.round(
+      (next.getTime() - start.getTime()) / 86400000,
+    );
+
+    return { next, days };
+  }
+
+  const celebrations = [
+    ...members
+      .filter(m => m.status === 'ACTIVE' && m.date_of_birth)
+      .map(m => ({
+        id: `birthday-${m.id}`,
+        name: `${m.first_name} ${m.last_name}`,
+        type: 'Birthday',
+        ...nextOccurrence(m.date_of_birth!),
+        greeting:
+          `Happy Birthday ${m.first_name}! 🎉\n` +
+          'May the Lord bless you and keep you.\n\n' +
+          'The City Of The Living God Fellowship',
+      })),
+
+    ...households
+      .filter(h => h.wedding_anniversary)
+      .map(h => ({
+        id: `anniversary-${h.id}`,
+        name: `${h.name} Family`,
+        type: 'Wedding Anniversary',
+        ...nextOccurrence(h.wedding_anniversary!),
+        greeting:
+          `Happy Wedding Anniversary to the ${h.name} family! 💍\n` +
+          'May God continue to bless your marriage with love, peace and unity.\n\n' +
+          'The City Of The Living God Fellowship',
+      })),
+  ]
+    .filter(c => c.days >= 0 && c.days <= 30)
     .sort((a, b) => a.days - b.days);
 
   return (
     <section className="member-profile-section">
-      <h3>🎂 Upcoming Member Birthdays</h3>
-      <p>Celebrations in the next 30 days</p>
+      <h3>🎉 Upcoming Birthdays & Wedding Anniversaries</h3>
+      <p>Church celebrations in the next 30 days</p>
 
-      {upcoming.length === 0 ? (
-        <p>No upcoming birthdays recorded.</p>
+      {error && <p>{error}</p>}
+
+      {celebrations.length === 0 ? (
+        <p>No upcoming celebrations recorded.</p>
       ) : (
-        upcoming.map(m => (
-          <div key={m.id} className="member-card"
-            style={{ marginBottom: 12 }}>
-            <strong>{m.first_name} {m.last_name}</strong>
+        celebrations.map(c => (
+          <div
+            key={c.id}
+            className="member-card"
+            style={{ marginBottom: 12 }}
+          >
+            <h4>{c.name}</h4>
+            <p>{c.type}</p>
             <p>
-              {m.next.toLocaleDateString('en-ZA', {
+              {c.next.toLocaleDateString('en-ZA', {
                 day: 'numeric',
                 month: 'long',
               })}
               {' — '}
-              {m.days === 0 ? 'Today!' : `In ${m.days} days`}
+              {c.days === 0 ? 'Today!' : `In ${c.days} days`}
             </p>
-            <button type="button" onClick={() => {
-              const text = encodeURIComponent(
-                `Happy Birthday ${m.first_name}! 🎉\n` +
-                `May the Lord bless you and keep you.\n\n` +
-                `The City Of The Living God Fellowship`
-              );
-              window.open(`https://wa.me/?text=${text}`, '_blank');
-            }}>
-              Send Birthday Greeting
+
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => {
+                window.open(
+                  `https://wa.me/?text=${encodeURIComponent(c.greeting)}`,
+                  '_blank',
+                );
+              }}
+            >
+              Send WhatsApp Greeting
             </button>
           </div>
         ))

@@ -5741,7 +5741,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
 
-          <MemberCelebrations members={members} />
+          <MemberCelebrations
+            members={members}
+            apiUrl={API_BASE_URL}
+            authFetch={authFetch}
+          />
 
           <Households
             members={members}
