@@ -51,6 +51,7 @@ import './App.css';
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 type AuthUser = {
+  memberId?: string | null;
   id: string;
   email: string;
   firstName: string;
@@ -13917,6 +13918,17 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       </div>
     );
   }
+
+  const isAssignedTreasurer =
+    !!authUser.memberId &&
+    leadershipAssignments.some((assignment) =>
+      assignment.member_id === authUser.memberId &&
+      assignment.status === 'ACTIVE' &&
+      ['treasurer', 'church treasurer', 'treasure'].includes(
+        assignment.role_title.trim().toLowerCase()
+      )
+    );
+
   /* =========================
      FINANCE PAGE
      ========================= */
@@ -14030,7 +14042,7 @@ className="back-button no-print"
                   🖨️ Print Report
                 </button>
               </div>
-          {authUser.role === 'ADMIN' && (
+          {(authUser.role === 'ADMIN' || isAssignedTreasurer) && (
           <form
             className="member-form"
             onSubmit={saveFinanceTransaction}

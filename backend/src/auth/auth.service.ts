@@ -91,6 +91,7 @@ export class AuthService {
           firstName: user.first_name,
           lastName: user.last_name,
           role: user.role,
+          memberId: user.member_id || null,
         },
       };
     } finally {
