@@ -168,7 +168,7 @@ export default function MemberRetention({
                       {r.member.home_cell_name || 'No Home Cell'}
                     </p>
                     
-                    {group === 'Needs Attention' && (
+                    {(
                       <button
                         type="button"
                         className="edit-button"
