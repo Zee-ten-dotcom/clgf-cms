@@ -3085,3 +3085,33 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Member Transfers responsive layout */
+.member-profile-section .member-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.member-profile-section .member-tools select,
+.member-profile-section .member-tools input,
+.member-profile-section .member-tools button {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .member-profile-section .member-tools {
+    flex-direction: column;
+  }
+
+  .member-profile-section .member-tools select,
+  .member-profile-section .member-tools input,
+  .member-profile-section .member-tools button {
+    width: 100%;
+    flex: none;
+  }
+}
