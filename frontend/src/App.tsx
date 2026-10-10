@@ -1,3 +1,4 @@
+import WhatsAppShare from './WhatsAppShare';
 import VisitorIntegration from './VisitorIntegration';
 import ChurchAssets from './ChurchAssets';
 import MinistryStrategicPlanning from './MinistryStrategicPlanning';
@@ -11510,6 +11511,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           <div className="page-header">
             <div>
               <h2>Visitor Management</h2>
+<WhatsAppShare />
               <p className="welcome">
                 Welcome, follow up and connect visitors
                 with the church
