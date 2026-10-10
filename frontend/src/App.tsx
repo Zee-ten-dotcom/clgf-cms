@@ -3520,6 +3520,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       return;
     }
 
+    if (
+      pastoralCareType === 'Follow-up' &&
+      !pastoralFollowUpDate
+    ) {
+      setPastoralError('A follow-up date is required.');
+      return;
+    }
+
     setPastoralSaving(true);
     setPastoralError('');
 
