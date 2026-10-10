@@ -1,3 +1,4 @@
+import Households from './Households';
 import MemberTransfers from './MemberTransfers';
 import WhatsAppShare from './WhatsAppShare';
 import VisitorIntegration from './VisitorIntegration';
@@ -5737,6 +5738,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
             </button>
           </div>
 
+
+
+          <Households
+            members={members}
+            role={authUser.role}
+            apiUrl={API_BASE_URL}
+            authFetch={authFetch}
+          />
 
           <MemberTransfers
             members={members}

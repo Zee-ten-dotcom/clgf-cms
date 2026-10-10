@@ -1,3 +1,4 @@
+import { HouseholdsController } from './households.controller';
 import { Module } from '@nestjs/common';
 import { MemberTransfersService } from './member-transfers.service';
 import { MemberTransfersController } from './member-transfers.controller';
@@ -15,6 +16,7 @@ import { MemberRegistrationGuard } from './member-registration.guard';
   ],
   controllers: [
     MembersController,
+    HouseholdsController,
     MemberTransfersController,
   ],
   providers: [
