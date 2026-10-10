@@ -1139,6 +1139,8 @@ const [systemUsers, setSystemUsers] =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showMembers, setShowMembers] = useState(false);
+  const [memberStatusFilter, setMemberStatusFilter] =
+    useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [showMinistries, setShowMinistries] = useState(false);
   const [showChurchAssets, setShowChurchAssets] = useState(false);
   const [weeklyServiceName, setWeeklyServiceName] = useState('');
@@ -4727,8 +4729,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   const reportTotalGiving =
     givingSummary?.totalGiving ?? 0;
 
-  const [memberStatusFilter, setMemberStatusFilter] =
-    useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+
 
   const filteredMembers = members.filter((member) => {
     if (
