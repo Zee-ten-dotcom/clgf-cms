@@ -17242,20 +17242,6 @@ className="back-button no-print"
             </button>
           )}
 
-          {(
-            authUser.role === 'ADMIN' ||
-            authUser.role === 'LEADER'
-          ) && (
-            <button
-              onClick={() => {
-                loadAnnouncements();
-                setShowAnnouncements(true);
-              }}
-            >
-              <span>!</span>
-              Announcements
-            </button>
-          )}
 
           {(
             authUser.role === 'ADMIN' ||
