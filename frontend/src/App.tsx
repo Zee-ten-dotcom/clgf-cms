@@ -1323,8 +1323,14 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       );
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message = errorData?.message;
         throw new Error(
-          'Failed to save finance transaction',
+          Array.isArray(message)
+            ? message.join(', ')
+            : typeof message === 'string'
+              ? message
+              : 'Finance request failed (HTTP ' + response.status + ')'
         );
       }
 
@@ -1339,7 +1345,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     } catch (err) {
       console.error(err);
       setFinanceError(
-        'Unable to save finance transaction.',
+        err instanceof Error ? err.message : 'Unable to save finance transaction.',
       );
     } finally {
       setFinanceSaving(false);
