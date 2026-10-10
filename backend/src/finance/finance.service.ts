@@ -103,9 +103,16 @@ export class FinanceService {
           transaction_type,
           category,
           amount,
-          description
+          description,
+          approval_status
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES (
+          $1, $2, $3, $4, $5,
+          CASE WHEN $2 = 'EXPENSE'
+            THEN 'PENDING'
+            ELSE 'APPROVED'
+          END
+        )
         RETURNING *
         `,
         [
@@ -183,6 +190,14 @@ export class FinanceService {
           description =
             COALESCE($5, description),
 
+          approval_status = CASE
+            WHEN COALESCE($2, transaction_type) = 'EXPENSE'
+              THEN 'PENDING'
+            ELSE 'APPROVED'
+          END,
+          approved_by = NULL,
+          approved_at = NULL,
+          rejection_reason = NULL,
           updated_at = NOW()
 
         WHERE id = $6
@@ -201,6 +216,53 @@ export class FinanceService {
       if (result.rows.length === 0) {
         throw new BadRequestException(
           'Finance transaction not found',
+        );
+      }
+
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+
+  async decideExpenseApproval(
+    id: string,
+    decision: 'APPROVED' | 'REJECTED',
+    actorId: string,
+    reason?: string,
+  ) {
+    if (decision === 'REJECTED' && !reason?.trim()) {
+      throw new BadRequestException('Rejection reason is required');
+    }
+
+    const client = await this.db();
+
+    try {
+      const result = await client.query(
+        `
+        UPDATE finance_transactions
+        SET approval_status = $2,
+            approved_by = $3,
+            approved_at = NOW(),
+            rejection_reason = $4,
+            updated_at = NOW()
+        WHERE id = $1
+          AND transaction_type = 'EXPENSE'
+          AND approval_status = 'PENDING'
+        RETURNING *
+        `,
+        [
+          id,
+          decision,
+          actorId,
+          decision === 'REJECTED' ? reason?.trim() : null,
+        ],
+      );
+
+      if (!result.rows.length) {
+        throw new BadRequestException(
+          'Expense not found or no longer pending approval',
         );
       }
 
@@ -257,6 +319,7 @@ export class FinanceService {
           COALESCE(
             SUM(amount) FILTER (
               WHERE transaction_type = 'EXPENSE'
+                AND approval_status = 'APPROVED'
             ),
             0
           )::numeric(12,2) AS total_expenses,
@@ -283,6 +346,10 @@ export class FinanceService {
           ($1::date IS NULL OR transaction_date >= $1::date)
           AND
           ($2::date IS NULL OR transaction_date <= $2::date)
+          AND (
+            transaction_type <> 'EXPENSE'
+            OR approval_status = 'APPROVED'
+          )
         GROUP BY transaction_type, category
         ORDER BY transaction_type, category
         `,

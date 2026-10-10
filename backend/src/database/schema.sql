@@ -242,6 +242,10 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
   amount NUMERIC(12,2) NOT NULL
     CHECK (amount >= 0),
   description TEXT,
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED',
+  approved_by UUID,
+  approved_at TIMESTAMPTZ,
+  rejection_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

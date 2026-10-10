@@ -303,6 +303,8 @@ type AttendanceReport = {
 
 type FinanceTransaction = {
   id: string;
+  approval_status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejection_reason?: string | null;
   transaction_date: string;
   transaction_type: string;
   category: string;
@@ -13885,7 +13887,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
                     </p>
                   </div>
 
-                  {authUser.role === 'ADMIN' && (
+                  {(authUser.role === 'ADMIN' || isAssignedTreasurer) && (
                   <div className="member-actions">
                     <button
                       className="edit-button"
@@ -13928,6 +13930,41 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         assignment.role_title.trim().toLowerCase()
       )
     );
+
+
+  const decideFinanceApproval = async (
+    transaction: FinanceTransaction,
+    decision: 'APPROVED' | 'REJECTED'
+  ) => {
+    let reason: string | undefined;
+
+    if (decision === 'REJECTED') {
+      const answer = window.prompt('Reason for rejecting this expense:');
+      if (!answer?.trim()) return;
+      reason = answer.trim();
+    } else if (!window.confirm('Approve this expense?')) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(
+        `/finance/${transaction.id}/approval`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision, reason }),
+        }
+      );
+
+      if (!response.ok) throw Error('Approval request failed');
+
+      await loadFinanceTransactions();
+      await loadFinanceSummary();
+      window.alert('Expense ' + decision.toLowerCase());
+    } catch (error) {
+      window.alert('Unable to update expense approval');
+    }
+  };
 
   /* =========================
      FINANCE PAGE
@@ -14263,6 +14300,7 @@ className="back-button no-print"
                       Edit
                     </button>
 
+                    {authUser.role === 'ADMIN' && (
                     <button
                       className="deactivate-button"
                       onClick={() =>
@@ -14271,8 +14309,47 @@ className="back-button no-print"
                     >
                       Delete
                     </button>
+                    )}
                   </div>
                   )}
+                    <p>
+                      <strong>Approval:</strong>{' '}
+                      {transaction.transaction_type === 'EXPENSE'
+                        ? (transaction.approval_status || 'APPROVED')
+                        : 'Not required'}
+                    </p>
+
+                    {transaction.approval_status === 'REJECTED' &&
+                      transaction.rejection_reason && (
+                      <p>
+                        <strong>Rejection reason:</strong>{' '}
+                        {transaction.rejection_reason}
+                      </p>
+                    )}
+
+                    {authUser.role === 'ADMIN' &&
+                      transaction.transaction_type === 'EXPENSE' &&
+                      transaction.approval_status === 'PENDING' && (
+                      <div className="member-actions">
+                        <button
+                          className="edit-button"
+                          onClick={() =>
+                            decideFinanceApproval(transaction, 'APPROVED')
+                          }
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="deactivate-button"
+                          onClick={() =>
+                            decideFinanceApproval(transaction, 'REJECTED')
+                          }
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+
                     <p>
                       <strong>Amount:</strong>{' '}
                       R{Number(transaction.amount).toFixed(2)}

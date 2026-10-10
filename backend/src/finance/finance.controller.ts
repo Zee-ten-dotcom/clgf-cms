@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -121,6 +122,49 @@ export class FinanceController {
           transaction.category,
         amount:
           Number(transaction.amount),
+      },
+    });
+
+    return transaction;
+  }
+
+
+  @Roles('ADMIN')
+  @Patch(':id/approval')
+  async decideApproval(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: { decision: string; reason?: string },
+    @Req() request: any,
+  ) {
+    if (
+      body.decision !== 'APPROVED' &&
+      body.decision !== 'REJECTED'
+    ) {
+      throw new BadRequestException(
+        'Decision must be APPROVED or REJECTED',
+      );
+    }
+
+    const transaction =
+      await this.financeService.decideExpenseApproval(
+        id,
+        body.decision,
+        request.user.sub,
+        body.reason,
+      );
+
+    await this.auditService.log({
+      actor: request.user,
+      action: 'UPDATE',
+      module: 'FINANCE',
+      entityType: 'FINANCE_TRANSACTION',
+      entityId: transaction.id,
+      description:
+        `Expense ${body.decision}: ${transaction.category}`,
+      metadata: {
+        approvalDecision: body.decision,
+        reason: body.reason || null,
+        amount: Number(transaction.amount),
       },
     });
 
