@@ -174,7 +174,7 @@ export default function MemberRetention({
                         className="edit-button"
                         onClick={() => onCreateFollowUp(r.member.id)}
                       >
-                        Create Follow-Up
+                        Request Follow-Up
                       </button>
                     )}
                     <p>

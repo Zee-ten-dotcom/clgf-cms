@@ -1,3 +1,4 @@
+import FollowupRequests from './FollowupRequests';
 import MemberRetention from './MemberRetention';
 import MemberCelebrations from './MemberCelebrations';
 import Households from './Households';
@@ -5743,13 +5744,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
 
 
-          <MemberRetention
-            members={members}
+          <FollowupRequests
             role={authUser.role}
             apiUrl={API_BASE_URL}
             authFetch={authFetch}
-          
-            onCreateFollowUp={(memberId) => {
+            onCreateCase={(memberId) => {
               setEditingPastoralCare(null);
               setSelectedMemberProfile(null);
               setPastoralMemberId(memberId);
@@ -5759,14 +5758,56 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               setPastoralPriority('NORMAL');
               setPastoralStatus('OPEN');
               setPastoralLeaderId('');
-              setPastoralCareDate(
-                new Date().toLocaleDateString('en-CA')
-              );
+              setPastoralCareDate(new Date().toISOString().slice(0, 10));
               setPastoralFollowUpDate('');
               setPastoralError('');
               setShowMembers(false);
               setShowPastoralCare(true);
               window.scrollTo(0, 0);
+            }}
+          />
+
+          <MemberRetention
+            members={members}
+            role={authUser.role}
+            apiUrl={API_BASE_URL}
+            authFetch={authFetch}
+          
+            onCreateFollowUp={async (memberId) => {
+              const reason = window.prompt(
+                'Reason for follow-up request:',
+                'Member needs attendance follow-up'
+              );
+              if (!reason?.trim()) return;
+
+              try {
+                const response = await authFetch(
+                  `${API_BASE_URL}/member-followup-requests`,
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      memberId,
+                      reason: reason.trim(),
+                    }),
+                  }
+                );
+
+                if (!response.ok) {
+                  const error = await response.text();
+                  throw new Error(error);
+                }
+
+                window.alert(
+                  'Follow-up request submitted for ADMIN review.'
+                );
+              } catch (error) {
+                window.alert(
+                  error instanceof Error
+                    ? error.message
+                    : 'Unable to submit follow-up request.'
+                );
+              }
             }}
           />
 

@@ -1,3 +1,5 @@
+import { MemberFollowupRequestsService } from './member-followup-requests.service';
+import { MemberFollowupRequestsController } from './member-followup-requests.controller';
 import { HouseholdsController } from './households.controller';
 import { Module } from '@nestjs/common';
 import { MemberTransfersService } from './member-transfers.service';
@@ -18,10 +20,12 @@ import { MemberRegistrationGuard } from './member-registration.guard';
     MembersController,
     HouseholdsController,
     MemberTransfersController,
+    MemberFollowupRequestsController,
   ],
   providers: [
     MembersService,
     MemberTransfersService,
+    MemberFollowupRequestsService,
     MemberRegistrationGuard,
   ],
 })
