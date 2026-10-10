@@ -36,7 +36,7 @@ export class MembersController {
     return this.membersService.findOne(id);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'LEADER')
   @Post()
   async create(
     @Body() body: CreateMemberDto,

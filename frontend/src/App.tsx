@@ -18270,8 +18270,7 @@ className="back-button no-print"
             </section>
           )}
 
-          {authUser.role === 'ADMIN' && (
-            <button
+          {(authUser.role === 'ADMIN' || authUser.role === 'LEADER') && (<button
               type="button"
               className="dashboard-add-member"
               onClick={openAddMember}
