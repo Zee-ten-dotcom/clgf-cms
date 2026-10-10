@@ -5117,7 +5117,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
      ADD MEMBER PAGE
      ========================= */
 
-  if ((showAddMember || editingMember) && authUser.role === 'ADMIN') {
+  if (
+    (showAddMember && (authUser.role === 'ADMIN' || memberRegistrationAllowed)) ||
+    (editingMember && authUser.role === 'ADMIN')
+  ) {
     return (
       <div className="app">
         <header className="header">
