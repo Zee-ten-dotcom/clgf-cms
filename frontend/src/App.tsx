@@ -1,3 +1,4 @@
+import MemberCelebrations from './MemberCelebrations';
 import Households from './Households';
 import MemberTransfers from './MemberTransfers';
 import WhatsAppShare from './WhatsAppShare';
@@ -5739,6 +5740,8 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           </div>
 
 
+
+          <MemberCelebrations members={members} />
 
           <Households
             members={members}
