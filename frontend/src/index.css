@@ -109,3 +109,62 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* CLGF WhatsApp notification layout */
+.clgf-whatsapp-share {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  margin: 20px 0;
+  background: #fff;
+  border: 1px solid #dfcf9f;
+  border-radius: 12px;
+}
+
+.clgf-whatsapp-share h3 {
+  color: #a47b1d;
+  margin-bottom: 12px;
+}
+
+.clgf-whatsapp-share label {
+  display: block;
+  margin: 14px 0 6px;
+  font-weight: 600;
+}
+
+.clgf-whatsapp-share input,
+.clgf-whatsapp-share select,
+.clgf-whatsapp-share textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+
+.clgf-whatsapp-share textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.clgf-whatsapp-share button {
+  background: #bd942c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-top: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .clgf-whatsapp-share {
+    padding: 14px;
+  }
+}
