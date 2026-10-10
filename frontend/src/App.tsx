@@ -4895,7 +4895,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const openAddMember = () => {
-    if (authUser.role !== 'ADMIN' && !memberRegistrationAllowed) return;
+    if (authUser.role !== 'ADMIN' && !memberRegistrationAllowed) {
+      alert('You are not authorized to register members.');
+      return;
+    }
     setForm(emptyForm);
     setFormError('');
     setShowMembers(false);
