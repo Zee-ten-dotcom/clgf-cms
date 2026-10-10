@@ -11102,7 +11102,35 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
               ← Dashboard
             </button>
           </div>
-          <WhatsAppShare />
+
+          {/* CLGF_COMMUNICATION_TABS */}
+          <div className="clgf-communication-tabs"
+            style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:20}}>
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => {
+                loadAnnouncements();
+                setShowChurchCommunication(false);
+                setShowAnnouncements(true);
+              }}
+            >
+              Announcements
+            </button>
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => {
+                document.getElementById('clgf-whatsapp-panel')
+                  ?.scrollIntoView({behavior:'smooth'});
+              }}
+            >
+              WhatsApp Notifications
+            </button>
+          </div>
+          <div id="clgf-whatsapp-panel">
+            <WhatsAppShare />
+          </div>
         </main>
         <footer>
           © 2026 The City Of The Living God Fellowship
