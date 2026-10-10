@@ -3,7 +3,7 @@ import {
   Req, UseGuards, ParseUUIDPipe,
   BadRequestException,
 } from '@nestjs/common';
-import { IsIn, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsIn, IsString, IsUUID, MaxLength, IsDateString } from 'class-validator';
 import { getDatabasePool } from '../database/database-pool';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -30,6 +30,11 @@ class AddHouseholdMemberDto {
 
   @IsIn(['HEAD', 'SPOUSE', 'CHILD', 'PARENT', 'GUARDIAN', 'OTHER'])
   relationship!: string;
+}
+
+class UpdateAnniversaryDto {
+  @IsDateString()
+  weddingAnniversary!: string;
 }
 
 @Controller('households')
@@ -84,6 +89,39 @@ export class HouseholdsController {
         module: 'MEMBERS', entityType: 'HOUSEHOLD',
         entityId: result.rows[0].id,
         description: `Created household ${body.name.trim()}`,
+      });
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+
+  @Post(':id/anniversary')
+  @Roles('ADMIN')
+  async updateAnniversary(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: UpdateAnniversaryDto,
+    @Req() req: any,
+  ) {
+    const client = await getDatabasePool().connect();
+    try {
+      const result = await client.query(
+        `UPDATE households
+         SET wedding_anniversary = $1
+         WHERE id = $2 RETURNING *`,
+        [body.weddingAnniversary, id],
+      );
+      if (!result.rowCount) {
+        throw new BadRequestException('Household not found');
+      }
+      await this.audit.log({
+        actor: req.user,
+        action: 'UPDATE_WEDDING_ANNIVERSARY',
+        module: 'MEMBERS',
+        entityType: 'HOUSEHOLD',
+        entityId: id,
+        description: 'Updated household wedding anniversary',
       });
       return result.rows[0];
     } finally {

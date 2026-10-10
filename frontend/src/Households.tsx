@@ -16,6 +16,7 @@ type Household = {
   name: string;
   address: string;
   phone: string;
+  wedding_anniversary: string | null;
   members: HouseholdMember[];
 };
 
@@ -39,6 +40,8 @@ export default function Households({
   const [relationship, setRelationship] = useState('HEAD');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [anniversaryDates, setAnniversaryDates] =
+    useState<Record<string, string>>({});
 
   async function load() {
     try {
@@ -173,6 +176,74 @@ export default function Households({
               <p>Address: {h.address || 'Not provided'}</p>
               <p>Phone: {h.phone || 'Not provided'}</p>
               <p>Family Members: {h.members.length}</p>
+              <p>
+                Wedding Anniversary:{' '}
+                {h.wedding_anniversary
+                  ? new Date(
+                      h.wedding_anniversary.slice(0, 10) + 'T12:00:00'
+                    ).toLocaleDateString('en-ZA', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : 'Not recorded'}
+              </p>
+
+              {role === 'ADMIN' && (
+                <div style={{ marginBottom: 12 }}>
+                  <input
+                    type="date"
+                    aria-label="Wedding anniversary date"
+                    style={{ ...inputStyle, maxWidth: 260 }}
+                    value={anniversaryDates[h.id] ??
+                      h.wedding_anniversary?.slice(0, 10) ?? ''}
+                    onChange={e => setAnniversaryDates(prev => ({
+                      ...prev,
+                      [h.id]: e.target.value,
+                    }))}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || !(
+                      anniversaryDates[h.id] ||
+                      h.wedding_anniversary
+                    )}
+                    onClick={() => send(
+                      `${apiUrl}/households/${h.id}/anniversary`,
+                      {
+                        method: 'POST',
+                        body: JSON.stringify({
+                          weddingAnniversary:
+                            anniversaryDates[h.id] ||
+                            h.wedding_anniversary?.slice(0, 10),
+                        }),
+                      },
+                    )}
+                  >
+                    Save Anniversary
+                  </button>
+                </div>
+              )}
+
+              {h.wedding_anniversary && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = encodeURIComponent(
+                      `Happy Wedding Anniversary to the ${h.name} family! 🎉\n` +
+                      'May God continue to bless your marriage with love, peace and unity.\n\n' +
+                      'The City Of The Living God Fellowship'
+                    );
+                    window.open(
+                      `https://wa.me/?text=${text}`,
+                      '_blank'
+                    );
+                  }}
+                >
+                  Send Anniversary Greeting
+                </button>
+              )}
+
               {h.members.map(m => (
                 <div key={m.member_id}
                   style={{
