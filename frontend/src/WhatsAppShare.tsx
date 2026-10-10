@@ -1,3 +1,4 @@
+import './whatsapp-layout.css';
 import { useState } from 'react';
 
 export default function WhatsAppShare() {
@@ -31,13 +32,7 @@ export default function WhatsAppShare() {
   };
 
   return (
-    <section style={{
-      padding: 20,
-      background: '#fff',
-      border: '1px solid #d8c28a',
-      borderRadius: 12,
-      margin: '20px 0'
-    }}>
+    <section className="clgf-whatsapp-share">
       <h3>WhatsApp Church Notifications</h3>
       <p>Prepare a message and open WhatsApp to send it.</p>
 
@@ -55,15 +50,13 @@ export default function WhatsAppShare() {
         <option value="followup">Visitor Follow-up</option>
       </select>
 
-      <p>
-        <label>Recipient Phone (optional)</label>
+      <div className="clgf-wa-field"><label>Recipient Phone (optional)</label>
         <input
           type="tel"
           value={phone}
           placeholder="083 123 4567"
           onChange={e => setPhone(e.target.value)}
-        />
-      </p>
+        /></div>
 
       <p>
         <label>Message</label>
