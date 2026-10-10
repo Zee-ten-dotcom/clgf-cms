@@ -977,6 +977,12 @@ function App() {
     useState<LeadershipAssignment | null>(null);
   const [showLeadership, setShowLeadership] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [cmsApprovalAlerts, setCmsApprovalAlerts] = useState({
+    followups: 0,
+    transfers: 0,
+  });
+  const [cmsAlertsError, setCmsAlertsError] = useState('');
+
 
   const [phoneNotificationsEnabled, setPhoneNotificationsEnabled] =
     useState(false);
@@ -3510,6 +3516,37 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   const [pendingFollowupRequestId, setPendingFollowupRequestId] =
     useState<string | null>(null);
+
+
+  const refreshCmsApprovalAlerts = async () => {
+    setCmsAlertsError('');
+    try {
+      const [followupsResponse, transfersResponse] = await Promise.all([
+        authFetch(`${API_BASE_URL}/member-followup-requests`),
+        authFetch(`${API_BASE_URL}/member-transfers`),
+      ]);
+
+      if (!followupsResponse.ok || !transfersResponse.ok) {
+        throw new Error('Unable to load approval alerts');
+      }
+
+      const followups = await followupsResponse.json();
+      const transfers = await transfersResponse.json();
+
+      setCmsApprovalAlerts({
+        followups: followups.filter(
+          (item: { status: string }) => item.status === 'PENDING'
+        ).length,
+        transfers: transfers.filter(
+          (item: { status: string }) => item.status === 'PENDING'
+        ).length,
+      });
+    } catch (error) {
+      setCmsAlertsError(
+        error instanceof Error ? error.message : 'Alerts unavailable'
+      );
+    }
+  };
 
   const savePastoralCare = async (
     submitEvent: React.FormEvent,
@@ -17631,7 +17668,72 @@ className="back-button no-print"
                 </button>
               </div>
 
+
+              {authUser.role === 'ADMIN' && (
+                <div style={{ marginBottom: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => void refreshCmsApprovalAlerts()}
+                  >
+                    Refresh Approval Alerts
+                  </button>
+                  {cmsAlertsError && <p role="alert">{cmsAlertsError}</p>}
+                </div>
+              )}
+
               <div className="dashboard-attention-grid">
+                {authUser.role === 'ADMIN' && (
+                  <>
+                    <button
+                      type="button"
+                      className="attention-card"
+                      onClick={() => {
+                        setShowNotifications(false);
+                        setShowMembers(true);
+                      }}
+                    >
+                      <span className="attention-icon">📋</span>
+                      <div>
+                        <strong>{cmsApprovalAlerts.followups}</strong>
+                        <h3>Pending Follow-Up Requests</h3>
+                        <small>Review requests in Church Members →</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="attention-card"
+                      onClick={() => {
+                        setShowNotifications(false);
+                        setShowMembers(true);
+                      }}
+                    >
+                      <span className="attention-icon">🔄</span>
+                      <div>
+                        <strong>{cmsApprovalAlerts.transfers}</strong>
+                        <h3>Pending Member Transfers</h3>
+                        <small>Review transfers in Church Members →</small>
+                      </div>
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  className="attention-card"
+                  onClick={() => {
+                    setShowNotifications(false);
+                    setShowLeadership(true);
+                  }}
+                >
+                  <span className="attention-icon">📌</span>
+                  <div>
+                    <strong>VIEW</strong>
+                    <h3>Leadership Tasks</h3>
+                    <small>Check assignments and deadlines →</small>
+                  </div>
+                </button>
+
                 <button
                   type="button"
                   className="attention-card"
