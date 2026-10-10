@@ -54,6 +54,15 @@ export class FinanceController {
     );
   }
 
+  @UseGuards(FinanceTreasurerGuard)
+  @Get('permissions')
+  getFinancePermissions(@Req() request: any) {
+    return {
+      canManageFinance: true,
+      canApproveExpenses: request.user.role === 'ADMIN',
+    };
+  }
+
   @Roles('ADMIN', 'LEADER')
   @Get(':id')
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {

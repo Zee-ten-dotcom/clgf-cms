@@ -861,6 +861,7 @@ function App() {
 
   const [attendanceReport, setAttendanceReport] =
     useState<AttendanceReport | null>(null);
+  const [financeTreasurerAllowed, setFinanceTreasurerAllowed] = useState(false);
   const [financeTransactions, setFinanceTransactions] =
     useState<FinanceTransaction[]>([]);
   const [financeSummary, setFinanceSummary] =
@@ -4359,6 +4360,11 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     loadEvents();
     loadPastoralCare();
+    authFetch(`${API_BASE_URL}/finance/permissions`)
+      .then(response => response.ok ? response.json() : null)
+      .then(data => setFinanceTreasurerAllowed(data?.canManageFinance === true))
+      .catch(() => setFinanceTreasurerAllowed(false));
+
     loadLeadership();
     loadMembers();
     loadMinistries();
@@ -13928,15 +13934,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   }
 
   const isAssignedTreasurer =
-    !!authUser.memberId &&
-    leadershipAssignments.some((assignment) =>
-      assignment.member_id === authUser.memberId &&
-      assignment.status === 'ACTIVE' &&
-      ['treasurer', 'church treasurer', 'treasure'].includes(
-        assignment.role_title.trim().toLowerCase()
-      )
-    );
-
+    authUser.role === 'LEADER' && financeTreasurerAllowed;
 
   const decideFinanceApproval = async (
     transaction: FinanceTransaction,
