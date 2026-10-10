@@ -778,6 +778,7 @@ function App() {
     useState('');
   const [visitors, setVisitors] =
     useState<Visitor[]>([]);
+  const [showChurchCommunication, setShowChurchCommunication] = useState(false);
   const [showVisitors, setShowVisitors] =
     useState(false);
   const [selectedVisitorProfile, setSelectedVisitorProfile] =
@@ -11061,6 +11062,55 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     );
   }
 
+
+  /* CHURCH COMMUNICATION */
+  if (
+    showChurchCommunication &&
+    (authUser.role === 'ADMIN' || authUser.role === 'LEADER')
+  ) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+          <div className="admin">
+            <span>{authUser.firstName} {authUser.lastName}</span>
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Church Communication</h2>
+              <p className="welcome">
+                WhatsApp messages and church notifications
+              </p>
+            </div>
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => setShowChurchCommunication(false)}
+            >
+              ← Dashboard
+            </button>
+          </div>
+          <WhatsAppShare />
+        </main>
+        <footer>
+          © 2026 The City Of The Living God Fellowship
+        </footer>
+      </div>
+    );
+  }
+
   /* =========================
      VISITOR MANAGEMENT
      ========================= */
@@ -11511,7 +11561,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
           <div className="page-header">
             <div>
               <h2>Visitor Management</h2>
-<WhatsAppShare />
+
               <p className="welcome">
                 Welcome, follow up and connect visitors
                 with the church
@@ -17013,6 +17063,18 @@ className="back-button no-print"
             <button onClick={openAttendancePage}>
               <span>✓</span>
               Attendance
+            </button>
+          )}
+
+
+          {(authUser.role === 'ADMIN' ||
+            authUser.role === 'LEADER') && (
+            <button
+              type="button"
+              onClick={() => setShowChurchCommunication(true)}
+            >
+              <span>✉</span>
+              Church Communication
             </button>
           )}
 
