@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { FinanceService } from './finance.service';
+import { FinanceTreasurerGuard } from './finance-treasurer.guard';
 import { AuditService } from '../audit/audit.service';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -58,7 +59,7 @@ export class FinanceController {
     return this.financeService.findOne(id);
   }
 
-  @Roles('ADMIN')
+  @UseGuards(FinanceTreasurerGuard)
   @Post()
   async create(
     @Body() body: CreateFinanceTransactionDto,
@@ -90,7 +91,7 @@ export class FinanceController {
     return transaction;
   }
 
-  @Roles('ADMIN')
+  @UseGuards(FinanceTreasurerGuard)
   @Patch(':id')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
