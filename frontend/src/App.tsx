@@ -17673,7 +17673,12 @@ className="back-button no-print"
                 <div style={{ marginBottom: 12 }}>
                   <button
                     type="button"
-                    onClick={() => void refreshCmsApprovalAlerts()}
+                    onClick={async () => {
+                      await refreshCmsApprovalAlerts();
+                      window.alert(
+                        'Refresh finished. Check the approval counts or error message.'
+                      );
+                    }}
                   >
                     Refresh Approval Alerts
                   </button>
