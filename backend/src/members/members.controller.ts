@@ -15,6 +15,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { AuditService } from '../audit/audit.service';
 import { MembersService } from './members.service';
+import { MemberRegistrationGuard } from './member-registration.guard';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 
@@ -25,6 +26,13 @@ export class MembersController {
     private readonly membersService: MembersService,
     private readonly auditService: AuditService,
   ) {}
+
+  @Get('registration-permissions')
+  @Roles('ADMIN', 'LEADER')
+  @UseGuards(MemberRegistrationGuard)
+  registrationPermissions() {
+    return { canRegister: true };
+  }
 
   @Get()
   findAll() {
@@ -37,6 +45,7 @@ export class MembersController {
   }
 
   @Roles('ADMIN', 'LEADER')
+  @UseGuards(MemberRegistrationGuard)
   @Post()
   async create(
     @Body() body: CreateMemberDto,

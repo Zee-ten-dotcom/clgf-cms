@@ -1139,6 +1139,7 @@ const [systemUsers, setSystemUsers] =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showMembers, setShowMembers] = useState(false);
+  const [memberRegistrationAllowed, setMemberRegistrationAllowed] = useState(false);
   const [memberStatusFilter, setMemberStatusFilter] =
     useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [showMinistries, setShowMinistries] = useState(false);
@@ -4362,6 +4363,10 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
 
     loadEvents();
     loadPastoralCare();
+    authFetch(`${API_BASE_URL}/members/registration-permissions`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setMemberRegistrationAllowed(d?.canRegister === true))
+      .catch(() => setMemberRegistrationAllowed(false));
     authFetch(`${API_BASE_URL}/finance/permissions`)
       .then(response => response.ok ? response.json() : null)
       .then(data => {
@@ -4890,6 +4895,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
   };
 
   const openAddMember = () => {
+    if (authUser.role !== 'ADMIN' && !memberRegistrationAllowed) return;
     setForm(emptyForm);
     setFormError('');
     setShowMembers(false);
@@ -18007,6 +18013,7 @@ className="back-button no-print"
               </div>
 
               <div className="dashboard-quick-grid">
+                {(authUser.role === 'ADMIN' || memberRegistrationAllowed) && (
                 <button
                   type="button"
                   className="dashboard-quick-card"
@@ -18018,6 +18025,7 @@ className="back-button no-print"
                     <small>Register a new member</small>
                   </div>
                 </button>
+                )}
 
                 <button
                   type="button"
@@ -18270,7 +18278,7 @@ className="back-button no-print"
             </section>
           )}
 
-          {(authUser.role === 'ADMIN' || authUser.role === 'LEADER') && (<button
+          {(authUser.role === 'ADMIN' || memberRegistrationAllowed) && (<button
               type="button"
               className="dashboard-add-member"
               onClick={openAddMember}
