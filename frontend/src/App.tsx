@@ -6583,62 +6583,65 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setMemberProfileLeadership([]);
     setMemberProfilePastoralCare([]);
 
-    try {
-      const [
-        attendanceResponse,
-        leadershipResponse,
-        pastoralResponse,
-      ] = await Promise.all([
-        authFetch(
-          `${API_BASE_URL}/attendance/member/${member.id}/history`,
-        ),
-        authFetch(`${API_BASE_URL}/leadership`),
-        authFetch(`${API_BASE_URL}/pastoral-care`),
-      ]);
+    const requests = await Promise.allSettled([
+      authFetch(`${API_BASE_URL}/attendance/member/${member.id}/history`)
+        .then(async r => {
+          if (!r.ok) throw new Error('Attendance unavailable');
+          return r.json();
+        }),
+      authFetch(`${API_BASE_URL}/leadership`)
+        .then(async r => {
+          if (!r.ok) throw new Error('Leadership unavailable');
+          return r.json();
+        }),
+      authFetch(`${API_BASE_URL}/pastoral-care`)
+        .then(async r => {
+          if (!r.ok) throw new Error('Pastoral Care unavailable');
+          return r.json();
+        }),
+    ]);
 
-      if (
-        !attendanceResponse.ok ||
-        !leadershipResponse.ok ||
-        !pastoralResponse.ok
-      ) {
-        throw new Error('Failed to load member profile');
-      }
+    const [attendance, leadership, pastoral] = requests;
+    const unavailable: string[] = [];
 
-      const [
-        attendanceData,
-        leadershipData,
-        pastoralData,
-      ] = await Promise.all([
-        attendanceResponse.json(),
-        leadershipResponse.json(),
-        pastoralResponse.json(),
-      ]);
-
-      setMemberProfileAttendance(attendanceData);
-
-      setMemberProfileLeadership(
-        Array.isArray(leadershipData)
-          ? leadershipData.filter(
-              (item) => item.member_id === member.id,
-            )
-          : [],
-      );
-
-      setMemberProfilePastoralCare(
-        Array.isArray(pastoralData)
-          ? pastoralData.filter(
-              (item) => item.member_id === member.id,
-            )
-          : [],
-      );
-    } catch (err) {
-      console.error(err);
-      setMemberProfileError(
-        'Unable to load the complete member profile.',
-      );
-    } finally {
-      setMemberProfileLoading(false);
+    if (attendance.status === 'fulfilled') {
+      setMemberProfileAttendance(attendance.value);
+    } else {
+      unavailable.push('Attendance');
     }
+
+    if (leadership.status === 'fulfilled') {
+      setMemberProfileLeadership(
+        Array.isArray(leadership.value)
+          ? leadership.value.filter(
+              (item) => item.member_id === member.id
+            )
+          : []
+      );
+    } else {
+      unavailable.push('Leadership');
+    }
+
+    if (pastoral.status === 'fulfilled') {
+      setMemberProfilePastoralCare(
+        Array.isArray(pastoral.value)
+          ? pastoral.value.filter(
+              (item) => item.member_id === member.id
+            )
+          : []
+      );
+    } else {
+      unavailable.push('Pastoral Care');
+    }
+
+    if (unavailable.length > 0) {
+      setMemberProfileError(
+        'Some profile sections are unavailable: ' +
+        unavailable.join(', ') + '.'
+      );
+    }
+
+    setMemberProfileLoading(false);
   }
 
   const openMemberAttendanceHistory = async (memberId: string) => {
