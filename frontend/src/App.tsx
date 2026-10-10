@@ -15451,9 +15451,9 @@ className="back-button no-print"
 
             <button
               className="back-button"
-              onClick={() => setShowAnnouncements(false)}
+              onClick={() => { setShowAnnouncements(false); setShowChurchCommunication(true); }}
             >
-              ← Dashboard
+              ← Church Communication
             </button>
           </div>
 
