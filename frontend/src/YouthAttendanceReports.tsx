@@ -94,7 +94,7 @@ export default function YouthAttendanceReports({
           <h4>Member Attendance</h4>
           {report.members.map(member => (
             <div className="clgf-ya-session" key={member.id}>
-              <strong>{member.first_name} {member.last_name}</strong>
+              <strong style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>{member.first_name} {member.last_name}</strong>
               <small>
                 Present: {member.present} · Absent: {member.absent}
               </small>
