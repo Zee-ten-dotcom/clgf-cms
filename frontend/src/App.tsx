@@ -16994,7 +16994,8 @@ className="back-button no-print"
       authFetch={authFetch}
       onRegister={() => {
         setShowYouthServices(false);
-        setShowMembers(true);
+        setShowMembers(false);
+        setShowAddMember(true);
       }}
     />
   </div>

@@ -3229,3 +3229,42 @@ footer {
   border-radius: 8px;
   font: inherit;
 }
+
+/* CLGF compact youth member cards */
+.clgf-youth-manager .clgf-youth-service {
+  padding: 12px 16px;
+  margin: 10px 0;
+  border: 1px solid #d7bd58;
+  border-radius: 10px;
+  background: #fffdf6;
+}
+
+.clgf-youth-manager .clgf-youth-service strong {
+  display: block;
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.clgf-youth-manager .clgf-youth-service p {
+  font-size: 13px;
+  margin: 3px 0 10px;
+}
+
+.clgf-youth-manager .clgf-youth-service button {
+  font-size: 13px;
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+.clgf-youth-manager select {
+  width: 100%;
+  max-width: 100%;
+  margin: 8px 0;
+}
+
+@media (min-width: 700px) {
+  .clgf-youth-manager .clgf-youth-service {
+    padding: 12px 18px;
+  }
+}
