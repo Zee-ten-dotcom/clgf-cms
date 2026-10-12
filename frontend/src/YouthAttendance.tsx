@@ -7,6 +7,12 @@ type Session = {
   absent: number;
 };
 
+type YouthMember = {
+  id: string;
+  first_name: string;
+  last_name: string;
+};
+
 type Props = {
   apiUrl: string;
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
@@ -14,6 +20,11 @@ type Props = {
 
 export default function YouthAttendance({ apiUrl, authFetch }: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [members, setMembers] = useState<YouthMember[]>([]);
+  const [selectedSession, setSelectedSession] = useState('');
+  const [memberId, setMemberId] = useState('');
+  const [status, setStatus] = useState('PRESENT');
+  const [marking, setMarking] = useState(false);
   const [date, setDate] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +41,44 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  async function loadMembers() {
+    try {
+      const response = await authFetch(`${apiUrl}/members`);
+      if (!response.ok) throw new Error('Unable to load members');
+      const data = await response.json();
+      setMembers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load members');
+    }
+  }
+
+  useEffect(() => {
+    void load();
+    void loadMembers();
+  }, []);
+
+  async function mark(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMarking(true);
+    try {
+      const response = await authFetch(
+        `${apiUrl}/youth/attendance/${selectedSession}/members`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memberId, status }),
+        }
+      );
+      if (!response.ok) throw new Error(await response.text());
+      setError('');
+      setMemberId('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to mark attendance');
+    } finally {
+      setMarking(false);
+    }
+  }
 
   async function create(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,6 +122,51 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
         </button>
       </form>
       {error && <p role="alert">{error}</p>}
+
+      <h3>Mark Youth Member Attendance</h3>
+      <form onSubmit={mark}>
+        <select
+          aria-label="Youth attendance session"
+          value={selectedSession}
+          onChange={e => setSelectedSession(e.target.value)}
+          required
+        >
+          <option value="">Select Youth Service</option>
+          {sessions.map(session => (
+            <option key={session.id} value={session.id}>
+              {String(session.service_date).slice(0, 10)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Church member"
+          value={memberId}
+          onChange={e => setMemberId(e.target.value)}
+          required
+        >
+          <option value="">Select Member</option>
+          {members.map(member => (
+            <option key={member.id} value={member.id}>
+              {member.first_name} {member.last_name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Attendance status"
+          value={status}
+          onChange={e => setStatus(e.target.value)}
+        >
+          <option value="PRESENT">Present</option>
+          <option value="ABSENT">Absent</option>
+        </select>
+
+        <button type="submit" disabled={marking}>
+          {marking ? 'Saving...' : 'Save Youth Attendance'}
+        </button>
+      </form>
+
       <h3>Youth Attendance Sessions</h3>
       {sessions.map(session => (
         <div className="clgf-youth-service" key={session.id}>

@@ -3220,3 +3220,12 @@ footer {
     max-width: 100%;
   }
 }
+
+.clgf-youth-manager select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font: inherit;
+}
