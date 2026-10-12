@@ -6823,6 +6823,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       }
 
       const data = await response.json();
+      setTimeout(() => document.getElementById("member-attendance-history")?.scrollIntoView({ behavior: "smooth" }), 150);
       setMemberAttendanceHistory({
         ...data,
         member: data?.member ?? {},
@@ -15291,7 +15292,7 @@ className="back-button no-print"
             </div>
           )}
           {memberAttendanceHistory && (
-            <div className="member-form">
+            <div id="member-attendance-history" className="member-form">
               <div className="page-header">
                 <div>
                   <h3>
