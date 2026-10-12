@@ -1154,6 +1154,7 @@ const [systemUsers, setSystemUsers] =
   const [memberStatusFilter, setMemberStatusFilter] =
     useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [showMinistries, setShowMinistries] = useState(false);
+  const [showYouthServices, setShowYouthServices] = useState(false);
   const [showChurchAssets, setShowChurchAssets] = useState(false);
   const [weeklyServiceName, setWeeklyServiceName] = useState('');
   const [weeklyServiceDay, setWeeklyServiceDay] = useState('Sunday');
@@ -16937,6 +16938,65 @@ className="back-button no-print"
     );
   }
 
+
+  if (showYouthServices) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div>
+            <h1>CLGF CMS</h1>
+            <p>The City Of The Living God Fellowship</p>
+          </div>
+          <div className="admin">
+            <span>{authUser.firstName} {authUser.lastName}</span>
+            <button className="logout-button" onClick={logout}>
+              Logout
+            </button>
+          </div>
+        </header>
+        <main className="main">
+          <div className="page-header">
+            <div>
+              <h2>Youth Services</h2>
+              <p className="welcome">CLGF Youth Ministry</p>
+            </div>
+            <button className="back-button"
+              onClick={() => setShowYouthServices(false)}>
+              ← Dashboard
+            </button>
+          </div>
+          <div className="dashboard-grid">
+            <div className="card">
+              <h3>Youth Members</h3>
+              <p>Register and manage youth members.</p>
+              <button onClick={() => {
+                setShowYouthServices(false);
+                setShowMembers(true);
+              }}>Open Members</button>
+            </div>
+            <div className="card">
+              <h3>Youth Services</h3>
+              <p>Saturday: 16:00–18:00</p>
+              <p>Service planning and coordination.</p>
+            </div>
+            <div className="card">
+              <h3>Youth Attendance</h3>
+              <p>Track participation in youth services.</p>
+            </div>
+            <div className="card">
+              <h3>Youth Programs & Activities</h3>
+              <p>Worship, teaching, outreach and fellowship.</p>
+            </div>
+            <div className="card">
+              <h3>Monthly Reports</h3>
+              <p>Submit Youth Ministry reports to church leadership.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (showMinistries) {
     return (
       <div className="app">
@@ -17397,6 +17457,10 @@ className="back-button no-print"
           <button onClick={() => setShowMinistries(true)}>
             <span>♟</span>
             Ministries
+          </button>
+          <button onClick={() => setShowYouthServices(true)}>
+            <span>♟</span>
+            Youth Services
           </button>
 
           <button onClick={() => setShowHomeCells(true)}>
