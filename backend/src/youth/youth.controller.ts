@@ -279,4 +279,58 @@ export class YouthController {
     }
   }
 
+  @Get('members')
+  async youthMembers(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS youth_ministry_members (
+          member_id UUID PRIMARY KEY REFERENCES members(id)
+            ON DELETE CASCADE,
+          added_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      const result = await db.query(`
+        SELECT m.id, m.first_name, m.last_name,
+          m.membership_number, m.status
+        FROM youth_ministry_members y
+        JOIN members m ON m.id = y.member_id
+        ORDER BY m.first_name, m.last_name
+      `);
+      return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
+  @Post('members')
+  async addYouthMember(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS youth_ministry_members (
+          member_id UUID PRIMARY KEY REFERENCES members(id)
+            ON DELETE CASCADE,
+          added_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      const result = await db.query(`
+        INSERT INTO youth_ministry_members (member_id)
+        SELECT id FROM members WHERE id = $1
+        ON CONFLICT (member_id) DO NOTHING
+        RETURNING member_id
+      `, [body.memberId]);
+
+      if (!result.rowCount)
+        throw new BadRequestException(
+          'Member not found or already in Youth Ministry'
+        );
+      return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
 }

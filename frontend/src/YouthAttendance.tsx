@@ -43,7 +43,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
 
   async function loadMembers() {
     try {
-      const response = await authFetch(`${apiUrl}/members`);
+      const response = await authFetch(`${apiUrl}/youth/members`);
       if (!response.ok) throw new Error('Unable to load members');
       const data = await response.json();
       setMembers(Array.isArray(data) ? data : []);
