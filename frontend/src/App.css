@@ -3379,3 +3379,60 @@ footer {
   background: #f6c7c7 !important;
   color: #8b1e1e !important;
 }
+
+/* CLGF Youth separate workspaces */
+.clgf-youth-workspace {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.clgf-youth-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.clgf-youth-workspace-header h2 { margin: 0 0 5px; }
+.clgf-youth-workspace-header p { margin: 0; color: #666; }
+.clgf-youth-workspace button {
+  background: #d9b331;
+  color: #171717;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.clgf-youth-workspace-form,
+.clgf-youth-workspace-list {
+  background: white;
+  border: 1px solid #e8e0c9;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 16px;
+}
+.clgf-youth-workspace-form label {
+  display: block;
+  margin-bottom: 14px;
+}
+.clgf-youth-workspace-form input,
+.clgf-youth-workspace-form select,
+.clgf-youth-workspace-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font: inherit;
+}
+.clgf-youth-workspace-record {
+  border-bottom: 1px solid #eee;
+  padding: 14px 0;
+}
+.clgf-youth-workspace-record strong { font-size: 16px; }
+.clgf-youth-workspace-record p { margin: 6px 0; font-size: 14px; }

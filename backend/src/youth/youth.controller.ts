@@ -1,6 +1,5 @@
-import {
-  Body, Controller, Delete, ForbiddenException, Get,
-  Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param, Query } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get,
+  Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param, Query, Patch } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -438,6 +437,142 @@ export class YouthController {
     } finally {
       db.release();
     }
+  }
+
+    // CLGF Youth Care and Leadership
+
+  private async ensureYouthExtraTables(db: any) {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS youth_follow_ups (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        member_id UUID NOT NULL REFERENCES members(id),
+        subject TEXT NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        follow_up_date DATE,
+        status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS youth_leadership_roles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        member_id UUID NOT NULL REFERENCES members(id),
+        role_title TEXT NOT NULL,
+        responsibility TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(member_id, role_title)
+      )
+    `);
+  }
+
+  @Get('follow-ups')
+  async youthFollowUps(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await this.ensureYouthExtraTables(db);
+      const result = await db.query(`
+        SELECT f.*, CONCAT(m.first_name, ' ', m.last_name)
+          AS member_name
+        FROM youth_follow_ups f
+        JOIN members m ON m.id = f.member_id
+        ORDER BY f.created_at DESC
+      `);
+      return result.rows;
+    } finally { db.release(); }
+  }
+
+  @Post('follow-ups')
+  async createYouthFollowUp(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+    if (!body.memberId || !String(body.subject || '').trim())
+      throw new BadRequestException('Member and subject required');
+
+    const db = await getDatabasePool().connect();
+    try {
+      await this.ensureYouthExtraTables(db);
+      const result = await db.query(`
+        INSERT INTO youth_follow_ups
+          (member_id, subject, notes, follow_up_date)
+        SELECT ym.member_id, $2, $3, $4
+        FROM youth_ministry_members ym
+        WHERE ym.member_id = $1
+        RETURNING *
+      `, [
+        body.memberId,
+        String(body.subject).trim(),
+        body.notes || '',
+        body.followUpDate || null,
+      ]);
+      if (!result.rowCount)
+        throw new BadRequestException('Youth member not found');
+      return result.rows[0];
+    } finally { db.release(); }
+  }
+
+  @Patch('follow-ups/:id/close')
+  async closeYouthFollowUp(
+    @Req() req: any, @Param('id') id: string,
+  ) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await this.ensureYouthExtraTables(db);
+      const result = await db.query(`
+        UPDATE youth_follow_ups
+        SET status = 'CLOSED'
+        WHERE id = $1 RETURNING *
+      `, [id]);
+      if (!result.rowCount)
+        throw new BadRequestException('Follow-up not found');
+      return result.rows[0];
+    } finally { db.release(); }
+  }
+
+  @Get('leadership')
+  async youthLeadership(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await this.ensureYouthExtraTables(db);
+      const result = await db.query(`
+        SELECT l.*, CONCAT(m.first_name, ' ', m.last_name)
+          AS member_name
+        FROM youth_leadership_roles l
+        JOIN members m ON m.id = l.member_id
+        ORDER BY l.role_title, m.first_name
+      `);
+      return result.rows;
+    } finally { db.release(); }
+  }
+
+  @Post('leadership')
+  async createYouthLeader(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+    if (!body.memberId || !String(body.roleTitle || '').trim())
+      throw new BadRequestException('Member and role required');
+
+    const db = await getDatabasePool().connect();
+    try {
+      await this.ensureYouthExtraTables(db);
+      const result = await db.query(`
+        INSERT INTO youth_leadership_roles
+          (member_id, role_title, responsibility)
+        SELECT ym.member_id, $2, $3
+        FROM youth_ministry_members ym
+        WHERE ym.member_id = $1
+        ON CONFLICT (member_id, role_title)
+        DO UPDATE SET responsibility = EXCLUDED.responsibility
+        RETURNING *
+      `, [
+        body.memberId,
+        String(body.roleTitle).trim(),
+        body.responsibility || '',
+      ]);
+      if (!result.rowCount)
+        throw new BadRequestException('Youth member not found');
+      return result.rows[0];
+    } finally { db.release(); }
   }
 
 }

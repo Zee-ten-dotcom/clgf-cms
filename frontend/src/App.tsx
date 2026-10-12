@@ -1,3 +1,4 @@
+import YouthCareLeadership from './YouthCareLeadership';
 import YouthAttendanceReports from './YouthAttendanceReports';
 import YouthMembers from './YouthMembers';
 import YouthReports from './YouthReports';
@@ -1161,6 +1162,8 @@ const [systemUsers, setSystemUsers] =
     useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [showMinistries, setShowMinistries] = useState(false);
   const [showYouthServices, setShowYouthServices] = useState(false);
+  const [youthWorkspace, setYouthWorkspace] =
+    useState<'care' | 'leadership' | null>(null);
   const [showChurchAssets, setShowChurchAssets] = useState(false);
   const [weeklyServiceName, setWeeklyServiceName] = useState('');
   const [weeklyServiceDay, setWeeklyServiceDay] = useState('Sunday');
@@ -16988,6 +16991,18 @@ className="back-button no-print"
     authUser.role === 'ADMIN' ||
     (authUser.role === 'LEADER' && assignedYouthLeader);
 
+
+  if (youthWorkspace && canManageYouth) {
+    return (
+      <YouthCareLeadership
+        apiUrl={import.meta.env.VITE_API_URL}
+        authFetch={authFetch}
+        section={youthWorkspace}
+        onBack={() => setYouthWorkspace(null)}
+      />
+    );
+  }
+
   if (showYouthServices && canManageYouth) {
     return (
       <div className="app">
@@ -17082,7 +17097,22 @@ className="back-button no-print"
       authFetch={authFetch}
     />
   </div>
-          </div>
+          
+    <div className="card">
+      <h3>Youth Follow-Up & Pastoral Care</h3>
+      <p>Manage youth follow-ups and pastoral support.</p>
+      <button onClick={() => setYouthWorkspace('care')}>
+        Open Follow-Ups
+      </button>
+    </div>
+    <div className="card">
+      <h3>Youth Leadership Structure</h3>
+      <p>Assign youth committee roles and responsibilities.</p>
+      <button onClick={() => setYouthWorkspace('leadership')}>
+        Open Youth Leadership
+      </button>
+    </div>
+</div>
         </main>
       </div>
     );
