@@ -1,3 +1,4 @@
+import { YouthModule } from './youth/youth.module';
 import { VisitorIntegrationModule } from './visitors/visitor-integration.module';
 import { ChurchAssetsModule } from './church-assets/church-assets.module';
 import { MinistryPlanningModule } from './ministry-planning/ministry-planning.module';
@@ -35,6 +36,7 @@ import { PushNotificationsModule } from './push-notifications/push-notifications
 
 @Module({
   imports: [
+    YouthModule,
     MinistryMonthlyReportsModule,
     MinistryPlanningModule,
     VisitorIntegrationModule,
