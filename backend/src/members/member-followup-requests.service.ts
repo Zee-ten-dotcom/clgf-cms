@@ -139,6 +139,27 @@ export class MemberFollowupRequestsService {
     }
   }
 
+
+  async removeRequest(id: string) {
+    const client = await this.db();
+    try {
+      const result = await client.query(
+        `DELETE FROM member_followup_requests
+         WHERE id = $1 AND status <> 'PENDING'
+         RETURNING id, status`,
+        [id],
+      );
+      if (!result.rowCount) {
+        throw new BadRequestException(
+          'Request not found or still pending',
+        );
+      }
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
   async review(
     id: string,
     decision: 'APPROVED' | 'REJECTED',

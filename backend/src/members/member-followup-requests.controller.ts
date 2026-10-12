@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -100,6 +101,25 @@ export class MemberFollowupRequestsController {
       description: 'Linked approved request to Pastoral Care case',
     });
 
+    return result;
+  }
+
+
+  @Delete(':id')
+  @Roles('ADMIN')
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: any,
+  ) {
+    const result = await this.requests.removeRequest(id);
+    await this.audit.log({
+      actor: req.user,
+      action: 'REMOVE_FOLLOWUP_REQUEST',
+      module: 'MEMBERS',
+      entityType: 'MEMBER_FOLLOWUP_REQUEST',
+      entityId: result.id,
+      description: 'Removed reviewed follow-up request',
+    });
     return result;
   }
 

@@ -61,6 +61,21 @@ export default function FollowupRequests({
     }
   }
 
+
+  async function removeRequest(id: string) {
+    if (!window.confirm('Remove this follow-up request?')) return;
+    try {
+      const response = await authFetch(
+        `${apiUrl}/member-followup-requests/${id}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error(await response.text());
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Remove failed');
+    }
+  }
+
   return (
     <section style={{ marginTop: 24 }}>
       <h3>Member Follow-Up Requests</h3>
@@ -91,6 +106,14 @@ export default function FollowupRequests({
                 Reject
               </button>
             </div>
+          )}
+          {role === 'ADMIN' && r.status !== 'PENDING' && (
+            <button
+              type="button"
+              onClick={() => void removeRequest(r.id)}
+            >
+              Remove Request
+            </button>
           )}
           {r.pastoral_care_id && (
             <p><strong>Case Created</strong></p>
