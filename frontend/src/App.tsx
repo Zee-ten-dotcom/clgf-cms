@@ -1231,6 +1231,7 @@ const [systemUsers, setSystemUsers] =
   const [selectedMinistryProfile, setSelectedMinistryProfile] =
     useState<Ministry | null>(null);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [registeringYouthMember, setRegisteringYouthMember] = useState(false);
   const [search, setSearch] = useState('');
 const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [form, setForm] = useState<MemberForm>(emptyForm);
@@ -4979,6 +4980,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       alert('You are not authorized to register members.');
       return;
     }
+    setRegisteringYouthMember(false);
     setForm(emptyForm);
     setFormError('');
     setShowMembers(false);
@@ -4989,6 +4991,7 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
     setForm(emptyForm);
     setFormError('');
     setShowAddMember(false);
+    setRegisteringYouthMember(false);
   };
 
   const saveMember = async (event: React.FormEvent) => {
@@ -5029,10 +5032,37 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
         throw new Error('Failed to create member');
       }
 
-      await response.json();
+      const createdMember = await response.json();
 
+      if (registeringYouthMember) {
+        if (!createdMember?.id) {
+          throw new Error('Member created without an ID');
+        }
+
+        const youthResponse = await authFetch(
+          `${API_BASE_URL}/youth/members`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memberId: createdMember.id }),
+          },
+        );
+
+        if (!youthResponse.ok) {
+          setFormError(
+            'Church member created, but Youth Ministry assignment failed. Add the member from Youth Members.'
+          );
+          setSaving(false);
+          return;
+        }
+      }
+
+      setRegisteringYouthMember(false);
       setForm(emptyForm);
       setShowAddMember(false);
+      if (registeringYouthMember) {
+        setShowYouthServices(true);
+      }
 
       loadMembers();
     loadMinistries();
@@ -16993,6 +17023,9 @@ className="back-button no-print"
       apiUrl={import.meta.env.VITE_API_URL}
       authFetch={authFetch}
       onRegister={() => {
+        setRegisteringYouthMember(true);
+        setForm(emptyForm);
+        setFormError('');
         setShowYouthServices(false);
         setShowMembers(false);
         setShowAddMember(true);
