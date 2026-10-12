@@ -3167,3 +3167,56 @@ footer {
 .youth-action-button:hover {
   background: #bd9825;
 }
+
+/* CLGF Youth Services */
+.clgf-youth-manager {
+  width: 100%;
+  max-width: 650px;
+  margin: 20px auto;
+  text-align: left;
+}
+
+.clgf-youth-manager form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.clgf-youth-manager input,
+.clgf-youth-manager textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.clgf-youth-manager textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.clgf-youth-manager button {
+  background: #d4af37;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clgf-youth-service {
+  padding: 15px;
+  margin: 12px 0;
+  border: 1px solid #d4af37;
+  border-radius: 10px;
+  background: #fffdf5;
+}
+
+@media (max-width: 600px) {
+  .clgf-youth-manager {
+    max-width: 100%;
+  }
+}
