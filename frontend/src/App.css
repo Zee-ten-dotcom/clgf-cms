@@ -3150,3 +3150,20 @@ footer {
     white-space: normal;
   }
 }
+
+/* CLGF Youth Ministry */
+.youth-action-button {
+  background: #d4af37;
+  color: #111;
+  border: 1px solid #d4af37;
+  border-radius: 8px;
+  padding: 11px 20px;
+  font-weight: 700;
+  min-height: 42px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.youth-action-button:hover {
+  background: #bd9825;
+}

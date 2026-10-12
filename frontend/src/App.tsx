@@ -16991,18 +16991,62 @@ className="back-button no-print"
               <h3>Youth Services</h3>
               <p>Saturday: 16:00–18:00</p>
               <p>Service planning and coordination.</p>
+            
+              <button
+                type="button"
+                className="youth-action-button"
+                onClick={() => {
+                  setShowYouthServices(false);
+                  setShowEvents(true);
+                }}
+              >
+                Open Section
+              </button>
             </div>
             <div className="card">
               <h3>Youth Attendance</h3>
               <p>Track participation in youth services.</p>
+            
+              <button
+                type="button"
+                className="youth-action-button"
+                onClick={() => {
+                  setShowYouthServices(false);
+                  setShowAttendance(true);
+                }}
+              >
+                Open Section
+              </button>
             </div>
             <div className="card">
               <h3>Youth Programs & Activities</h3>
               <p>Worship, teaching, outreach and fellowship.</p>
+            
+              <button
+                type="button"
+                className="youth-action-button"
+                onClick={() => {
+                  setShowYouthServices(false);
+                  setShowEvents(true);
+                }}
+              >
+                Open Section
+              </button>
             </div>
             <div className="card">
               <h3>Monthly Reports</h3>
               <p>Submit Youth Ministry reports to church leadership.</p>
+            
+              <button
+                type="button"
+                className="youth-action-button"
+                onClick={() => {
+                  setShowYouthServices(false);
+                  setShowReports(true);
+                }}
+              >
+                Open Section
+              </button>
             </div>
           </div>
         </main>
