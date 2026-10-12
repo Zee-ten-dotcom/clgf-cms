@@ -25,6 +25,11 @@ export class MemberRegistrationGuard implements CanActivate {
             OR LOWER(l.role_title) ~
               '(^|[,;/]) *home *cell leader'
             ))
+            OR (
+              l.status = 'ACTIVE'
+              AND LOWER(TRIM(l.role_title)) IN
+                ('youth leader', 'youth minister', 'youth ministry leader')
+            )
             OR EXISTS (
               SELECT 1 FROM home_cells h
               WHERE h.leader_id = u.member_id
@@ -35,7 +40,7 @@ export class MemberRegistrationGuard implements CanActivate {
       `, [user.sub]);
 
       if (!result.rowCount) {
-        throw new ForbiddenException('Assigned Home Cell Leader required');
+        throw new ForbiddenException('Assigned Home Cell or Youth Leader required');
       }
       return true;
     } finally {
