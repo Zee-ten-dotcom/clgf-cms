@@ -107,7 +107,7 @@ export class YouthController {
   @Post('attendance')
   async createAttendance(@Req() req: any, @Body() body: any) {
     await this.authorize(req.user);
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(body.serviceDate || ''))
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.serviceDate || ''))
       throw new BadRequestException('Valid service date required');
 
     const db = await getDatabasePool().connect();
