@@ -252,7 +252,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
                 {filtered.map(m => (
                   <div className="clgf-ya-member" key={m.id}>
                     <div>
-                      <strong className="clgf-attendance-member-name">{m.first_name} {m.last_name}</strong>
+                      <strong className="clgf-attendance-member-name" style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, display: "block" }}>{m.first_name} {m.last_name}</strong>
                       <small>{m.membership_number || ''}</small>
                     </div>
                     <div className="clgf-ya-status">
