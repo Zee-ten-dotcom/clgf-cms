@@ -63,6 +63,21 @@ export default function YouthMembers({
     }
   }
 
+
+  async function removeMember(id: string) {
+    if (!window.confirm('Remove this member from Youth Ministry?')) return;
+    try {
+      const response = await authFetch(
+        `${apiUrl}/youth/members/${id}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error(await response.text());
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove member');
+    }
+  }
+
   const existing = new Set(members.map(member => member.id));
 
   return (
@@ -98,6 +113,12 @@ export default function YouthMembers({
         <div className="clgf-youth-service" key={m.id}>
           <strong>{m.first_name} {m.last_name}</strong>
           <p>{m.membership_number || ''}</p>
+          <button
+            type="button"
+            onClick={() => void removeMember(m.id)}
+          >
+            Remove from Youth Ministry
+          </button>
         </div>
       ))}
     </section>

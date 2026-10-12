@@ -1,5 +1,5 @@
 import {
-  Body, Controller, ForbiddenException, Get,
+  Body, Controller, Delete, ForbiddenException, Get,
   Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -328,6 +328,26 @@ export class YouthController {
           'Member not found or already in Youth Ministry'
         );
       return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
+  @Delete('members/:memberId')
+  async removeYouthMember(
+    @Req() req: any,
+    @Param('memberId', new ParseUUIDPipe()) memberId: string,
+  ) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(
+        'DELETE FROM youth_ministry_members WHERE member_id = $1 RETURNING member_id',
+        [memberId],
+      );
+      if (!result.rowCount)
+        throw new BadRequestException('Youth member not found');
+      return { success: true };
     } finally {
       db.release();
     }
