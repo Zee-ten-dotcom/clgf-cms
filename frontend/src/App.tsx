@@ -1,3 +1,4 @@
+import YouthServiceManager from './YouthServiceManager';
 import FollowupRequests from './FollowupRequests';
 import MemberRetention from './MemberRetention';
 import MemberCelebrations from './MemberCelebrations';
@@ -16989,6 +16990,10 @@ className="back-button no-print"
             </div>
             <div className="card">
               <h3>Youth Services</h3>
+              <YouthServiceManager
+                apiUrl={import.meta.env.VITE_API_URL}
+                authFetch={authFetch}
+              />
               <p>Saturday: 16:00–18:00</p>
               <p>Service planning and coordination.</p>
             
