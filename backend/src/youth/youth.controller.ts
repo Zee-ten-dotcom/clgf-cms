@@ -1,6 +1,6 @@
 import {
   Body, Controller, ForbiddenException, Get,
-  Post, Req, UseGuards, BadRequestException,
+  Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -81,4 +81,82 @@ export class YouthController {
       db.release();
     }
   }
+
+  @Get('attendance')
+  async attendance(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        SELECT s.*, COUNT(r.id)::int AS total_marked,
+          COUNT(r.id) FILTER (WHERE r.status = 'PRESENT')::int AS present,
+          COUNT(r.id) FILTER (WHERE r.status = 'ABSENT')::int AS absent
+        FROM attendance_sessions s
+        LEFT JOIN attendance_records r ON r.session_id = s.id
+        WHERE s.service_type = 'YOUTH_SERVICE'
+          AND s.home_cell_id IS NULL
+        GROUP BY s.id
+        ORDER BY s.service_date DESC
+      `);
+      return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
+  @Post('attendance')
+  async createAttendance(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(body.serviceDate || ''))
+      throw new BadRequestException('Valid service date required');
+
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        INSERT INTO attendance_sessions
+          (service_date, service_type, home_cell_id, notes)
+        VALUES ($1, 'YOUTH_SERVICE', NULL, $2)
+        RETURNING *
+      `, [body.serviceDate, body.notes || null]);
+      return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
+  @Post('attendance/:sessionId/members')
+  async markYouthAttendance(
+    @Req() req: any,
+    @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
+    @Body() body: any,
+  ) {
+    await this.authorize(req.user);
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(body.memberId || ''))
+      throw new BadRequestException('Valid member required');
+    if (!['PRESENT', 'ABSENT'].includes(body.status))
+      throw new BadRequestException('Invalid attendance status');
+
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        INSERT INTO attendance_records (session_id, member_id, status)
+        SELECT s.id, m.id, $3
+        FROM attendance_sessions s
+        CROSS JOIN members m
+        WHERE s.id = $1 AND m.id = $2
+          AND s.service_type = 'YOUTH_SERVICE'
+          AND s.home_cell_id IS NULL
+        ON CONFLICT (session_id, member_id)
+        DO UPDATE SET status = EXCLUDED.status
+        RETURNING *
+      `, [sessionId, body.memberId, body.status]);
+
+      if (!result.rowCount)
+        throw new BadRequestException('Youth session or member not found');
+      return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
 }
