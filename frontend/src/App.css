@@ -3634,3 +3634,31 @@ footer {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* CLGF Youth Attendance — compact member names */
+.clgf-youth-workspace .member-name,
+.youth-attendance .member-name,
+.youth-attendance-list .member-name,
+.youth-attendance-member strong,
+.youth-attendance-row strong {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+/* Keep member rows compact */
+.youth-attendance-member,
+.youth-attendance-row {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+/* Mobile-friendly attendance text */
+@media (max-width: 640px) {
+  .youth-attendance .member-name,
+  .youth-attendance-list .member-name,
+  .youth-attendance-member strong,
+  .youth-attendance-row strong {
+    font-size: 14px !important;
+  }
+}
