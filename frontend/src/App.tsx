@@ -16939,7 +16939,20 @@ className="back-button no-print"
   }
 
 
-  if (showYouthServices) {
+  const assignedYouthLeader =
+    leadershipAssignments.some((assignment) =>
+      assignment.status === 'ACTIVE' &&
+      assignment.member_id === authUser.memberId &&
+      /youth (leader|minister|ministry leader)/i.test(
+        assignment.role_title || ''
+      )
+    );
+
+  const canManageYouth =
+    authUser.role === 'ADMIN' ||
+    (authUser.role === 'LEADER' && assignedYouthLeader);
+
+  if (showYouthServices && canManageYouth) {
     return (
       <div className="app">
         <header className="header">
@@ -17458,10 +17471,12 @@ className="back-button no-print"
             <span>♟</span>
             Ministries
           </button>
-          <button onClick={() => setShowYouthServices(true)}>
-            <span>♟</span>
-            Youth Services
-          </button>
+          {canManageYouth && (
+            <button onClick={() => setShowYouthServices(true)}>
+              <span>♟</span>
+              Youth Services
+            </button>
+          )}
 
           <button onClick={() => setShowHomeCells(true)}>
             <span>⌂</span>
