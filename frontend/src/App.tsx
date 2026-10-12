@@ -1,3 +1,4 @@
+import YouthReports from './YouthReports';
 import YouthPrograms from './YouthPrograms';
 import YouthAttendance from './YouthAttendance';
 import YouthServiceManager from './YouthServiceManager';
@@ -17036,17 +17037,13 @@ className="back-button no-print"
               <h3>Monthly Reports</h3>
               <p>Submit Youth Ministry reports to church leadership.</p>
             
-              <button
-      type="button"
-      className="youth-action-button"
-      onClick={() => {
-        setShowYouthServices(false);
-        setShowReports(true);
-      }}
-    >
-      Open Monthly Reports
-    </button>
-            </div>
+              
+            
+    <YouthReports
+      apiUrl={import.meta.env.VITE_API_URL}
+      authFetch={authFetch}
+    />
+  </div>
           </div>
         </main>
       </div>

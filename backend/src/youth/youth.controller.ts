@@ -209,4 +209,74 @@ export class YouthController {
     }
   }
 
+  @Get('reports')
+  async reports(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS youth_monthly_reports (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          report_month VARCHAR(7) NOT NULL UNIQUE,
+          achievements TEXT NOT NULL DEFAULT '',
+          challenges TEXT NOT NULL DEFAULT '',
+          plans TEXT NOT NULL DEFAULT '',
+          submitted_by UUID REFERENCES users(id),
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      const result = await db.query(`
+        SELECT * FROM youth_monthly_reports
+        ORDER BY report_month DESC
+      `);
+      return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
+  @Post('reports')
+  async createReport(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+
+    if (!/^\\d{4}-(0[1-9]|1[0-2])$/.test(body.reportMonth || ''))
+      throw new BadRequestException('Valid report month required');
+
+    const db = await getDatabasePool().connect();
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS youth_monthly_reports (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          report_month VARCHAR(7) NOT NULL UNIQUE,
+          achievements TEXT NOT NULL DEFAULT '',
+          challenges TEXT NOT NULL DEFAULT '',
+          plans TEXT NOT NULL DEFAULT '',
+          submitted_by UUID REFERENCES users(id),
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      const result = await db.query(`
+        INSERT INTO youth_monthly_reports
+          (report_month, achievements, challenges, plans, submitted_by)
+        VALUES ($1,$2,$3,$4,$5)
+        ON CONFLICT (report_month)
+        DO UPDATE SET
+          achievements = EXCLUDED.achievements,
+          challenges = EXCLUDED.challenges,
+          plans = EXCLUDED.plans,
+          submitted_by = EXCLUDED.submitted_by
+        RETURNING *
+      `, [
+        body.reportMonth,
+        body.achievements || '',
+        body.challenges || '',
+        body.plans || '',
+        req.user.sub,
+      ]);
+      return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
 }
