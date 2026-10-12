@@ -1,3 +1,4 @@
+import YouthMembers from './YouthMembers';
 import YouthReports from './YouthReports';
 import YouthPrograms from './YouthPrograms';
 import YouthAttendance from './YouthAttendance';
@@ -16986,11 +16987,17 @@ className="back-button no-print"
             <div className="card">
               <h3>Youth Members</h3>
               <p>Register and manage youth members.</p>
-              <button onClick={() => {
-                setShowYouthServices(false);
-                setShowMembers(true);
-              }}>Open Members</button>
-            </div>
+              
+            
+    <YouthMembers
+      apiUrl={import.meta.env.VITE_API_URL}
+      authFetch={authFetch}
+      onRegister={() => {
+        setShowYouthServices(false);
+        setShowMembers(true);
+      }}
+    />
+  </div>
             <div className="card">
               <h3>Youth Services</h3>
               <YouthServiceManager
