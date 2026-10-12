@@ -6823,7 +6823,19 @@ const [editingMember, setEditingMember] = useState<Member | null>(null);
       }
 
       const data = await response.json();
-      setMemberAttendanceHistory(data);
+      setMemberAttendanceHistory({
+        ...data,
+        member: data?.member ?? {},
+        summary: {
+          totalSessions: 0,
+          present: 0,
+          absent: 0,
+          notMarked: 0,
+          attendanceRate: 0,
+          ...(data?.summary ?? {}),
+        },
+        history: Array.isArray(data?.history) ? data.history : [],
+      });
     } catch (err) {
       console.error(err);
       alert('Unable to load member attendance history.');
