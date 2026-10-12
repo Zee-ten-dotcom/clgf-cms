@@ -3268,3 +3268,84 @@ footer {
     padding: 12px 18px;
   }
 }
+
+/* Youth Attendance — consistent CLGF dashboard layout */
+.clgf-youth-attendance {
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+}
+.clgf-ya-header { text-align: center; margin-bottom: 18px; }
+.clgf-ya-header h3 { margin-bottom: 4px; }
+.clgf-ya-header p { color: #666; margin: 0; }
+.clgf-ya-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.clgf-ya-stats > div {
+  border: 1px solid #e4d7a7;
+  background: #fffdf5;
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+}
+.clgf-ya-stats span { display: block; font-size: 12px; color: #666; }
+.clgf-ya-stats strong { display: block; font-size: 24px; margin-top: 5px; }
+.clgf-ya-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.clgf-ya-actions button, .clgf-ya-panel button {
+  border: 0;
+  border-radius: 8px;
+  background: #d9b331;
+  color: #171717;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.clgf-ya-panel {
+  background: #fff;
+  border: 1px solid #e7e2d3;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+}
+.clgf-ya-panel h4 { margin: 0 0 14px; }
+.clgf-ya-panel label { display: block; margin-bottom: 12px; }
+.clgf-ya-panel input, .clgf-ya-panel select,
+.clgf-ya-panel textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 7px 0 12px;
+  padding: 11px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font: inherit;
+}
+.clgf-ya-session, .clgf-ya-member {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+.clgf-ya-session small, .clgf-ya-member small {
+  display: block;
+  color: #666;
+  margin-top: 4px;
+}
+.clgf-ya-status { display: flex; gap: 5px; }
+.clgf-ya-status button {
+  background: #f0f0f0;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.clgf-ya-status button.active { background: #b7e4bd; }
+.clgf-ya-status button.active.absent { background: #f2c1c1; }
+.clgf-ya-error { color: #a32222; }
+@media (max-width: 480px) {
+  .clgf-ya-member { align-items: flex-start; flex-direction: column; }
+  .clgf-ya-stats { grid-template-columns: repeat(2, 1fr); }
+}

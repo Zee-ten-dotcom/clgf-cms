@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type Session = {
   id: string;
@@ -7,10 +7,11 @@ type Session = {
   absent: number;
 };
 
-type YouthMember = {
+type Member = {
   id: string;
   first_name: string;
   last_name: string;
+  membership_number?: string;
 };
 
 type Props = {
@@ -18,162 +19,268 @@ type Props = {
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 };
 
+type View = 'dashboard' | 'take' | 'history';
+
 export default function YouthAttendance({ apiUrl, authFetch }: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [members, setMembers] = useState<YouthMember[]>([]);
-  const [selectedSession, setSelectedSession] = useState('');
-  const [memberId, setMemberId] = useState('');
-  const [status, setStatus] = useState('PRESENT');
-  const [marking, setMarking] = useState(false);
-  const [date, setDate] = useState('');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [view, setView] = useState<View>('dashboard');
+  const [sessionId, setSessionId] = useState('');
+  const [date, setDate] = useState(
+    new Date().toLocaleDateString('en-CA')
+  );
   const [notes, setNotes] = useState('');
+  const [marks, setMarks] = useState<Record<string, 'PRESENT' | 'ABSENT'>>({});
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
 
-  async function load() {
+  async function request(path: string, options?: RequestInit) {
+    const response = await authFetch(`${apiUrl}${path}`, options);
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message || 'Request failed');
+    }
+    return response.json();
+  }
+
+  async function refresh() {
     try {
-      const response = await authFetch(`${apiUrl}/youth/attendance`);
-      if (!response.ok) throw new Error(await response.text());
-      setSessions(await response.json());
+      const [attendance, youth] = await Promise.all([
+        request('/youth/attendance'),
+        request('/youth/members')
+      ]);
+      setSessions(Array.isArray(attendance) ? attendance : []);
+      setMembers(Array.isArray(youth) ? youth : []);
       setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load attendance');
     }
   }
 
-  async function loadMembers() {
-    try {
-      const response = await authFetch(`${apiUrl}/youth/members`);
-      if (!response.ok) throw new Error('Unable to load members');
-      const data = await response.json();
-      setMembers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load members');
-    }
-  }
+  useEffect(() => { void refresh(); }, []);
 
-  useEffect(() => {
-    void load();
-    void loadMembers();
-  }, []);
+  const current = sessions.find(s => s.id === sessionId);
+  const totalPresent = sessions.reduce((n, s) => n + Number(s.present || 0), 0);
+  const totalAbsent = sessions.reduce((n, s) => n + Number(s.absent || 0), 0);
+  const attendanceRate = totalPresent + totalAbsent
+    ? Math.round(100 * totalPresent / (totalPresent + totalAbsent))
+    : 0;
 
-  async function mark(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMarking(true);
-    try {
-      const response = await authFetch(
-        `${apiUrl}/youth/attendance/${selectedSession}/members`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberId, status }),
-        }
-      );
-      if (!response.ok) throw new Error(await response.text());
-      setError('');
-      setMemberId('');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to mark attendance');
-    } finally {
-      setMarking(false);
-    }
-  }
+  const filtered = useMemo(() => members.filter(m =>
+    `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
+  ), [members, search]);
 
-  async function create(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
+  async function createSession() {
+    if (!date) return;
+    setBusy(true);
     try {
-      const response = await authFetch(`${apiUrl}/youth/attendance`, {
+      const created = await request('/youth/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serviceDate: date, notes }),
+        body: JSON.stringify({ serviceDate: date, notes })
       });
-      if (!response.ok) throw new Error(await response.text());
-      setDate('');
-      setNotes('');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save');
+      await refresh();
+      const id = created?.id || created?.session?.id;
+      if (id) {
+        setSessionId(id);
+        setMarks({});
+        setView('take');
+      } else {
+        setView('dashboard');
+      }
+      setError('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create session');
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
+  async function saveMarks() {
+    if (!sessionId) return;
+    const entries = Object.entries(marks);
+    if (!entries.length) {
+      setError('Select Present or Absent for at least one youth member.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      for (const [memberId, status] of entries) {
+        await request(`/youth/attendance/${sessionId}/members`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memberId, status })
+        });
+      }
+      await refresh();
+      setMarks({});
+      setView('dashboard');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save attendance');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const formatDate = (value: string) =>
+    String(value).slice(0, 10);
+
   return (
-    <section className="clgf-youth-manager">
-      <h3>Youth Attendance</h3>
-      <form onSubmit={create}>
-        <input
-          aria-label="Attendance date"
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          required
-        />
-        <textarea
-          aria-label="Attendance notes"
-          placeholder="Youth service notes"
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-        />
-        <button disabled={saving}>
-          {saving ? 'Saving...' : 'Create Youth Attendance'}
+    <section className="clgf-youth-attendance">
+      <div className="clgf-ya-header">
+        <h3>Youth Attendance</h3>
+        <p>Saturday Youth Service · 16:00–18:00</p>
+      </div>
+
+      <div className="clgf-ya-stats">
+        <div><span>Sessions</span><strong>{sessions.length}</strong></div>
+        <div><span>Youth Members</span><strong>{members.length}</strong></div>
+        <div><span>Present</span><strong>{totalPresent}</strong></div>
+        <div><span>Absent</span><strong>{totalAbsent}</strong></div>
+        <div><span>Attendance Rate</span><strong>{attendanceRate}%</strong></div>
+      </div>
+
+      <div className="clgf-ya-actions">
+        <button type="button" onClick={() => setView('dashboard')}>
+          Dashboard
         </button>
-      </form>
-      {error && <p role="alert">{error}</p>}
-
-      <h3>Mark Youth Member Attendance</h3>
-      <form onSubmit={mark}>
-        <select
-          aria-label="Youth attendance session"
-          value={selectedSession}
-          onChange={e => setSelectedSession(e.target.value)}
-          required
-        >
-          <option value="">Select Youth Service</option>
-          {sessions.map(session => (
-            <option key={session.id} value={session.id}>
-              {String(session.service_date).slice(0, 10)}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Church member"
-          value={memberId}
-          onChange={e => setMemberId(e.target.value)}
-          required
-        >
-          <option value="">Select Member</option>
-          {members.map(member => (
-            <option key={member.id} value={member.id}>
-              {member.first_name} {member.last_name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Attendance status"
-          value={status}
-          onChange={e => setStatus(e.target.value)}
-        >
-          <option value="PRESENT">Present</option>
-          <option value="ABSENT">Absent</option>
-        </select>
-
-        <button type="submit" disabled={marking}>
-          {marking ? 'Saving...' : 'Save Youth Attendance'}
+        <button type="button" onClick={() => setView('take')}>
+          Take Attendance
         </button>
-      </form>
+        <button type="button" onClick={() => setView('history')}>
+          View History
+        </button>
+      </div>
 
-      <h3>Youth Attendance Sessions</h3>
-      {sessions.map(session => (
-        <div className="clgf-youth-service" key={session.id}>
-          <strong>{String(session.service_date).slice(0, 10)}</strong>
-          <p>Present: {session.present} | Absent: {session.absent}</p>
+      {error && <p className="clgf-ya-error" role="alert">{error}</p>}
+
+      {view === 'dashboard' && (
+        <div className="clgf-ya-panel">
+          <h4>Recent Youth Services</h4>
+          {sessions.length === 0 && <p>No attendance sessions yet.</p>}
+          {sessions.slice(0, 5).map(s => (
+            <div className="clgf-ya-session" key={s.id}>
+              <div>
+                <strong>{formatDate(s.service_date)}</strong>
+                <small>Present: {s.present} · Absent: {s.absent}</small>
+              </div>
+              <button type="button" onClick={() => {
+                setSessionId(s.id);
+                setMarks({});
+                setView('take');
+              }}>Open</button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
+
+      {view === 'take' && (
+        <div className="clgf-ya-panel">
+          <h4>Take Youth Attendance</h4>
+          <label>
+            Select Existing Youth Service
+            <select value={sessionId} onChange={e => {
+              setSessionId(e.target.value);
+              setMarks({});
+            }}>
+              <option value="">New Attendance Session</option>
+              {sessions.map(s => (
+                <option key={s.id} value={s.id}>
+                  {formatDate(s.service_date)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {!sessionId ? (
+            <div className="clgf-ya-form">
+              <label>
+                Service Date
+                <input type="date" value={date}
+                  onChange={e => setDate(e.target.value)} />
+              </label>
+              <label>
+                Service Notes
+                <textarea value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="Optional notes" />
+              </label>
+              <button disabled={busy || !date}
+                onClick={() => void createSession()}>
+                {busy ? 'Creating...' : 'Create Session & Take Attendance'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <p>
+                <strong>Service: {current
+                  ? formatDate(current.service_date)
+                  : 'Selected session'}</strong>
+              </p>
+              <input
+                type="search"
+                placeholder="Search youth member..."
+                aria-label="Search youth member"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <div className="clgf-ya-member-list">
+                {filtered.map(m => (
+                  <div className="clgf-ya-member" key={m.id}>
+                    <div>
+                      <strong>{m.first_name} {m.last_name}</strong>
+                      <small>{m.membership_number || ''}</small>
+                    </div>
+                    <div className="clgf-ya-status">
+                      <button
+                        type="button"
+                        className={marks[m.id] === 'PRESENT' ? 'active' : ''}
+                        onClick={() => setMarks(prev => ({
+                          ...prev, [m.id]: 'PRESENT'
+                        }))}
+                      >Present</button>
+                      <button
+                        type="button"
+                        className={marks[m.id] === 'ABSENT' ? 'active absent' : ''}
+                        onClick={() => setMarks(prev => ({
+                          ...prev, [m.id]: 'ABSENT'
+                        }))}
+                      >Absent</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p>{Object.keys(marks).length} member(s) selected</p>
+              <button disabled={busy || !Object.keys(marks).length}
+                onClick={() => void saveMarks()}>
+                {busy ? 'Saving...' : 'Save Youth Attendance'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {view === 'history' && (
+        <div className="clgf-ya-panel">
+          <h4>Youth Attendance History</h4>
+          {sessions.length === 0 && <p>No history available.</p>}
+          {sessions.map(s => (
+            <div className="clgf-ya-session" key={s.id}>
+              <div>
+                <strong>{formatDate(s.service_date)}</strong>
+                <small>Present: {s.present} · Absent: {s.absent}</small>
+              </div>
+              <button type="button" onClick={() => {
+                setSessionId(s.id);
+                setMarks({});
+                setView('take');
+              }}>View / Edit</button>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
