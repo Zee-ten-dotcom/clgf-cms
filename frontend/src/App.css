@@ -3115,3 +3115,38 @@ footer {
     flex: none;
   }
 }
+
+/* CLGF Follow-Up Request Buttons */
+.clgf-followup-requests button {
+  background: #d4af37;
+  color: #111;
+  border: 1px solid #d4af37;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 42px;
+  margin: 4px;
+  transition: background 0.2s ease;
+}
+
+.clgf-followup-requests button:hover {
+  background: #bd9825;
+}
+
+.clgf-followup-requests button:active {
+  transform: scale(0.98);
+}
+
+.clgf-followup-requests button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .clgf-followup-requests button {
+    max-width: 100%;
+    white-space: normal;
+  }
+}

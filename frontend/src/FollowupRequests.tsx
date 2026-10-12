@@ -77,7 +77,7 @@ export default function FollowupRequests({
   }
 
   return (
-    <section style={{ marginTop: 24 }}>
+    <section className="clgf-followup-requests" style={{ marginTop: 24 }}>
       <h3>Member Follow-Up Requests</h3>
       <button type="button" onClick={() => void load()}>
         Refresh Requests
