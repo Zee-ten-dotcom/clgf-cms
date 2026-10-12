@@ -1,3 +1,4 @@
+import YouthAttendance from './YouthAttendance';
 import YouthServiceManager from './YouthServiceManager';
 import FollowupRequests from './FollowupRequests';
 import MemberRetention from './MemberRetention';
@@ -17012,17 +17013,13 @@ className="back-button no-print"
               <h3>Youth Attendance</h3>
               <p>Track participation in youth services.</p>
             
-              <button
-      type="button"
-      className="youth-action-button"
-      onClick={() => {
-        setShowYouthServices(false);
-        setShowAttendance(true);
-      }}
-    >
-      Open Youth Attendance
-    </button>
-            </div>
+              
+            
+    <YouthAttendance
+      apiUrl={import.meta.env.VITE_API_URL}
+      authFetch={authFetch}
+    />
+  </div>
             <div className="card">
               <h3>Youth Programs & Activities</h3>
               <p>Worship, teaching, outreach and fellowship.</p>
