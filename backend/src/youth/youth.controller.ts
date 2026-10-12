@@ -159,4 +159,54 @@ export class YouthController {
     }
   }
 
+  @Get('programs')
+  async programs(@Req() req: any) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        SELECT * FROM events
+        WHERE event_type = 'YOUTH_PROGRAM'
+        ORDER BY event_date DESC, start_time ASC
+      `);
+      return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
+  @Post('programs')
+  async createProgram(@Req() req: any, @Body() body: any) {
+    await this.authorize(req.user);
+
+    if (
+      typeof body.title !== 'string' ||
+      !body.title.trim() ||
+      !/^\\d{4}-\\d{2}-\\d{2}$/.test(body.eventDate || '')
+    ) {
+      throw new BadRequestException('Title and valid date required');
+    }
+
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        INSERT INTO events
+          (title, description, event_date, start_time,
+           end_time, location, event_type, status)
+        VALUES ($1,$2,$3,$4,$5,$6,'YOUTH_PROGRAM','SCHEDULED')
+        RETURNING *
+      `, [
+        body.title.trim(),
+        body.description || '',
+        body.eventDate,
+        body.startTime || '16:00',
+        body.endTime || '18:00',
+        body.location || 'CLGF Main Sanctuary',
+      ]);
+      return result.rows[0];
+    } finally {
+      db.release();
+    }
+  }
+
 }

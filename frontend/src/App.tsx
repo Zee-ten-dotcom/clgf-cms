@@ -1,3 +1,4 @@
+import YouthPrograms from './YouthPrograms';
 import YouthAttendance from './YouthAttendance';
 import YouthServiceManager from './YouthServiceManager';
 import FollowupRequests from './FollowupRequests';
@@ -17024,17 +17025,13 @@ className="back-button no-print"
               <h3>Youth Programs & Activities</h3>
               <p>Worship, teaching, outreach and fellowship.</p>
             
-              <button
-      type="button"
-      className="youth-action-button"
-      onClick={() => {
-        setShowYouthServices(false);
-        setShowEvents(true);
-      }}
-    >
-      Open Youth Programs & Activities
-    </button>
-            </div>
+              
+            
+    <YouthPrograms
+      apiUrl={import.meta.env.VITE_API_URL}
+      authFetch={authFetch}
+    />
+  </div>
             <div className="card">
               <h3>Monthly Reports</h3>
               <p>Submit Youth Ministry reports to church leadership.</p>
