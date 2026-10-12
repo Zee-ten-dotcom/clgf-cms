@@ -17008,16 +17008,7 @@ className="back-button no-print"
               <p>Saturday: 16:00–18:00</p>
               <p>Service planning and coordination.</p>
             
-              <button
-                type="button"
-                className="youth-action-button"
-                onClick={() => {
-                  setShowYouthServices(false);
-                  setShowEvents(true);
-                }}
-              >
-                Open Section
-              </button>
+              
             </div>
             <div className="card">
               <h3>Youth Attendance</h3>

@@ -71,6 +71,31 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
     `${m.first_name} ${m.last_name}`.toLowerCase().includes(search.toLowerCase())
   ), [members, search]);
 
+
+  async function openSession(id: string) {
+    setSessionId(id);
+    setMarks({});
+    if (!id) return;
+
+    try {
+      const records = await request(
+        `/youth/attendance/${id}/records`
+      );
+      const saved: Record<string, 'PRESENT' | 'ABSENT'> = {};
+      if (Array.isArray(records)) {
+        for (const record of records) {
+          if (record.status === 'PRESENT' || record.status === 'ABSENT') {
+            saved[record.member_id] = record.status;
+          }
+        }
+      }
+      setMarks(saved);
+      setError('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load saved attendance');
+    }
+  }
+
   async function createSession() {
     if (!date) return;
     setBusy(true);
@@ -83,8 +108,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
       await refresh();
       const id = created?.id || created?.session?.id;
       if (id) {
-        setSessionId(id);
-        setMarks({});
+        void openSession(id);
         setView('take');
       } else {
         setView('dashboard');
@@ -167,8 +191,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
                 <small>Present: {s.present} · Absent: {s.absent}</small>
               </div>
               <button type="button" onClick={() => {
-                setSessionId(s.id);
-                setMarks({});
+                void openSession(s.id);
                 setView('take');
               }}>Open</button>
             </div>
@@ -182,8 +205,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
           <label>
             Select Existing Youth Service
             <select value={sessionId} onChange={e => {
-              setSessionId(e.target.value);
-              setMarks({});
+              void openSession(e.target.value);
             }}>
               <option value="">New Attendance Session</option>
               {sessions.map(s => (
@@ -273,8 +295,7 @@ export default function YouthAttendance({ apiUrl, authFetch }: Props) {
                 <small>Present: {s.present} · Absent: {s.absent}</small>
               </div>
               <button type="button" onClick={() => {
-                setSessionId(s.id);
-                setMarks({});
+                void openSession(s.id);
                 setView('take');
               }}>View / Edit</button>
             </div>

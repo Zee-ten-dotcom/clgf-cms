@@ -3349,3 +3349,33 @@ footer {
   .clgf-ya-member { align-items: flex-start; flex-direction: column; }
   .clgf-ya-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Youth Attendance compact member typography */
+.clgf-youth-attendance .clgf-ya-member strong {
+  display: block;
+  font-size: 15px !important;
+  line-height: 1.4 !important;
+  font-weight: 600;
+}
+
+.clgf-youth-attendance .clgf-ya-member small {
+  font-size: 12px;
+}
+
+.clgf-youth-attendance .clgf-ya-member {
+  padding: 10px 0;
+}
+
+.clgf-youth-attendance .clgf-ya-status button {
+  min-width: 68px;
+}
+
+.clgf-youth-attendance .clgf-ya-status button.active {
+  background: #c8e8ce !important;
+  color: #14532d !important;
+}
+
+.clgf-youth-attendance .clgf-ya-status button.active.absent {
+  background: #f6c7c7 !important;
+  color: #8b1e1e !important;
+}

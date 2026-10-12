@@ -353,4 +353,30 @@ export class YouthController {
     }
   }
 
+  @Get('attendance/:sessionId/records')
+  async youthAttendanceRecords(
+    @Req() req: any,
+    @Param('sessionId') sessionId: string,
+  ) {
+    await this.authorize(req.user);
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        SELECT ar.member_id, ar.status
+        FROM attendance_records ar
+        JOIN attendance_sessions s ON s.id = ar.session_id
+        WHERE s.id = $1
+          AND s.service_type = 'YOUTH_SERVICE'
+          AND s.home_cell_id IS NULL
+          AND EXISTS (
+            SELECT 1 FROM youth_ministry_members ym
+            WHERE ym.member_id = ar.member_id
+          )
+      `, [sessionId]);
+      return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
 }
