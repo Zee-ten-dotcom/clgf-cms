@@ -3611,3 +3611,26 @@ footer {
     width: 100%;
   }
 }
+
+/* CLGF Youth Services dashboard action buttons */
+.dashboard-grid .card button {
+  background: #d9b331;
+  color: #171717;
+  border: 1px solid #d9b331;
+  border-radius: 8px;
+  padding: 11px 20px;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dashboard-grid .card button:hover {
+  background: #c5a12b;
+}
+
+.dashboard-grid .card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
