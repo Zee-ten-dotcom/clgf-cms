@@ -757,9 +757,26 @@ export class AttendanceService {
         );
       }
 
+      const history = sessionsResult.rows;
+      const present = history.filter(
+        (r: any) => r.attendance_status === 'PRESENT'
+      ).length;
+      const absent = history.filter(
+        (r: any) => r.attendance_status === 'ABSENT'
+      ).length;
+
       return {
         member: memberResult.rows[0],
-        history: sessionsResult.rows,
+        history,
+        summary: {
+          totalSessions: history.length,
+          present,
+          absent,
+          notMarked: history.length - present - absent,
+          attendanceRate: present + absent
+            ? Math.round((present / (present + absent)) * 100)
+            : 0,
+        },
       };
     } finally {
       client.release();
