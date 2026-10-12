@@ -1,7 +1,6 @@
 import {
   Body, Controller, Delete, ForbiddenException, Get,
-  Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param,
-} from '@nestjs/common';
+  Post, Req, UseGuards, BadRequestException, ParseUUIDPipe, Param, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -374,6 +373,68 @@ export class YouthController {
           )
       `, [sessionId]);
       return result.rows;
+    } finally {
+      db.release();
+    }
+  }
+
+  @Get('attendance/report')
+  async youthAttendanceReport(
+    @Req() req: any,
+    @Query('month') month: string,
+  ) {
+    await this.authorize(req.user);
+
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) {
+      throw new BadRequestException('Valid report month required');
+    }
+
+    const db = await getDatabasePool().connect();
+    try {
+      const result = await db.query(`
+        SELECT
+          m.id,
+          m.first_name,
+          m.last_name,
+          COUNT(DISTINCT s.id)::int AS total_sessions,
+          COUNT(ar.member_id) FILTER (
+            WHERE ar.status = 'PRESENT'
+          )::int AS present,
+          COUNT(ar.member_id) FILTER (
+            WHERE ar.status = 'ABSENT'
+          )::int AS absent
+        FROM youth_ministry_members ym
+        JOIN members m ON m.id = ym.member_id
+        LEFT JOIN attendance_sessions s
+          ON s.service_type = 'YOUTH_SERVICE'
+          AND s.home_cell_id IS NULL
+          AND s.service_date >= ($1 || '-01')::date
+          AND s.service_date < (
+            ($1 || '-01')::date + INTERVAL '1 month'
+          )
+        LEFT JOIN attendance_records ar
+          ON ar.session_id = s.id
+          AND ar.member_id = m.id
+        GROUP BY m.id, m.first_name, m.last_name
+        ORDER BY m.first_name, m.last_name
+      `, [month]);
+
+      const sessions = await db.query(`
+        SELECT COUNT(*)::int AS total
+        FROM attendance_sessions
+        WHERE service_type = 'YOUTH_SERVICE'
+          AND home_cell_id IS NULL
+          AND service_date >= ($1 || '-01')::date
+          AND service_date < (
+            ($1 || '-01')::date + INTERVAL '1 month'
+          )
+      `, [month]);
+
+      return {
+        month,
+        totalSessions: sessions.rows[0].total,
+        members: result.rows,
+      };
     } finally {
       db.release();
     }

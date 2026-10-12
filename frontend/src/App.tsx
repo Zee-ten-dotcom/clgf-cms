@@ -1,3 +1,4 @@
+import YouthAttendanceReports from './YouthAttendanceReports';
 import YouthMembers from './YouthMembers';
 import YouthReports from './YouthReports';
 import YouthPrograms from './YouthPrograms';
@@ -17053,6 +17054,11 @@ className="back-button no-print"
       apiUrl={import.meta.env.VITE_API_URL}
       authFetch={authFetch}
     />
+    <YouthAttendanceReports
+      apiUrl={import.meta.env.VITE_API_URL}
+      authFetch={authFetch}
+    />
+
   </div>
             <div className="card">
               <h3>Youth Programs & Activities</h3>
