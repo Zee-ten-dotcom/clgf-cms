@@ -31,6 +31,30 @@ type Props = {
   onBack: () => void;
 };
 
+
+const YOUTH_ROLES: Record<string, string> = {
+  'Chairperson':
+    'Provide leadership to the Youth Committee; chair meetings; coordinate youth ministry plans; promote unity and accountability; report progress to church leadership.',
+  'Vice Chairperson':
+    'Assist the Chairperson; act in their absence; support committee members; monitor implementation of youth ministry decisions.',
+  'Secretary':
+    'Prepare meeting agendas; record minutes; maintain youth ministry records; manage correspondence; communicate meeting decisions.',
+  'Deputy Secretary':
+    'Assist the Secretary; maintain attendance and administrative records; act when the Secretary is unavailable.',
+  'Treasurer':
+    'Maintain accurate youth ministry financial records; prepare budgets and financial reports; record approved income and expenditure; ensure accountability under church financial policies.',
+  'Organizer':
+    'Coordinate youth services, events and outreach; prepare activity schedules; organize volunteers, equipment and venues; monitor event readiness.',
+  'Public Relations Officer':
+    'Communicate approved youth announcements; promote youth activities; coordinate invitations and publicity; maintain respectful communication with members and visitors.',
+  'Worship Coordinator':
+    'Coordinate youth praise and worship; organize rehearsals; support worship team development; work with technical teams and service leaders.',
+  'Prayer Coordinator':
+    'Organize youth prayer meetings; encourage consistent prayer; coordinate intercession and prayer requests; support the spiritual growth of youth members.',
+  'Youth Committee Member':
+    'Attend committee meetings; support youth programs and outreach; carry out assigned responsibilities; encourage participation and uphold ministry values.'
+};
+
 export default function YouthCareLeadership({
   apiUrl, authFetch, section, onBack,
 }: Props) {
@@ -41,7 +65,7 @@ export default function YouthCareLeadership({
   const [notes, setNotes] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
   const [role, setRole] = useState('Chairperson');
-  const [responsibility, setResponsibility] = useState('');
+  const [responsibility, setResponsibility] = useState(YOUTH_ROLES['Chairperson']);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -95,7 +119,7 @@ export default function YouthCareLeadership({
       setSubject('');
       setNotes('');
       setFollowUpDate('');
-      setResponsibility('');
+      setResponsibility(YOUTH_ROLES[role] || '');
       setShowForm(false);
       await load();
     } catch (e) {
@@ -182,7 +206,10 @@ export default function YouthCareLeadership({
               <label>
                 Leadership Position
                 <select value={role}
-                  onChange={e => setRole(e.target.value)}>
+                  onChange={e => {
+                    setRole(e.target.value);
+                    setResponsibility(YOUTH_ROLES[e.target.value] || '');
+                  }}>
                   {[
                     'Chairperson', 'Vice Chairperson', 'Secretary',
                     'Deputy Secretary', 'Treasurer', 'Organizer',
@@ -195,9 +222,12 @@ export default function YouthCareLeadership({
               </label>
               <label>
                 Responsibilities
-                <textarea value={responsibility}
-                  onChange={e => setResponsibility(e.target.value)}
-                  placeholder="Describe leadership responsibilities" />
+                <textarea
+                  value={responsibility}
+                  readOnly
+                  rows={5}
+                  aria-label="Predefined leadership responsibilities"
+                />
               </label>
             </>
           )}
